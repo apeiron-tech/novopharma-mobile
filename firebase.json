@@ -1,0 +1,39 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "pharmadefi-b352b",
+          "appId": "1:501099928244:android:54aaa44370d498391795e1",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "pharmadefi-b352b",
+          "configurations": {
+            "android": "1:501099928244:android:54aaa44370d498391795e1",
+            "ios": "1:501099928244:ios:384791336b06a0461795e1"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}
