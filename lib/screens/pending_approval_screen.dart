@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
 class PendingApprovalScreen extends StatelessWidget {
@@ -12,10 +11,6 @@ class PendingApprovalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final l10n = AppLocalizations.of(context)!;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
-    });
 
     return Scaffold(
       backgroundColor: LightModeColors.novoPharmaLightBlue,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:novopharma/screens/product_screen.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
+import 'dart:developer';
 
 class BarcodeScannerScreen extends StatefulWidget {
   const BarcodeScannerScreen({super.key});
@@ -30,6 +31,9 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     final List<Barcode> barcodes = capture.barcodes;
     for (final barcode in barcodes) {
       if (barcode.rawValue != null) {
+        // Log the scanned barcode
+        log('Barcode scanned: ${barcode.rawValue}');
+
         setState(() {
           _isDetecting = true;
         });
@@ -45,9 +49,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
           // Navigate to Product screen with barcode data
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => ProductScreen(
-                sku: barcode.rawValue!,
-              ),
+              builder: (context) => ProductScreen(sku: barcode.rawValue!),
             ),
           );
         });
@@ -68,33 +70,25 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       body: Stack(
         children: [
           // Camera preview
-          MobileScanner(
-            controller: cameraController,
-            onDetect: _onDetect,
-          ),
-          
+          MobileScanner(controller: cameraController, onDetect: _onDetect),
+
           // Darkened overlay with scan frame
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
-            ),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.5)),
             child: Center(
               child: Container(
                 width: 250,
                 height: 250,
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
+                  border: Border.all(color: Colors.white, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-          
+
           // Top overlay with controls
           SafeArea(
             child: Container(
@@ -111,7 +105,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                       size: 28,
                     ),
                   ),
-                  
+
                   // Center text
                   Text(
                     l10n.scanBarcodeHere,
@@ -121,7 +115,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  
+
                   // Flash toggle
                   IconButton(
                     onPressed: _toggleFlash,

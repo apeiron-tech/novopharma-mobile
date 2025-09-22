@@ -317,7 +317,7 @@ abstract class AppLocalizations {
   /// No description provided for @points.
   ///
   /// In en, this message translates to:
-  /// **'POINTS'**
+  /// **'Points'**
   String get points;
 
   /// No description provided for @rank.
@@ -757,6 +757,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sun'**
   String get sun;
+
+  /// No description provided for @availableQuizzes.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Quizzes'**
+  String get availableQuizzes;
+
+  /// No description provided for @noQuizzesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No Quizzes Available'**
+  String get noQuizzesAvailable;
+
+  /// No description provided for @questions.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get questions;
+
+  /// No description provided for @startQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Quiz'**
+  String get startQuiz;
+
+  /// No description provided for @quizzes.
+  ///
+  /// In en, this message translates to:
+  /// **'Quizzes'**
+  String get quizzes;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// No description provided for @goalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal Details'**
+  String get goalDetails;
+
+  /// No description provided for @eligibilityCriteria.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligibility Criteria'**
+  String get eligibilityCriteria;
+
+  /// No description provided for @eligibleProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible Products'**
+  String get eligibleProducts;
+
+  /// No description provided for @eligibleBrands.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible Brands'**
+  String get eligibleBrands;
+
+  /// No description provided for @eligibleCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible Categories'**
+  String get eligibleCategories;
+
+  /// No description provided for @eligibleZones.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible Zones'**
+  String get eligibleZones;
+
+  /// No description provided for @eligibleClientCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible Client Categories'**
+  String get eligibleClientCategories;
+
+  /// No description provided for @eligiblePharmacies.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible Pharmacies'**
+  String get eligiblePharmacies;
+
+  /// No description provided for @noSpecificCriteria.
+  ///
+  /// In en, this message translates to:
+  /// **'This goal applies to all sales.'**
+  String get noSpecificCriteria;
+
+  /// The amount of stock available
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{{count} piece} other{{count} pieces}}'**
+  String stockAmount(int count);
 }
 
 class _AppLocalizationsDelegate

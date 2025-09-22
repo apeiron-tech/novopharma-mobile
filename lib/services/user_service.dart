@@ -58,4 +58,17 @@ class UserService {
       rethrow;
     }
   }
+
+  Future<UserModel?> getUser(String uid) async {
+    try {
+      final docSnapshot = await _firestore.collection(_collection).doc(uid).get();
+      if (docSnapshot.exists) {
+        return UserModel.fromFirestore(docSnapshot);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching user: $e');
+      return null;
+    }
+  }
 }

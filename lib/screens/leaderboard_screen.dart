@@ -4,7 +4,6 @@ import 'package:novopharma/controllers/leaderboard_provider.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
 class LeaderboardScreen extends StatefulWidget {
@@ -18,10 +17,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
-      // Data is fetched automatically by the provider's constructor
-    });
+    // Data is fetched automatically by the provider's constructor
   }
 
   @override

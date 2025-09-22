@@ -35,7 +35,7 @@
     "welcome": "Bienvenue",
     "totalPoints": "POINTS TOTAUX",
     "currentBalance": "solde actuel",
-    "points": "POINTS",
+    "points": "Points",
     "rank": "RANG",
     "badges": "BADGES",
     "challenges": "DÉFIS",
@@ -108,5 +108,29 @@
     "thu": "Jeu",
     "fri": "Ven",
     "sat": "Sam",
-    "sun": "Dim"
+    "sun": "Dim",
+    "availableQuizzes": "Quiz disponibles",
+    "noQuizzesAvailable": "Aucun quiz disponible",
+    "questions": "Questions",
+    "startQuiz": "Commencer le quiz",
+    "quizzes": "Quiz",
+    "viewAll": "Voir tout",
+    "goalDetails": "Détails de l'objectif",
+    "eligibilityCriteria": "Critères d'éligibilité",
+    "eligibleProducts": "Produits éligibles",
+    "eligibleBrands": "Marques éligibles",
+    "eligibleCategories": "Catégories éligibles",
+    "eligibleZones": "Zones éligibles",
+    "eligibleClientCategories": "Catégories de clients éligibles",
+    "eligiblePharmacies": "Pharmacies éligibles",
+    "noSpecificCriteria": "Cet objectif s'applique à toutes les ventes.",
+    "stockAmount": "{count,plural, =1{{count} pièce} other{{count} pièces}}",
+    "@stockAmount": {
+        "description": "La quantité de stock disponible",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
 }

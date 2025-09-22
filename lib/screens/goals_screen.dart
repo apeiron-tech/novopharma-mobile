@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/goal_provider.dart';
-import 'package:novopharma/controllers/quiz_provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
+import 'package:novopharma/screens/goal_details_screen.dart';
+import 'package:novopharma/screens/quiz_list_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/models/goal.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/bottom_navigation_bar.dart';
-import 'quiz_question_screen.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
 class GoalsScreen extends StatefulWidget {
@@ -26,9 +26,10 @@ class _GoalsScreenState extends State<GoalsScreen>
     super.initState();
     _pageController = PageController(viewportFraction: 0.86);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
-      Provider.of<GoalProvider>(context, listen: false).fetchGoals();
-      Provider.of<QuizProvider>(context, listen: false).fetchWeeklyQuiz();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.appAuthState == AppAuthState.authenticatedActive) {
+        Provider.of<GoalProvider>(context, listen: false).fetchGoals();
+      }
     });
   }
 
@@ -51,16 +52,13 @@ class _GoalsScreenState extends State<GoalsScreen>
     );
   }
 
-  void _onTakeQuiz(QuizProvider quizProvider) {
-    if (quizProvider.weeklyQuiz != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              QuizQuestionScreen(quiz: quizProvider.weeklyQuiz!),
-        ),
-      );
-    }
+  void _onNavigateToQuizzes() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const QuizListScreen(),
+      ),
+    );
   }
 
   @override
@@ -136,14 +134,10 @@ class _GoalsScreenState extends State<GoalsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    // Weekly Quiz Card
+                    // Quizzes Card
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Consumer<QuizProvider>(
-                        builder: (context, quizProvider, child) {
-                          return _buildWeeklyQuizCard(quizProvider, l10n);
-                        },
-                      ),
+                      child: _buildQuizNavigationCard(l10n),
                     ),
                     const SizedBox(height: 24),
                     // Goal Type Buttons
@@ -211,10 +205,11 @@ class _GoalsScreenState extends State<GoalsScreen>
                             });
                           },
                           itemBuilder: (context, index) {
+                            final goal = goalProvider.goals[index];
                             return GoalCard(
-                              goal: goalProvider.goals[index],
-                              onTap: () => _onGoalCardTap(
-                                  goalProvider.goals[index]),
+                              goal: goal,
+                              progress: goal.userProgress,
+                              onTap: () => _onGoalCardTap(goal),
                             );
                           },
                         ),
@@ -251,7 +246,7 @@ class _GoalsScreenState extends State<GoalsScreen>
     );
   }
 
-  Widget _buildWeeklyQuizCard(QuizProvider quizProvider, AppLocalizations l10n) {
+  Widget _buildQuizNavigationCard(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -294,7 +289,7 @@ class _GoalsScreenState extends State<GoalsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.weeklyQuiz,
+                  l10n.quizzes,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -314,7 +309,7 @@ class _GoalsScreenState extends State<GoalsScreen>
           ),
           const SizedBox(width: 12),
           ElevatedButton(
-            onPressed: () => _onTakeQuiz(quizProvider),
+            onPressed: _onNavigateToQuizzes,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF1F9BD1),
@@ -325,7 +320,7 @@ class _GoalsScreenState extends State<GoalsScreen>
               minimumSize: const Size(100, 44),
             ),
             child: Text(
-              l10n.takeQuiz,
+              l10n.viewAll,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
               ),
@@ -446,6 +441,11 @@ class GoalBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final progress = goal.userProgress;
+    final progressPercent = progress != null && goal.targetValue > 0
+        ? (progress.progressValue / goal.targetValue * 100).clamp(0, 100)
+        : 0.0;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.4,
@@ -500,7 +500,7 @@ class GoalBottomSheet extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              '${goal.progressPercent}% ${l10n.complete}',
+                              '${progressPercent.toStringAsFixed(0)}% ${l10n.complete}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -590,7 +590,15 @@ class GoalBottomSheet extends StatelessWidget {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () {
+                                Navigator.pop(context); // Close the bottom sheet
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GoalDetailsScreen(goal: goal),
+                                  ),
+                                );
+                              },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(
                                   color: Color(0xFF1F9BD1),

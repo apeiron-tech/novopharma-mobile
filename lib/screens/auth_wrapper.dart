@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/screens/dashboard_home_screen.dart';
 import 'package:novopharma/screens/login_screen.dart';
 import 'package:novopharma/screens/pending_approval_screen.dart';
