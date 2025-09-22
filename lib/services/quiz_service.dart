@@ -5,11 +5,10 @@ class QuizService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _collection = 'quizzes';
 
-  Future<List<Quiz>> getAvailableQuizzes() async {
+  Future<List<Quiz>> getAllQuizzes() async {
     try {
       final querySnapshot = await _firestore
           .collection(_collection)
-          .where('active', isEqualTo: true)
           .get();
       final List<Quiz> quizzes =
           querySnapshot.docs.map((doc) => Quiz.fromFirestore(doc)).toList();
@@ -58,6 +57,21 @@ class QuizService {
     } catch (e) {
       print('Error submitting quiz: $e');
       rethrow;
+    }
+  }
+
+  Future<int> getUserAttemptCount(String userId, String quizId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('quizAttempts')
+          .where('quizId', isEqualTo: quizId)
+          .get();
+      return querySnapshot.docs.length;
+    } catch (e) {
+      print('Error getting user attempt count: $e');
+      return 0; // Return 0 on error to prevent blocking the quiz
     }
   }
 }

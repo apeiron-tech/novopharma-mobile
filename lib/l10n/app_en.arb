@@ -35,7 +35,7 @@
     "welcome": "Welcome",
     "totalPoints": "TOTAL POINTS",
     "currentBalance": "current balance",
-    "points": "POINTS",
+    "points": "Points",
     "rank": "RANK",
     "badges": "BADGES",
     "challenges": "CHALLENGES",
@@ -108,5 +108,29 @@
     "thu": "Thu",
     "fri": "Fri",
     "sat": "Sat",
-    "sun": "Sun"
+    "sun": "Sun",
+    "availableQuizzes": "Available Quizzes",
+    "noQuizzesAvailable": "No Quizzes Available",
+    "questions": "Questions",
+    "startQuiz": "Start Quiz",
+    "quizzes": "Quizzes",
+    "viewAll": "View All",
+    "goalDetails": "Goal Details",
+    "eligibilityCriteria": "Eligibility Criteria",
+    "eligibleProducts": "Eligible Products",
+    "eligibleBrands": "Eligible Brands",
+    "eligibleCategories": "Eligible Categories",
+    "eligibleZones": "Eligible Zones",
+    "eligibleClientCategories": "Eligible Client Categories",
+    "eligiblePharmacies": "Eligible Pharmacies",
+    "noSpecificCriteria": "This goal applies to all sales.",
+    "stockAmount": "{count,plural, =1{{count} piece} other{{count} pieces}}",
+    "@stockAmount": {
+        "description": "The amount of stock available",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
 }

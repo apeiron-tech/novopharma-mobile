@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,17 +25,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
 
-  late FabVisibilityProvider _fabVisibilityProvider;
-
   bool _hasChanges = false;
   bool _isLoading = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Grab the provider instance here, where it's safe to do so.
-    _fabVisibilityProvider = Provider.of<FabVisibilityProvider>(context, listen: false);
-  }
 
   @override
   void initState() {
@@ -47,10 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     _nameController.addListener(_checkForChanges);
     _phoneController.addListener(_checkForChanges);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
-    });
   }
 
   void _checkForChanges() {
@@ -122,40 +108,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return WillPopScope(
-      onWillPop: () async {
-        Provider.of<FabVisibilityProvider>(context, listen: false).showFab();
-        return true;
-      },
-      child: BottomNavigationScaffoldWrapper(
-        currentIndex: 4,
-        onTap: (index) {},
-        child: Consumer<AuthProvider>(
-          builder: (context, authProvider, _) {
-            final user = authProvider.userProfile;
-            if (user == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return Container(
-              color: const Color(0xFFFFFFFF),
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _buildAppBar(context, l10n),
-                      const SizedBox(height: 32),
-                      _buildProfileHeader(user),
-                      const SizedBox(height: 16),
-                      _buildProfileInfo(user, l10n),
-                    ],
-                  ),
+    return BottomNavigationScaffoldWrapper(
+      currentIndex: 4,
+      onTap: (index) {},
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          final user = authProvider.userProfile;
+          if (user == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Container(
+            color: const Color(0xFFFFFFFF),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    _buildAppBar(context, l10n),
+                    const SizedBox(height: 32),
+                    _buildProfileHeader(user),
+                    const SizedBox(height: 16),
+                    _buildProfileInfo(user, l10n),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -168,7 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         GestureDetector(
           onTap: () {
-            Provider.of<FabVisibilityProvider>(context, listen: false).showFab();
             Navigator.pop(context);
           },
           child: Container(

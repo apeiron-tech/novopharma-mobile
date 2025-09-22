@@ -4,9 +4,8 @@ import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/screens/notifications_screen.dart';
 import 'package:novopharma/widgets/dashboard_header.dart';
-//import 'package:novopharma/services/notifications_api_service.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
+import 'package:novopharma/widgets/rewards_fab_core.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
@@ -33,7 +32,6 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     _dateScrollController = ScrollController();
     _loadNotificationCount();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).showFab();
       _centerToIndex(_selectedDay);
     });
   }
@@ -109,47 +107,58 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return BottomNavigationScaffoldWrapper(
-      currentIndex: _selectedIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
-          final user = authProvider.userProfile;
+    return Scaffold(
+      body: Stack(
+        children: [
+          BottomNavigationScaffoldWrapper(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            child: Consumer<AuthProvider>(
+              builder: (context, authProvider, child) {
+                final user = authProvider.userProfile;
 
-          return Container(
-            color: Colors.white,
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  children: [
-                    DashboardHeader(
-                      user: user,
-                      unreadNotifications: _unreadNotifications,
-                      onNotificationTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                        );
-                        _loadNotificationCount();
-                      },
+                return Container(
+                  color: Colors.white,
+                  child: SafeArea(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Column(
+                        children: [
+                          DashboardHeader(
+                            user: user,
+                            unreadNotifications: _unreadNotifications,
+                            onNotificationTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                              );
+                              _loadNotificationCount();
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          _buildSalesCard(user, l10n),
+                          const SizedBox(height: 20),
+                          _buildDateSelector(),
+                          const SizedBox(height: 20),
+                          _buildDashboardGrid(l10n),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    _buildSalesCard(user, l10n),
-                    const SizedBox(height: 20),
-                    _buildDateSelector(),
-                    const SizedBox(height: 20),
-                    _buildDashboardGrid(l10n),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          const Positioned(
+            bottom: 80,
+            right: 30,
+            child: RewardsFABCore(),
+          ),
+        ],
       ),
     );
   }

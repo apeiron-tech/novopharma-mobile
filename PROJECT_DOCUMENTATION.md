@@ -1,95 +1,61 @@
-# NovoPharma Project Documentation
+This app is a gamified rewards and engagement platform for pharmacy employees. It allows them to earn points, compete on leaderboards, and redeem rewards by tracking sales and participating in quizzes and goals.
 
-This file is maintained by your Gemini assistant to document the project's architecture, features, and key implementation details as they are discovered.
+### Features
 
-## 1. Project Overview
+-   **Authentication**: Users can sign up, log in, and manage their passwords. New accounts require admin approval.
+    -   *Files*: `lib/screens/login_screen.dart`, `lib/screens/signup_screen.dart`, `lib/services/auth_service.dart`
+-   **Dashboard**: Displays total points, daily stats, and quick access to other features.
+    -   *Files*: `lib/screens/dashboard_home_screen.dart`
+-   **Barcode Scanning**: Users can scan product barcodes to view details and log sales.
+    -   *Files*: `lib/screens/barcode_scanner_screen.dart`, `lib/screens/product_screen.dart`
+-   **Goals & Challenges**: Users can view and track progress towards sales or engagement goals.
+    -   *Files*: `lib/screens/goals_screen.dart`, `lib/services/goal_service.dart`
+-   **Leaderboard**: A competitive leaderboard ranks users daily, weekly, monthly, or yearly based on points.
+    -   *Files*: `lib/screens/leaderboard_screen.dart`, `lib/services/leaderboard_service.dart`
+-   **Quizzes**: Users can take quizzes to earn points.
+    -   *Files*: `lib/screens/quiz_list_screen.dart`, `lib/screens/quiz_question_screen.dart`, `lib/services/quiz_service.dart`
+-   **Rewards**: Users can redeem earned points for rewards.
+    -   *Files*: `lib/screens/rewards_screen.dart`, `lib/services/rewards_service.dart`
+-   **Profile Management**: Users can view and update their profile information.
+    -   *Files*: `lib/screens/profile_screen.dart`, `lib/services/user_service.dart`
 
-- **Framework:** Flutter
-- **Backend:** Firebase (Authentication, Cloud Firestore)
-- **State Management:** `provider` package
+### Navigation
 
-## 2. Architecture & Navigation
+-   **Start Screen**: The app starts with `AuthWrapper` (`lib/screens/auth_wrapper.dart`), which directs users to the `LoginScreen` or `DashboardHomeScreen` based on their authentication state.
+-   **Main Routes**:
+    -   `/dashboard_home` → `lib/screens/dashboard_home_screen.dart`
+    -   `/leaderboard` → `lib/screens/leaderboard_screen.dart`
+    -   `/goals` → `lib/screens/goals_screen.dart`
+    -   `/profile` → `lib/screens/profile_screen.dart`
 
-The application follows a clean, service-based architecture and uses a primary `SharedBottomNavigationBar` for main screen navigation.
+### Data & Services
 
-- **Services (`lib/services/`):** Handle direct communication with the backend (Firestore).
-- **Providers/Controllers (`lib/controllers/`):** Bridge the UI and services, manage state.
-- **Models (`lib/models/`):** Define data structures.
-- **Screens (`lib/screens/`):** The UI layer.
+-   **Data Source**: The app uses Google's **Firestore** as its primary database for all data, including users, products, sales, and rewards.
+-   **Service Layer**: Data fetching and business logic are handled in the `lib/services/` directory. Each file corresponds to a specific data model (e.g., `user_service.dart`, `product_service.dart`).
 
-### 2.1. Navigation Flow
+### State Management
 
-- **Main Navigation:** A custom bottom navigation bar (`SharedBottomNavigationBar`) provides access to Home, Challenges, Leaderboard, and Sales History.
-- **Profile Access:** The user's `ProfileScreen` is now accessed via an icon button in the header of the `DashboardHomeScreen`.
-- **Scan Flow:** The scan flow is initiated by a central Floating Action Button (FAB) and navigates the user to the `BarcodeScannerScreen` and then the `ProductScreen`.
+-   **Approach**: The app uses the **Provider** package for state management.
+-   **Location**: State management logic is centralized in the `lib/controllers/` directory. Each provider (e.g., `AuthProvider`, `GoalProvider`) manages a specific piece of the app's state.
 
-## 3. Features & Implementation Notes
+### Integrations
 
-### 3.1. Rewards System
+-   **Firebase Authentication**: For user sign-up and sign-in.
+    -   *Setup*: `lib/services/auth_service.dart`
+-   **Mobile Scanner**: For barcode scanning functionality.
+    -   *Setup*: `lib/screens/barcode_scanner_screen.dart`
+-   **Image Picker**: For selecting profile images.
+    -   *Setup*: `lib/screens/profile_screen.dart`
 
-- **Functionality:** Allows users to redeem rewards using points. Includes a history view.
-- **Redemption Logic:** The `RedeemedRewardService` uses an atomic Firestore transaction to create a `redeemedRewards` record, decrement user points, and decrement reward stock.
-- **State Management:** `RewardsController` fetches reward data and the user's redemption history.
-- **UI:** The `RewardsScreen` displays available rewards (with stock counts) and the user's real-time point balance. The `RewardHistoryScreen` lists all past redemptions.
+### Key Packages
 
-### 3.2. Leaderboard
+-   **`firebase_core`**, **`cloud_firestore`**, **`firebase_auth`**: For Firebase integration.
+-   **`provider`**: For state management.
+-   **`mobile_scanner`**: For scanning barcodes.
+-   **`image_picker`**: For picking images from the gallery or camera.
+-   **`google_fonts`**: For custom fonts.
 
-- **Functionality:** Displays a ranked list of users based on points earned over different time periods.
-- **Data Fetching:** `LeaderboardService` queries the `sales` collection and aggregates points per user.
-- **State Management:** `LeaderboardProvider` manages the state and the selected time filter.
+### Gaps/Unclear
 
-### 3.3. Scan Flow & Stock Management
-
-- **Functionality:** Allows users to scan products, adjust quantity, see related promotions, and confirm a sale while respecting product stock.
-- **Implementation:**
-    1.  **Scan & Lookup:** `BarcodeScannerScreen` captures the SKU and pushes to `ProductScreen`, which uses `ScanProvider` to fetch product data, campaigns, goals, and recommended products.
-    2.  **UI & State:** The `ProductScreen` displays all fetched data, including available stock. The quantity selector is limited by available stock, and the confirm button is disabled if the product is out of stock.
-    3.  **Sale Confirmation (Atomic Transaction):** `SaleService.createSale()` runs a transaction that verifies stock before creating the `sales` document, incrementing user `points`, and decrementing product `stock`.
-
-### 3.4. Real-Time Point Updates
-
-- **Functionality:** A user's total points on the `DashboardHomeScreen` and `RewardsScreen` update in real-time after a sale or redemption.
-- **Implementation:** `UserService.getUserProfile` was converted from a `Future` to a `Stream`. The `AuthProvider` subscribes to this stream, receiving and propagating real-time updates to the user's profile to all listening widgets.
-
-## 4. Database Schema
-
-*The following schema was provided by the user.*
-
-### `users`
-- **id:** Firebase Auth UID
-- **fields:** name, email, avatarUrl, dateOfBirth, phone, role, pharmacy (label), pharmacyId, points (number), status ("pending" | "active" | "disabled"), createdAt, updatedAt
-
-### `pharmacies`
-- **fields:** name, email, phone, address, city, postalCode, zone, clientCategory, location (lat/lng), createdAt, updatedAt
-
-### `products`
-- **fields:** name, marque (brand), category, description, price (number), points (reward points), sku, stock, protocol (text), recommendedWith (array of productIds), createdAt, updatedAt
-
-### `sales`
-- **fields:** userId, pharmacyId, productId, productNameSnapshot, quantity (number), pointsEarned (number), saleDate (timestamp)
-
-### `rewards`
-- **fields:** name, description, imageUrl, pointsCost (number), stock (number), dataAiHint (string), createdAt, updatedAt
-
-### `redeemedRewards`
-- **fields:** userId, userNameSnapshot, rewardId, rewardNameSnapshot, pointsSpent (number), createdAt (timestamp), redeemedAt (timestamp)
-
-### `user_badges`
-- **fields:** userId, badgeId, badgeName, badgeDescription, badgeImageUrl, context, awardedAt (timestamp)
-
-### `quizzes`
-- **fields:** title, type ("regular"), active (bool), attemptLimit (number), points (number), quizTimeLimitSeconds (number), startDate, endDate, createdAt, updatedAt
-- **questions:** array of objects { text, options [string], correctAnswers [index], explanation (string), multipleAnswersAllowed (bool), timeLimitSeconds (number) }
-
-### `goals`
-- **fields:** title, description, isActive (bool), metric (e.g., "quantity", "revenue"), targetValue (number), rewardPoints (number), criteria (object of multi-select filters), startDate, endDate, createdAt, updatedAt
-
-### `campaigns`
-- **fields:** title, description, coverImageUrl, videoUrl (optional), productCriteria (filters), tradeOfferProductIds [string], linkedGoalId (string), startDate, endDate, createdAt, updatedAt
-
-## 5. Account Approval Flow
-
-1.  **Sign-up:** A Firebase Auth user is created, and a corresponding document is added to the `users` collection with `status="pending"`.
-2.  **Pending Status:** While the user's status is "pending", they are shown a "Pending Approval" screen and cannot access the main application.
-3.  **Approval:** An administrator changes the user's status to "active" in Firestore. The user can then sign in and access the app.
-4.  **Disabled:** If the status is changed to "disabled", the user is denied access.
+-   **Notifications**: The UI shows a notification icon, but the implementation for receiving push notifications is unclear. The `NotificationService` only fetches notifications from Firestore.
+-   **Admin Panel**: The user approval flow implies an admin interface exists, but it is not present in this project.

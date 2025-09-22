@@ -4,7 +4,6 @@ import 'package:novopharma/screens/signup_screen.dart';
 import 'package:novopharma/screens/forgot_password_screen.dart';
 import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,14 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
-    });
-  }
 
   @override
   void dispose() {
@@ -57,9 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
     // No navigation code needed here, AuthWrapper handles it.
   }
@@ -151,9 +142,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue),
+                          borderSide: const BorderSide(
+                            color: LightModeColors.novoPharmaBlue,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -177,7 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         fillColor: Colors.grey.shade50,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: Colors.grey,
                           ),
                           onPressed: () {
@@ -196,9 +194,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue),
+                          borderSide: const BorderSide(
+                            color: LightModeColors.novoPharmaBlue,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -236,7 +239,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
+                              ),
                             );
                           },
                           child: Text(
@@ -296,11 +302,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         child: RichText(
                           text: TextSpan(
-                            style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
                             children: [
-                              TextSpan(
-                                text: l10n.dontHaveAnAccount,
-                              ),
+                              TextSpan(text: l10n.dontHaveAnAccount),
                               TextSpan(
                                 text: l10n.signUp,
                                 style: const TextStyle(

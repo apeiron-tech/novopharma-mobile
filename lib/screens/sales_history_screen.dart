@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/controllers/sales_history_provider.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
@@ -22,7 +21,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
       if (authProvider.firebaseUser != null) {
         Provider.of<SalesHistoryProvider>(context, listen: false)
             .fetchSalesHistory(authProvider.firebaseUser!.uid);

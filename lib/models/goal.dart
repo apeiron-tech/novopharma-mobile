@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:novopharma/models/user_goal_progress.dart';
 
 class Goal {
   final String id;
@@ -13,6 +14,7 @@ class Goal {
   final DateTime endDate;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final UserGoalProgress? userProgress;
 
   Goal({
     required this.id,
@@ -27,6 +29,7 @@ class Goal {
     required this.endDate,
     required this.createdAt,
     required this.updatedAt,
+    this.userProgress,
   });
 
   factory Goal.fromFirestore(DocumentSnapshot doc) {
@@ -47,6 +50,26 @@ class Goal {
     );
   }
 
+  factory Goal.fromMap(Map<String, dynamic> data) {
+    return Goal(
+      id: data['id'] ?? '',
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      isActive: data['isActive'] ?? false,
+      metric: data['metric'] ?? '',
+      targetValue: data['targetValue'] ?? 0,
+      rewardPoints: data['rewardPoints'] ?? 0,
+      criteria: GoalCriteria.fromMap(data['criteria'] ?? {}),
+      startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      endDate: (data['endDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      userProgress: data['userProgress'] != null
+          ? UserGoalProgress.fromMap(data['id'], data['userProgress'])
+          : null,
+    );
+  }
+
   String get timeRemaining {
     final now = DateTime.now();
     final difference = endDate.difference(now);
@@ -61,8 +84,6 @@ class Goal {
       return 'Ending soon';
     }
   }
-
-  int get progressPercent => (targetValue > 0 ? (rewardPoints / targetValue * 100) : 0).round();
 
   String get rewardText => '$rewardPoints points';
 }

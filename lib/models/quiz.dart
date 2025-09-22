@@ -73,7 +73,7 @@ class QuizQuestion {
       correctAnswers: List<int>.from(data['correctAnswers'] ?? []),
       explanation: data['explanation'] ?? '',
       multipleAnswersAllowed: data['multipleAnswersAllowed'] ?? false,
-      timeLimitSeconds: data['timeLimitSeconds'] ?? 0,
+      timeLimitSeconds: data['timeLimitInSeconds'] ?? 30,
     );
   }
 }

@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:novopharma/controllers/fab_visibility_provider.dart';
 import 'package:novopharma/screens/auth_wrapper.dart';
 import 'package:novopharma/theme.dart';
-import 'package:provider/provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -16,11 +14,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Hide the FAB as soon as this screen is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FabVisibilityProvider>(context, listen: false).hideFab();
-    });
 
     Timer(const Duration(seconds: 2), () {
       if (mounted) {

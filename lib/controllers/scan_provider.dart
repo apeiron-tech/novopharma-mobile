@@ -67,22 +67,24 @@ class ScanProvider with ChangeNotifier {
       _scannedProduct = await _productService.getProductBySku(sku);
 
       if (_scannedProduct != null) {
-        // Fetch campaigns, goals, and recommended products in parallel
         final recommendedIds = _scannedProduct!.recommendedWith;
-        
+
+        // Fetch campaigns, goals, and recommended products in parallel
+        final campaignsFuture = _campaignService.findMatchingCampaigns(_scannedProduct!);
+        final goalsFuture = _goalService.getUserGoals().then((allGoals) => _goalService.findMatchingGoals(_scannedProduct!, allGoals));
+        final recommendedProductsFuture = (recommendedIds.isNotEmpty)
+            ? _productService.getProductsByIds(recommendedIds)
+            : Future.value(<Product>[]);
+
         final results = await Future.wait([
-          _campaignService.findMatchingCampaigns(_scannedProduct!),
-          _goalService.findMatchingGoals(_scannedProduct!),
-          if (recommendedIds != null && recommendedIds.isNotEmpty)
-            _productService.getProductsByIds(recommendedIds)
-          else
-            Future.value(<Product>[]), // Return empty list if no IDs
+            campaignsFuture,
+            goalsFuture,
+            recommendedProductsFuture,
         ]);
 
         _matchingCampaigns = results[0] as List<Campaign>;
         _matchingGoals = results[1] as List<Goal>;
         _recommendedProducts = results[2] as List<Product>;
-
       } else {
         _errorMessage = 'Product not found';
       }
@@ -116,7 +118,7 @@ class ScanProvider with ChangeNotifier {
         productNameSnapshot: _scannedProduct!.name,
         quantity: _quantity,
         pointsEarned: totalPoints,
-        saleDate: DateTime.now(),
+        saleDate: DateTime.now(), 
       );
 
       await _saleService.createSale(newSale);

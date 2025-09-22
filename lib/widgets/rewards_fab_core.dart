@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:novopharma/navigation.dart';
 import 'package:novopharma/screens/rewards_screen.dart';
 
 /// Standalone animated circular Rewards FAB button (56x56) with red background, 
@@ -51,9 +50,7 @@ class _RewardsFABCoreState extends State<RewardsFABCore>
   }
 
   void _onTap() {
-    appNavigatorKey.currentState?.push(
-      MaterialPageRoute(builder: (_) => const RewardsScreen()),
-    );
+    Navigator.of(context).pushNamed('/rewards');
   }
 
   @override

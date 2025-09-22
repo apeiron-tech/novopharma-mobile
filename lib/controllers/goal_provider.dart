@@ -18,7 +18,7 @@ class GoalProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _goals = await _goalService.getActiveGoals();
+      _goals = await _goalService.getUserGoals();
     } catch (e) {
       _error = e.toString();
     } finally {

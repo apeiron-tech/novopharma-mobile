@@ -49,14 +49,21 @@ class AuthProvider with ChangeNotifier {
       _appAuthState = AppAuthState.unknown; // Set to unknown while profile is loading
       
       _userProfileSubscription =
-          _userService.getUserProfile(user.uid).listen((userProfile) {
+          _userService.getUserProfile(user.uid).listen((userProfile) async {
         _userProfile = userProfile;
         if (_userProfile == null) {
           _appAuthState = AppAuthState.authenticatedDisabled;
         } else {
           switch (_userProfile!.status) {
             case UserStatus.active:
-              _appAuthState = AppAuthState.authenticatedActive;
+              try {
+                // Explicitly get token to ensure auth is fully ready before proceeding
+                await _firebaseUser!.getIdToken();
+                _appAuthState = AppAuthState.authenticatedActive;
+              } catch (e) {
+                print('Error getting ID token: $e');
+                _appAuthState = AppAuthState.unauthenticated;
+              }
               break;
             case UserStatus.pending:
               _appAuthState = AppAuthState.authenticatedPending;

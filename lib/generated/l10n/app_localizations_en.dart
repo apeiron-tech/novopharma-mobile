@@ -121,7 +121,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentBalance => 'current balance';
 
   @override
-  String get points => 'POINTS';
+  String get points => 'Points';
 
   @override
   String get rank => 'RANK';
@@ -347,4 +347,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sun => 'Sun';
+
+  @override
+  String get availableQuizzes => 'Available Quizzes';
+
+  @override
+  String get noQuizzesAvailable => 'No Quizzes Available';
+
+  @override
+  String get questions => 'Questions';
+
+  @override
+  String get startQuiz => 'Start Quiz';
+
+  @override
+  String get quizzes => 'Quizzes';
+
+  @override
+  String get viewAll => 'View All';
+
+  @override
+  String get goalDetails => 'Goal Details';
+
+  @override
+  String get eligibilityCriteria => 'Eligibility Criteria';
+
+  @override
+  String get eligibleProducts => 'Eligible Products';
+
+  @override
+  String get eligibleBrands => 'Eligible Brands';
+
+  @override
+  String get eligibleCategories => 'Eligible Categories';
+
+  @override
+  String get eligibleZones => 'Eligible Zones';
+
+  @override
+  String get eligibleClientCategories => 'Eligible Client Categories';
+
+  @override
+  String get eligiblePharmacies => 'Eligible Pharmacies';
+
+  @override
+  String get noSpecificCriteria => 'This goal applies to all sales.';
+
+  @override
+  String stockAmount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pieces',
+      one: '$count piece',
+    );
+    return '$_temp0';
+  }
 }
