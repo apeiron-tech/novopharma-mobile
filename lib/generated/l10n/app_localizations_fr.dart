@@ -148,18 +148,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get takeQuiz => 'Faire le quiz';
 
   @override
-  String get exclusive => 'Exclusif';
-
-  @override
-  String get premiumGoals => 'Objectifs premium';
-
-  @override
-  String get community => 'Communauté';
-
-  @override
-  String get joinOthers => 'Rejoindre les autres';
-
-  @override
   String get activeGoals => 'Objectifs actifs';
 
   @override
