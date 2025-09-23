@@ -44,46 +44,55 @@ class AuthProvider with ChangeNotifier {
       _firebaseUser = null;
       _userProfile = null;
       _appAuthState = AppAuthState.unauthenticated;
+      print('[AuthProvider] State changed to: AppAuthState.unauthenticated');
+      notifyListeners();
+      return;
     } else {
       _firebaseUser = user;
-      _appAuthState = AppAuthState.unknown; // Set to unknown while profile is loading
-      
+      _appAuthState = AppAuthState.unknown;
+      print('[AuthProvider] State changed to: AppAuthState.unknown (user found, loading profile)');
+      notifyListeners(); // Notify for the initial loading state
+
       _userProfileSubscription =
           _userService.getUserProfile(user.uid).listen((userProfile) async {
         _userProfile = userProfile;
         if (_userProfile == null) {
           _appAuthState = AppAuthState.authenticatedDisabled;
+          print('[AuthProvider] State changed to: AppAuthState.authenticatedDisabled (profile is null)');
         } else {
           switch (_userProfile!.status) {
             case UserStatus.active:
               try {
-                // Explicitly get token to ensure auth is fully ready before proceeding
                 await _firebaseUser!.getIdToken();
                 _appAuthState = AppAuthState.authenticatedActive;
+                print('[AuthProvider] State changed to: AppAuthState.authenticatedActive');
               } catch (e) {
                 print('Error getting ID token: $e');
                 _appAuthState = AppAuthState.unauthenticated;
+                print('[AuthProvider] State changed to: AppAuthState.unauthenticated (token error)');
               }
               break;
             case UserStatus.pending:
               _appAuthState = AppAuthState.authenticatedPending;
+              print('[AuthProvider] State changed to: AppAuthState.authenticatedPending');
               break;
             case UserStatus.disabled:
               _appAuthState = AppAuthState.authenticatedDisabled;
+              print('[AuthProvider] State changed to: AppAuthState.authenticatedDisabled');
               break;
             default:
               _appAuthState = AppAuthState.unauthenticated;
+              print('[AuthProvider] State changed to: AppAuthState.unauthenticated (default case)');
           }
         }
         notifyListeners();
       }, onError: (error) {
-        // Handle errors fetching user profile, e.g., log them and sign out the user
         print('Error fetching user profile: $error');
         _appAuthState = AppAuthState.unauthenticated;
+        print('[AuthProvider] State changed to: AppAuthState.unauthenticated (profile fetch error)');
         notifyListeners();
       });
     }
-    notifyListeners();
   }
 
   Future<String?> signIn(String email, String password) async {

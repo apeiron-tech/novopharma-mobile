@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/models/user_model.dart';
+import 'package:novopharma/screens/auth_wrapper.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:novopharma/screens/change_password_screen.dart';
@@ -101,8 +102,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _signOut() async {
+    setState(() => _isLoading = true);
+
+    // Wait for 1 second to provide feedback to the user
+    await Future.delayed(const Duration(seconds: 1));
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.signOut();
+
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const AuthWrapper()),
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -250,13 +263,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           width: double.infinity,
           height: 48,
           child: OutlinedButton(
-            onPressed: _signOut,
+            onPressed: _isLoading ? null : _signOut,
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               side: const BorderSide(color: Colors.red, width: 1),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text(l10n.disconnect, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red)),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.red,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(l10n.disconnect, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red)),
           ),
         ),
         const SizedBox(height: 24),
