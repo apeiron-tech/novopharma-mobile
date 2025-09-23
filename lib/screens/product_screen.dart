@@ -98,15 +98,19 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   void _confirmSale(Product product, UserModel user) {
+    final int quantity = _quantityNotifier.value;
+    final double totalPrice = product.price * quantity;
+
     final sale = Sale(
       id: '',
       userId: user.uid,
       pharmacyId: user.pharmacyId,
       productId: product.id,
       productNameSnapshot: product.name,
-      quantity: _quantityNotifier.value,
-      pointsEarned: product.points * _quantityNotifier.value,
+      quantity: quantity,
+      pointsEarned: product.points * quantity,
       saleDate: DateTime.now(),
+      totalPrice: totalPrice,
     );
     _saleService.createSale(sale);
     Navigator.of(context).pop();

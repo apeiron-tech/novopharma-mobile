@@ -6,6 +6,9 @@ import 'package:novopharma/screens/notifications_screen.dart';
 import 'package:novopharma/widgets/dashboard_header.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:novopharma/widgets/rewards_fab_core.dart';
+import 'package:novopharma/models/product.dart';
+import 'package:novopharma/screens/product_screen.dart';
+import 'package:novopharma/services/product_service.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
@@ -153,10 +156,37 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
               },
             ),
           ),
-          const Positioned(
+          Positioned(
             bottom: 80,
             right: 30,
-            child: RewardsFABCore(),
+            left: 30,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                FloatingActionButton(
+                  onPressed: () async {
+                    final productService = ProductService();
+                    final product = await productService.getProductBySku('6194008541086');
+                    if (product != null && mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductScreen(sku: product.sku),
+                        ),
+                      );
+                    } else if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Product not found!')),
+                      );
+                    }
+                  },
+                  heroTag: 'scan_test_btn',
+                  backgroundColor: Colors.blueAccent,
+                  child: const Icon(Icons.qr_code_scanner),
+                ),
+                const RewardsFABCore(),
+              ],
+            ),
           ),
         ],
       ),

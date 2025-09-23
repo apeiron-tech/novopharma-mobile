@@ -96,30 +96,26 @@ class _GoalsScreenState extends State<GoalsScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Text(
-                                  l10n.goals,
+                            Text(
+                              l10n.goals,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF102132),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Consumer<GoalProvider>(
+                              builder: (context, goalProvider, child) {
+                                final goalCount = goalProvider.goals.length;
+                                return Text(
+                                  'You have $goalCount active goals.',
                                   style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF102132),
+                                    fontSize: 16,
+                                    color: Color(0xFF4A5568),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1F9BD1).withAlpha(25),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.flag,
-                                    size: 20,
-                                    color: Color(0xFF1F9BD1),
-                                  ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -169,7 +165,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                       _buildEmptyState(l10n)
                     else
                       SizedBox(
-                        height: 280,
+                        height: 240, // Adjusted height for the new card design
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: goalProvider.goals.length,

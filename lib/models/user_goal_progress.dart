@@ -10,9 +10,15 @@ class UserGoalProgress {
   });
 
   factory UserGoalProgress.fromMap(String id, Map<String, dynamic> data) {
+    final num? progressNum = data['progressValue'] as num?;
+    int progressValue = 0;
+    if (progressNum != null && progressNum.isFinite) {
+      progressValue = progressNum.toInt();
+    }
+
     return UserGoalProgress(
       goalId: id,
-      progressValue: data['progressValue'] ?? 0,
+      progressValue: progressValue,
       status: data['status'] ?? 'in-progress',
     );
   }

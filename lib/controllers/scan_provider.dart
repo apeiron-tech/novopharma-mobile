@@ -107,8 +107,9 @@ class ScanProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Calculate total points based on quantity
-      int totalPoints = _scannedProduct!.points * _quantity;
+      // Calculate total points and total price based on quantity
+      final int totalPoints = _scannedProduct!.points * _quantity;
+      final double totalPrice = _scannedProduct!.price * _quantity;
       
       final newSale = Sale(
         id: '', // Firestore will generate this
@@ -118,7 +119,8 @@ class ScanProvider with ChangeNotifier {
         productNameSnapshot: _scannedProduct!.name,
         quantity: _quantity,
         pointsEarned: totalPoints,
-        saleDate: DateTime.now(), 
+        saleDate: DateTime.now(),
+        totalPrice: totalPrice,
       );
 
       await _saleService.createSale(newSale);
