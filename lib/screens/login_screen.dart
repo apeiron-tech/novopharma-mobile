@@ -62,19 +62,19 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: LightModeColors.novoPharmaLightBlue,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top Logo Section
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: Image.asset('assets/images/logo.png'),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Top Logo Section
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: Image.asset('assets/images/logo.png'),
+                ),
               ),
-            ),
-            // White Card Container
-            Expanded(
-              child: Container(
+              // White Card Container
+              Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
@@ -209,31 +209,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Transform.scale(
-                              scale: 0.9,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                activeColor: LightModeColors.novoPharmaBlue,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
+                        Flexible(
+                          child: Row(
+                            children: [
+                              Transform.scale(
+                                scale: 0.9,
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                  activeColor: LightModeColors.novoPharmaBlue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Text(
-                              l10n.rememberMe,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
+                              Flexible(
+                                child: Text(
+                                  l10n.rememberMe,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         TextButton(
                           onPressed: () {
@@ -288,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 32), // Added space
                     // Sign Up Link
                     Center(
                       child: TextButton(
@@ -351,9 +355,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );

@@ -11,6 +11,7 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    print('[AuthWrapper] Building with state: ${authProvider.appAuthState}');
 
     switch (authProvider.appAuthState) {
       case AppAuthState.authenticatedActive:
