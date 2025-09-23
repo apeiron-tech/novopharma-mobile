@@ -140,32 +140,6 @@ class _GoalsScreenState extends State<GoalsScreen>
                       child: _buildQuizNavigationCard(l10n),
                     ),
                     const SizedBox(height: 24),
-                    // Goal Type Buttons
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildGoalTypeButton(
-                              icon: '🔥',
-                              title: l10n.exclusive,
-                              subtitle: l10n.premiumGoals,
-                              onTap: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildGoalTypeButton(
-                              icon: '🌍',
-                              title: l10n.community,
-                              subtitle: l10n.joinOthers,
-                              onTap: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
                     // Active Goals Section
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -327,62 +301,6 @@ class _GoalsScreenState extends State<GoalsScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGoalTypeButton({
-    required String icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF1F9BD1).withAlpha(13),
-                const Color(0xFF97E1E8).withAlpha(13),
-              ],
-            ),
-            border: Border.all(
-              color: const Color(0xFF1F9BD1).withAlpha(51),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Text(
-                icon,
-                style: const TextStyle(fontSize: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF102132),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF4A5568),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -145,18 +145,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get takeQuiz => 'Take Quiz';
 
   @override
-  String get exclusive => 'Exclusive';
-
-  @override
-  String get premiumGoals => 'Premium goals';
-
-  @override
-  String get community => 'Community';
-
-  @override
-  String get joinOthers => 'Join others';
-
-  @override
   String get activeGoals => 'Active Goals';
 
   @override

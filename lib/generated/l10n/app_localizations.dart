@@ -362,30 +362,6 @@ abstract class AppLocalizations {
   /// **'Take Quiz'**
   String get takeQuiz;
 
-  /// No description provided for @exclusive.
-  ///
-  /// In en, this message translates to:
-  /// **'Exclusive'**
-  String get exclusive;
-
-  /// No description provided for @premiumGoals.
-  ///
-  /// In en, this message translates to:
-  /// **'Premium goals'**
-  String get premiumGoals;
-
-  /// No description provided for @community.
-  ///
-  /// In en, this message translates to:
-  /// **'Community'**
-  String get community;
-
-  /// No description provided for @joinOthers.
-  ///
-  /// In en, this message translates to:
-  /// **'Join others'**
-  String get joinOthers;
-
   /// No description provided for @activeGoals.
   ///
   /// In en, this message translates to:
