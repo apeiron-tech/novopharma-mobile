@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:novopharma/models/user_goal_progress.dart';
 
 class Goal {
@@ -70,22 +71,42 @@ class Goal {
     );
   }
 
-  String get timeRemaining {
+  String getTimeRemaining(AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = endDate.difference(now);
     
     if (difference.inDays > 0) {
-      return 'Ends in ${difference.inDays}d';
+      return l10n.endsInDays(difference.inDays);
     } else if (difference.inHours > 0) {
-      return 'Ends in ${difference.inHours}h';
+      return l10n.endsInHours(difference.inHours);
     } else if (difference.inMinutes > 0) {
-      return 'Ends in ${difference.inMinutes}m';
+      return l10n.endsInMinutes(difference.inMinutes);
     } else {
-      return 'Ending soon';
+      return l10n.endingSoon;
     }
   }
 
   String get rewardText => '$rewardPoints points';
+
+  Goal copyWith({
+    UserGoalProgress? userProgress,
+  }) {
+    return Goal(
+      id: id,
+      title: title,
+      description: description,
+      isActive: isActive,
+      metric: metric,
+      targetValue: targetValue,
+      rewardPoints: rewardPoints,
+      criteria: criteria,
+      startDate: startDate,
+      endDate: endDate,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      userProgress: userProgress ?? this.userProgress,
+    );
+  }
 }
 
 class GoalCriteria {

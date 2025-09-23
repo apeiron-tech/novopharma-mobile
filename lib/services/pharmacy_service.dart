@@ -36,4 +36,18 @@ class PharmacyService {
       return [];
     }
   }
+
+  Future<Pharmacy?> getPharmacy(String id) async {
+    if (id.isEmpty) return null;
+    try {
+      final doc = await _firestore.collection('pharmacies').doc(id).get();
+      if (doc.exists) {
+        return Pharmacy.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching pharmacy by id: $e');
+      return null;
+    }
+  }
 }

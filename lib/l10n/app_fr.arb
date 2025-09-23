@@ -120,6 +120,22 @@
     "eligibleClientCategories": "Catégories de clients éligibles",
     "eligiblePharmacies": "Pharmacies éligibles",
     "noSpecificCriteria": "Cet objectif s'applique à toutes les ventes.",
+    "activeGoalsCount": "Vous avez {count} objectifs actifs",
+    "@activeGoalsCount": {
+        "description": "Le nombre d'objectifs actifs affiché dans l'en-tête",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "endsInDays": "Termine dans {count}j",
+    "@endsInDays": { "placeholders": { "count": { "type": "int" } } },
+    "endsInHours": "Termine dans {count}h",
+    "@endsInHours": { "placeholders": { "count": { "type": "int" } } },
+    "endsInMinutes": "Termine dans {count}m",
+    "@endsInMinutes": { "placeholders": { "count": { "type": "int" } } },
+    "endingSoon": "Se termine bientôt",
     "stockAmount": "{count,plural, =1{{count} pièce} other{{count} pièces}}",
     "@stockAmount": {
         "description": "La quantité de stock disponible",

@@ -109,7 +109,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                               builder: (context, goalProvider, child) {
                                 final goalCount = goalProvider.goals.length;
                                 return Text(
-                                  'You have $goalCount active goals.',
+                                  l10n.activeGoalsCount(goalCount),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     color: Color(0xFF4A5568),
@@ -152,7 +152,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                     // Goals Slider
                     if (goalProvider.isLoading)
                       const SizedBox(
-                        height: 280,
+                        height: 240,
                         child: Center(
                           child: CircularProgressIndicator(
                             valueColor: AlwaysStoppedAnimation<Color>(
@@ -464,7 +464,7 @@ class GoalBottomSheet extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    goal.timeRemaining,
+                                    goal.getTimeRemaining(l10n),
                                     style: const TextStyle(
                                       fontSize: 14,
                                       color: Color(0xFF4A5568),
@@ -500,59 +500,34 @@ class GoalBottomSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
                       // Action buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.pop(context); // Close the bottom sheet
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => GoalDetailsScreen(goal: goal),
-                                  ),
-                                );
-                              },
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                  color: Color(0xFF1F9BD1),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                minimumSize: const Size(0, 52),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close the bottom sheet
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GoalDetailsScreen(goal: goal),
                               ),
-                              child: Text(
-                                l10n.viewRules,
-                                style: const TextStyle(
-                                  color: Color(0xFF1F9BD1),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1F9BD1),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            minimumSize: const Size(0, 52),
+                          ),
+                          child: Text(
+                            l10n.viewRules,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F9BD1),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                minimumSize: const Size(0, 52),
-                              ),
-                              child: Text(
-                                l10n.trackProgress,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
