@@ -824,6 +824,36 @@ abstract class AppLocalizations {
   /// **'This goal applies to all sales.'**
   String get noSpecificCriteria;
 
+  /// The number of active goals displayed in the header
+  ///
+  /// In en, this message translates to:
+  /// **'You have {count} active goals'**
+  String activeGoalsCount(int count);
+
+  /// No description provided for @endsInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {count}d'**
+  String endsInDays(int count);
+
+  /// No description provided for @endsInHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {count}h'**
+  String endsInHours(int count);
+
+  /// No description provided for @endsInMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {count}m'**
+  String endsInMinutes(int count);
+
+  /// No description provided for @endingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Ending soon'**
+  String get endingSoon;
+
   /// The amount of stock available
   ///
   /// In en, this message translates to:

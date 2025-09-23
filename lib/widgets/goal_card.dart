@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:novopharma/models/user_goal_progress.dart';
 import 'package:novopharma/widgets/progress_ring.dart';
 import '../models/goal.dart';
@@ -17,6 +18,7 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final int currentProgress = progress?.progressValue ?? 0;
     final bool isCompleted = progress?.status == 'completed';
     final double progressPercent = goal.targetValue > 0
@@ -98,7 +100,7 @@ class GoalCard extends StatelessWidget {
                     // Time Remaining
                     _buildChip(
                       icon: Icons.access_time_filled,
-                      text: goal.timeRemaining,
+                      text: goal.getTimeRemaining(l10n),
                       color: const Color(0xFF4A5568),
                     ),
                   ],

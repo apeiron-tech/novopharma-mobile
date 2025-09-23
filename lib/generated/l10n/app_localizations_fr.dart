@@ -388,6 +388,29 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cet objectif s\'applique à toutes les ventes.';
 
   @override
+  String activeGoalsCount(int count) {
+    return 'Vous avez $count objectifs actifs';
+  }
+
+  @override
+  String endsInDays(int count) {
+    return 'Termine dans ${count}j';
+  }
+
+  @override
+  String endsInHours(int count) {
+    return 'Termine dans ${count}h';
+  }
+
+  @override
+  String endsInMinutes(int count) {
+    return 'Termine dans ${count}m';
+  }
+
+  @override
+  String get endingSoon => 'Se termine bientôt';
+
+  @override
   String stockAmount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
