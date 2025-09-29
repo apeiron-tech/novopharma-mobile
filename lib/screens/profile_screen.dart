@@ -9,6 +9,7 @@ import 'package:novopharma/screens/change_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/locale_provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
+import 'package:novopharma/screens/badges_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,10 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final Map<String, bool> _editingStates = {
-    'name': false,
-    'phone': false,
-  };
+  final Map<String, bool> _editingStates = {'name': false, 'phone': false};
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -44,8 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = Provider.of<AuthProvider>(context, listen: false).userProfile;
     if (user == null) return;
 
-    final bool changed = (_nameController.text != user.name) ||
-                         (_phoneController.text != (user.phone ?? ''));
+    final bool changed =
+        (_nameController.text != user.name) ||
+        (_phoneController.text != (user.phone ?? ''));
     if (changed != _hasChanges) {
       setState(() {
         _hasChanges = changed;
@@ -69,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     final Map<String, dynamic> dataToUpdate = {};
     if (_nameController.text != authProvider.userProfile?.name) {
       dataToUpdate['name'] = _nameController.text;
@@ -91,13 +90,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _hasChanges = false;
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Update failed: $error')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Update failed: $error')));
         }
       }
     }
-    
+
     setState(() => _isLoading = false);
   }
 
@@ -167,14 +166,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 40,
             height: 40,
             alignment: Alignment.center,
-            child: const Icon(Icons.chevron_left, size: 24, color: Color(0xFF111827)),
+            child: const Icon(
+              Icons.chevron_left,
+              size: 24,
+              color: Color(0xFF111827),
+            ),
           ),
         ),
         Expanded(
           child: Text(
             l10n.myPersonalDetails,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF111827),
+            ),
           ),
         ),
         TextButton.icon(
@@ -205,18 +212,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           radius: 48,
           backgroundImage: user.avatarUrl != null
               ? NetworkImage(user.avatarUrl!)
-              : const NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'),
+              : const NetworkImage(UserModel.defaultAvatarUrl),
         ),
         const SizedBox(height: 16),
-        Text(user.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+        Text(
+          user.name,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF111827),
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(user.email, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF9CA3AF))),
+        Text(
+          user.email,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF9CA3AF),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildProfileInfo(UserModel user, AppLocalizations l10n) {
-    final formattedDob = user.dateOfBirth != null ? DateFormat('dd/MM/yyyy').format(user.dateOfBirth!) : 'Not set';
+  Widget _buildProfileInfo(UserModel user, l10n) {
+    final formattedDob = user.dateOfBirth != null
+        ? DateFormat('dd/MM/yyyy').format(user.dateOfBirth!)
+        : 'Not set';
 
     return Column(
       children: [
@@ -237,12 +260,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
           isEditing: _editingStates['phone']!,
         ),
         const SizedBox(height: 16),
-        _buildInputPill(label: l10n.password, value: '••••••••••••', field: 'password'),
+        _buildInputPill(
+          label: l10n.password,
+          value: '••••••••••••',
+          field: 'password',
+        ),
         const SizedBox(height: 16),
         _buildInputPill(label: l10n.dateOfBirth, value: formattedDob),
         const SizedBox(height: 16),
-        _buildInputPill(label: l10n.yourPharmacy, value: user.pharmacy ?? 'N/A'),
+        _buildInputPill(
+          label: l10n.yourPharmacy,
+          value: user.pharmacy ?? 'N/A',
+        ),
         const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BadgesScreen()),
+              );
+            },
+            icon: const Icon(Icons.shield_outlined),
+            label: const Text('My Badges'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF111827),
+              side: const BorderSide(color: Color(0xFFE5E7EB)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           height: 56,
@@ -251,11 +303,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2E6EF7),
               disabledBackgroundColor: const Color(0xFF2E6EF7).withOpacity(0.6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
             ),
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
-                : Text(l10n.updateProfile, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                : Text(
+                    l10n.updateProfile,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ),
         const SizedBox(height: 16),
@@ -267,7 +328,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               side: const BorderSide(color: Colors.red, width: 1),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: _isLoading
                 ? const SizedBox(
@@ -278,7 +341,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       strokeWidth: 2,
                     ),
                   )
-                : Text(l10n.disconnect, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red)),
+                : Text(
+                    l10n.disconnect,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
           ),
         ),
         const SizedBox(height: 24),
@@ -318,7 +388,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: isEditing
                 ? TextField(
                     controller: controller,
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF111827)),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF111827),
+                    ),
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       isDense: true,
@@ -330,7 +403,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     value ?? controller?.text ?? '',
                     style: TextStyle(
                       fontSize: 14,
-                      color: isEditable ? const Color(0xFF111827) : const Color(0xFF6B7280),
+                      color: isEditable
+                          ? const Color(0xFF111827)
+                          : const Color(0xFF6B7280),
                     ),
                   ),
           ),
@@ -340,7 +415,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (isPassword) {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const ChangePasswordScreen(),
+                    ),
                   );
                 } else {
                   _toggleEditMode(field);
@@ -351,7 +428,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 40,
                 alignment: Alignment.center,
                 child: Icon(
-                  isEditing ? Icons.check : (isPassword ? Icons.chevron_right : Icons.edit),
+                  isEditing
+                      ? Icons.check
+                      : (isPassword ? Icons.chevron_right : Icons.edit),
                   size: 20,
                   color: const Color(0xFF9CA3AF),
                 ),

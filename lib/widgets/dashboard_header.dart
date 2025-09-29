@@ -28,7 +28,7 @@ class DashboardHeader extends StatelessWidget {
         CircleAvatar(
           radius: 20,
           backgroundImage: NetworkImage(
-            user?.avatarUrl ?? 'https://i.pravatar.cc/150?img=3',
+            user?.avatarUrl ?? UserModel.defaultAvatarUrl,
           ),
         ),
         const SizedBox(width: 12),

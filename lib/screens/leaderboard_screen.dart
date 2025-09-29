@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/leaderboard_provider.dart';
+import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
@@ -68,7 +69,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         CircleAvatar(
           radius: 20,
           backgroundImage: NetworkImage(
-            user?.avatarUrl ?? 'https://i.pravatar.cc/150?img=3',
+            user?.avatarUrl ?? UserModel.defaultAvatarUrl,
           ),
         ),
         const SizedBox(width: 12),
@@ -222,6 +223,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildPodiumItem(Map<String, dynamic> user, int position, double height) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final currentUserId = authProvider.firebaseUser?.uid;
+    final isCurrentUser = user['userId'] == currentUserId;
+    final avatarUrl = isCurrentUser ? authProvider.userProfile?.avatarUrl : user['avatarUrl'];
+
     Color medalColor;
     IconData medalIcon;
     
@@ -247,7 +253,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       children: [
         CircleAvatar(
           radius: 25,
-          backgroundImage: NetworkImage(user['avatarUrl'] ?? 'https://i.pravatar.cc/150'),
+          backgroundImage: NetworkImage(avatarUrl ?? UserModel.defaultAvatarUrl),
         ),
         const SizedBox(height: 8),
         Container(
@@ -350,6 +356,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             itemBuilder: (context, index) {
               final user = leaderboardData[index];
               final isCurrentUser = user['userId'] == currentUserId;
+              final avatarUrl = isCurrentUser ? authProvider.userProfile?.avatarUrl : user['avatarUrl'];
               
               return Container(
                 color: isCurrentUser ? LightModeColors.dashboardLightCyan.withOpacity(0.1) : Colors.transparent,
@@ -377,7 +384,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     const SizedBox(width: 12),
                     CircleAvatar(
                       radius: 20,
-                      backgroundImage: NetworkImage(user['avatarUrl'] ?? 'https://i.pravatar.cc/150'),
+                      backgroundImage: NetworkImage(avatarUrl ?? UserModel.defaultAvatarUrl),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
