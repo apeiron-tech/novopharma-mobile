@@ -5,6 +5,7 @@ import 'package:novopharma/theme.dart';
 import 'package:novopharma/models/reward.dart';
 import 'package:novopharma/controllers/rewards_controller.dart';
 import 'package:novopharma/screens/reward_history_screen.dart';
+import 'package:novopharma/controllers/redeemed_rewards_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
@@ -20,13 +21,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final rewardsController = Provider.of<RewardsController>(context, listen: false);
-      
-      rewardsController.loadRewards();
-      if (authProvider.firebaseUser != null) {
-        rewardsController.fetchRedeemedRewards(authProvider.firebaseUser!.uid);
-      }
+      // The RedeemedRewardsProvider is already updated by the proxy in main.dart
+      // We just need to load the list of available rewards.
+      Provider.of<RewardsController>(context, listen: false).loadRewards();
     });
   }
 
@@ -134,11 +131,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
       ),
       body: Column(
         children: [
-          Consumer2<AuthProvider, RewardsController>(
-            builder: (context, authProvider, rewardsController, child) {
+          Consumer2<AuthProvider, RedeemedRewardsProvider>(
+            builder: (context, authProvider, redeemedRewardsProvider, child) {
               final currentUser = authProvider.userProfile;
               final currentPoints = currentUser?.points ?? 0;
-              final spentPoints = rewardsController.totalSpentPoints;
+              final spentPoints = redeemedRewardsProvider.totalPointsSpent;
               final allTimePoints = currentPoints + spentPoints;
 
               return Container(

@@ -51,24 +51,23 @@ class RedeemedRewardService {
     });
   }
 
-  Future<List<RedeemedReward>> getRedeemedRewards(String userId) async {
+  Stream<List<RedeemedReward>> getRedeemedRewards(String userId) {
     try {
-      print('Fetching redeemed rewards for userId: $userId');
-      final querySnapshot = await _firestore
+      print('Setting up redeemed rewards stream for userId: $userId');
+      return _firestore
           .collection('redeemedRewards')
           .where('userId', isEqualTo: userId)
           .orderBy('redeemedAt', descending: true)
-          .get();
-      
-      print('Found ${querySnapshot.docs.length} redeemed rewards.');
-
-      final List<RedeemedReward> redeemedRewards = querySnapshot.docs
-          .map((doc) => RedeemedReward.fromFirestore(doc))
-          .toList();
-      return redeemedRewards;
+          .snapshots()
+          .map((querySnapshot) {
+        print('Received ${querySnapshot.docs.length} redeemed rewards update.');
+        return querySnapshot.docs
+            .map((doc) => RedeemedReward.fromFirestore(doc))
+            .toList();
+      });
     } catch (e) {
-      print('Error fetching redeemed rewards: $e');
-      return [];
+      print('Error setting up redeemed rewards stream: $e');
+      return Stream.value([]);
     }
   }
 }

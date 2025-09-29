@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/models/redeemed_reward.dart';
@@ -10,10 +11,11 @@ class RedeemedRewardsProvider with ChangeNotifier {
   List<RedeemedReward> _redeemedRewards = [];
   bool _isLoading = false;
   int _totalPointsSpent = 0;
+  StreamSubscription<List<RedeemedReward>>? _redeemedRewardsSubscription;
 
   RedeemedRewardsProvider(this._authProvider) {
     if (_authProvider.userProfile != null) {
-      fetchRedeemedRewards();
+      _subscribeToRedeemedRewards();
     }
   }
 
@@ -24,30 +26,40 @@ class RedeemedRewardsProvider with ChangeNotifier {
   void update(AuthProvider authProvider) {
     if (authProvider.userProfile?.uid != _authProvider.userProfile?.uid) {
       _authProvider = authProvider;
-      if (_authProvider.userProfile != null) {
-        fetchRedeemedRewards();
-      } else {
-        _redeemedRewards = [];
-        _totalPointsSpent = 0;
-        notifyListeners();
-      }
+      _subscribeToRedeemedRewards();
     }
   }
 
-  Future<void> fetchRedeemedRewards() async {
-    if (_authProvider.userProfile == null) return;
-
+  void _subscribeToRedeemedRewards() {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      _redeemedRewards = await _redeemedRewardService.getRedeemedRewards(_authProvider.userProfile!.uid);
-      _totalPointsSpent = _redeemedRewards.fold(0, (sum, reward) => sum + reward.pointsSpent);
-    } catch (e) {
-      print('Error fetching redeemed rewards: $e');
-    } finally {
+    _redeemedRewardsSubscription?.cancel();
+    if (_authProvider.userProfile == null) {
+      _redeemedRewards = [];
+      _totalPointsSpent = 0;
       _isLoading = false;
       notifyListeners();
+      return;
     }
+
+    _redeemedRewardsSubscription = _redeemedRewardService
+        .getRedeemedRewards(_authProvider.userProfile!.uid)
+        .listen((rewards) {
+      _redeemedRewards = rewards;
+      _totalPointsSpent = rewards.fold(0, (sum, reward) => sum + reward.pointsSpent);
+      _isLoading = false;
+      notifyListeners();
+    }, onError: (error) {
+      print('Error in redeemed rewards stream: $error');
+      _isLoading = false;
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _redeemedRewardsSubscription?.cancel();
+    super.dispose();
   }
 }
