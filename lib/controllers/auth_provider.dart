@@ -31,6 +31,8 @@ class AuthProvider with ChangeNotifier {
   UserModel? get userProfile => _userProfile;
   AppAuthState get appAuthState => _appAuthState;
 
+  get user => null;
+
   @override
   void dispose() {
     _userProfileSubscription?.cancel();

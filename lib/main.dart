@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
+import 'package:novopharma/controllers/badge_provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/goal_provider.dart';
 import 'package:novopharma/controllers/quiz_provider.dart';
@@ -34,6 +35,10 @@ void main() async {
         ChangeNotifierProxyProvider<AuthProvider, GoalProvider>(
           create: (_) => GoalProvider(),
           update: (_, auth, previous) => GoalProvider(),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, BadgeProvider>(
+          create: (context) => BadgeProvider(Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, previous) => BadgeProvider(auth),
         ),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
         ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
