@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/services/auth_service.dart';
+import 'package:novopharma/services/storage_service.dart';
 import 'package:novopharma/services/user_service.dart';
 
 enum AppAuthState {
@@ -16,6 +18,7 @@ enum AppAuthState {
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final StorageService _storageService = StorageService();
 
   User? _firebaseUser;
   UserModel? _userProfile;
@@ -31,8 +34,6 @@ class AuthProvider with ChangeNotifier {
   UserModel? get userProfile => _userProfile;
   AppAuthState get appAuthState => _appAuthState;
 
-  get user => null;
-
   @override
   void dispose() {
     _userProfileSubscription?.cancel();
@@ -46,55 +47,36 @@ class AuthProvider with ChangeNotifier {
       _firebaseUser = null;
       _userProfile = null;
       _appAuthState = AppAuthState.unauthenticated;
-      print('[AuthProvider] State changed to: AppAuthState.unauthenticated');
-      notifyListeners();
-      return;
     } else {
       _firebaseUser = user;
       _appAuthState = AppAuthState.unknown;
-      print('[AuthProvider] State changed to: AppAuthState.unknown (user found, loading profile)');
-      notifyListeners(); // Notify for the initial loading state
-
       _userProfileSubscription =
-          _userService.getUserProfile(user.uid).listen((userProfile) async {
+          _userService.getUserProfile(user.uid).listen((userProfile) {
         _userProfile = userProfile;
         if (_userProfile == null) {
           _appAuthState = AppAuthState.authenticatedDisabled;
-          print('[AuthProvider] State changed to: AppAuthState.authenticatedDisabled (profile is null)');
         } else {
           switch (_userProfile!.status) {
             case UserStatus.active:
-              try {
-                await _firebaseUser!.getIdToken();
-                _appAuthState = AppAuthState.authenticatedActive;
-                print('[AuthProvider] State changed to: AppAuthState.authenticatedActive');
-              } catch (e) {
-                print('Error getting ID token: $e');
-                _appAuthState = AppAuthState.unauthenticated;
-                print('[AuthProvider] State changed to: AppAuthState.unauthenticated (token error)');
-              }
+              _appAuthState = AppAuthState.authenticatedActive;
               break;
             case UserStatus.pending:
               _appAuthState = AppAuthState.authenticatedPending;
-              print('[AuthProvider] State changed to: AppAuthState.authenticatedPending');
               break;
             case UserStatus.disabled:
               _appAuthState = AppAuthState.authenticatedDisabled;
-              print('[AuthProvider] State changed to: AppAuthState.authenticatedDisabled');
               break;
             default:
               _appAuthState = AppAuthState.unauthenticated;
-              print('[AuthProvider] State changed to: AppAuthState.unauthenticated (default case)');
           }
         }
         notifyListeners();
       }, onError: (error) {
-        print('Error fetching user profile: $error');
         _appAuthState = AppAuthState.unauthenticated;
-        print('[AuthProvider] State changed to: AppAuthState.unauthenticated (profile fetch error)');
         notifyListeners();
       });
     }
+    notifyListeners();
   }
 
   Future<String?> signIn(String email, String password) async {
@@ -116,12 +98,10 @@ class AuthProvider with ChangeNotifier {
     required String phone,
   }) async {
     try {
-      // Step 1: Create user in Firebase Auth
       UserCredential userCredential = await _authService
           .createUserWithEmailAndPassword(email, password);
       User newUser = userCredential.user!;
 
-      // Step 2: Create user profile in Firestore
       await _userService.createUserProfile(
         user: newUser,
         name: name,
@@ -130,8 +110,6 @@ class AuthProvider with ChangeNotifier {
         pharmacyName: pharmacyName,
         phone: phone,
       );
-
-      // The _onAuthStateChanged listener will automatically handle the state update
       return null; // Success
     } on FirebaseAuthException catch (e) {
       return e.message; // Return error message
@@ -144,7 +122,25 @@ class AuthProvider with ChangeNotifier {
     if (_firebaseUser == null) return 'No user logged in.';
     try {
       await _userService.updateUserProfile(_firebaseUser!.uid, data);
-      // No need to manually refresh, the stream will handle it.
+      return null; // Success
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> updateAvatar(File imageFile) async {
+    if (_firebaseUser == null) return 'No user logged in.';
+    try {
+      final downloadUrl = await _storageService.uploadProfilePicture(
+        _firebaseUser!.uid,
+        imageFile,
+      );
+
+      if (downloadUrl == null) {
+        return 'Failed to upload image.';
+      }
+
+      await updateUserProfile({'avatarUrl': downloadUrl});
       return null; // Success
     } catch (e) {
       return e.toString();

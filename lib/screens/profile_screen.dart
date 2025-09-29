@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
@@ -26,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _hasChanges = false;
   bool _isLoading = false;
+  bool _isUploadingAvatar = false;
 
   @override
   void initState() {
@@ -63,6 +65,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _editingStates[field] = !_editingStates[field]!;
     });
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+
+    if (image != null) {
+      setState(() => _isUploadingAvatar = true);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final error = await authProvider.updateAvatar(File(image.path));
+
+      if (mounted) {
+        if (error == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Avatar updated successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Avatar update failed: $error')),
+          );
+        }
+      }
+      setState(() => _isUploadingAvatar = false);
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -208,11 +234,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileHeader(UserModel user) {
     return Column(
       children: [
-        CircleAvatar(
-          radius: 48,
-          backgroundImage: user.avatarUrl != null
-              ? NetworkImage(user.avatarUrl!)
-              : const NetworkImage(UserModel.defaultAvatarUrl),
+        Stack(
+          children: [
+            CircleAvatar(
+              radius: 48,
+              backgroundImage: user.avatarUrl != null
+                  ? NetworkImage(user.avatarUrl!)
+                  : const NetworkImage(UserModel.defaultAvatarUrl),
+              child: _isUploadingAvatar
+                  ? const CircularProgressIndicator()
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: _isUploadingAvatar ? null : _pickAndUploadAvatar,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Text(
