@@ -57,8 +57,10 @@ class BadgeProvider with ChangeNotifier {
   Future<void> fetchBadges() async {
     if (_authProvider.userProfile == null) return;
 
-    _isLoading = true;
-    notifyListeners();
+    Future.microtask(() {
+      _isLoading = true;
+      notifyListeners();
+    });
 
     try {
       final userId = _authProvider.userProfile!.uid;

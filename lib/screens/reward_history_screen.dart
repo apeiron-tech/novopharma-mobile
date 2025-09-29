@@ -1,29 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:novopharma/controllers/auth_provider.dart';
-import 'package:novopharma/controllers/rewards_controller.dart';
+import 'package:novopharma/controllers/redeemed_rewards_provider.dart';
 import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
 
-class RewardHistoryScreen extends StatefulWidget {
+class RewardHistoryScreen extends StatelessWidget {
   const RewardHistoryScreen({super.key});
-
-  @override
-  State<RewardHistoryScreen> createState() => _RewardHistoryScreenState();
-}
-
-class _RewardHistoryScreenState extends State<RewardHistoryScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.userProfile != null) {
-        Provider.of<RewardsController>(context, listen: false)
-            .fetchRedeemedRewards(authProvider.userProfile!.uid);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,17 +26,13 @@ class _RewardHistoryScreenState extends State<RewardHistoryScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
       ),
-      body: Consumer<RewardsController>(
-        builder: (context, controller, child) {
-          if (controller.isLoading) {
+      body: Consumer<RedeemedRewardsProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (controller.error != null) {
-            return Center(child: Text(controller.error!, style: const TextStyle(color: Colors.red)));
-          }
-
-          if (controller.redeemedRewards.isEmpty) {
+          if (provider.redeemedRewards.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -77,9 +55,9 @@ class _RewardHistoryScreenState extends State<RewardHistoryScreen> {
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: controller.redeemedRewards.length,
+            itemCount: provider.redeemedRewards.length,
             itemBuilder: (context, index) {
-              final redeemed = controller.redeemedRewards[index];
+              final redeemed = provider.redeemedRewards[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

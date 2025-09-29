@@ -19,9 +19,12 @@ class LeaderboardProvider with ChangeNotifier {
   }
 
   Future<void> fetchLeaderboard(String period) async {
-    _selectedPeriod = period;
-    _isLoading = true;
-    notifyListeners();
+    // Defer the state update to after the build phase
+    Future.microtask(() {
+      _selectedPeriod = period;
+      _isLoading = true;
+      notifyListeners();
+    });
 
     _leaderboardData = await _leaderboardService.getLeaderboard(period);
     

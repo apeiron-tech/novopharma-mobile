@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:novopharma/models/redeemed_reward.dart';
 import 'package:novopharma/models/reward.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/services/redeemed_reward_service.dart';
@@ -10,22 +9,13 @@ class RewardsController extends ChangeNotifier {
   final RedeemedRewardService _redeemedRewardService = RedeemedRewardService();
 
   List<Reward> _rewards = [];
-  List<RedeemedReward> _redeemedRewards = [];
   bool _isLoading = false;
   String? _error;
 
   // Getters
   List<Reward> get rewards => _rewards;
-  List<RedeemedReward> get redeemedRewards => _redeemedRewards;
   bool get isLoading => _isLoading;
   String? get error => _error;
-
-  int get totalSpentPoints {
-    return _redeemedRewards.fold<int>(
-      0,
-      (sum, reward) => sum + reward.pointsSpent,
-    );
-  }
 
   Future<void> loadRewards() async {
     try {
@@ -37,22 +27,6 @@ class RewardsController extends ChangeNotifier {
     } catch (e) {
       _error = 'Failed to load rewards. Please try again.';
       debugPrint('Error loading rewards: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchRedeemedRewards(String userId) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-      _redeemedRewards = await _redeemedRewardService.getRedeemedRewards(
-        userId,
-      );
-    } catch (e) {
-      _error = 'Failed to load redeemed rewards.';
-      debugPrint('Error fetching redeemed rewards: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -81,17 +55,10 @@ class RewardsController extends ChangeNotifier {
         pointsSpent: reward.pointsCost,
       );
       
-      // Refresh the list of redeemed rewards after a successful redemption
-      await fetchRedeemedRewards(currentUser.uid);
-
-      // The user's points will update automatically via the AuthProvider stream.
-      // Manually update the local stock for immediate UI feedback.
-      final rewardIndex = _rewards.indexWhere((r) => r.id == rewardId);
-      // This needs a copyWith method in the Reward model. Let's assume it exists or add it.
-      // For now, we will just reload the rewards to show the new stock.
+      // The user's points and redeemed rewards list will update automatically via streams.
+      // We just need to reload the available rewards to get the new stock count.
       await loadRewards();
       
-      notifyListeners();
       return null; // Success
     } catch (e) {
       debugPrint('Error redeeming reward: $e');

@@ -9,7 +9,6 @@ import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/screens/badges_screen.dart';
 import 'package:novopharma/screens/goals_screen.dart';
 import 'package:novopharma/screens/leaderboard_screen.dart';
-import 'package:novopharma/navigation_observer.dart';
 import 'package:novopharma/screens/product_screen.dart';
 import 'package:novopharma/services/product_service.dart';
 import 'package:novopharma/theme.dart';
@@ -26,92 +25,15 @@ class DashboardHomeScreen extends StatefulWidget {
   State<DashboardHomeScreen> createState() => _DashboardHomeScreenState();
 }
 
-class _DashboardHomeScreenState extends State<DashboardHomeScreen>
-    with RouteAware {
+class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   int _selectedIndex = 0;
-  int _selectedDay = 3;
-
-  late List<Map<String, dynamic>> _days;
-  late ScrollController _dateScrollController;
-  bool _daysInitialized = false;
-  bool _isDateSelectorCentered = false;
 
   @override
   void initState() {
     super.initState();
-    _dateScrollController = ScrollController();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Fetch leaderboard data
-      Provider.of<LeaderboardProvider>(
-        context,
-        listen: false,
-      ).fetchLeaderboard('yearly');
+      Provider.of<LeaderboardProvider>(context, listen: false).fetchLeaderboard('yearly');
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_daysInitialized) {
-      _generateDays();
-      _daysInitialized = true;
-    }
-    final route = ModalRoute.of(context);
-    if (route != null) {
-      routeObserver.subscribe(this, route as PageRoute);
-    }
-  }
-
-  @override
-  void dispose() {
-    routeObserver.unsubscribe(this);
-    _dateScrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didPopNext() {
-    // This is called when the user navigates back to this screen.
-    setState(() {
-      _isDateSelectorCentered = false;
-    });
-  }
-
-  void _generateDays() {
-    final now = DateTime.now();
-    final l10n = AppLocalizations.of(context)!;
-    _days = [];
-
-    for (int i = -7; i <= 6; i++) {
-      final date = now.add(Duration(days: i));
-      final dayNames = [
-        '',
-        l10n.mon,
-        l10n.tue,
-        l10n.wed,
-        l10n.thu,
-        l10n.fri,
-        l10n.sat,
-        l10n.sun,
-      ];
-      final label = dayNames[date.weekday];
-      _days.add({'day': label, 'date': date.day.toString(), 'isToday': i == 0});
-    }
-
-    _selectedDay = 7;
-  }
-
-  void _centerToIndex(int index) {
-    const itemWidth = 55.0;
-    final viewport = _dateScrollController.position.viewportDimension;
-    final target = (index * itemWidth) - (viewport - itemWidth) / 2;
-    final max = _dateScrollController.position.maxScrollExtent;
-    _dateScrollController.animateTo(
-      target.clamp(0.0, max),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-    );
   }
 
   @override
@@ -123,81 +45,34 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
           BottomNavigationScaffoldWrapper(
             currentIndex: _selectedIndex,
             onTap: (index) => setState(() => _selectedIndex = index),
-            child:
-                Consumer5<
-                  AuthProvider,
-                  LeaderboardProvider,
-                  GoalProvider,
-                  BadgeProvider,
-                  RedeemedRewardsProvider
-                >(
-                  builder:
-                      (
-                        context,
-                        auth,
-                        leaderboard,
-                        goal,
-                        badge,
-                        redeemedRewards,
-                        child,
-                      ) {
-                        final user = auth.userProfile;
-                        if (user == null ||
-                            leaderboard.isLoading ||
-                            goal.isLoading ||
-                            badge.isLoading ||
-                            redeemedRewards.isLoading) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
+            child: Consumer5<AuthProvider, LeaderboardProvider, GoalProvider, BadgeProvider, RedeemedRewardsProvider>(
+              builder: (context, auth, leaderboard, goal, badge, redeemedRewards, child) {
+                final user = auth.userProfile;
+                if (user == null || leaderboard.isLoading || goal.isLoading || badge.isLoading || redeemedRewards.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                        // This callback runs after the UI is built.
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!_isDateSelectorCentered &&
-                              _dateScrollController.hasClients) {
-                            _centerToIndex(_selectedDay);
-                            setState(() {
-                              _isDateSelectorCentered = true;
-                            });
-                          }
-                        });
-
-                        return Container(
-                          color: Colors.white,
-                          child: SafeArea(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
-                              child: Column(
-                                children: [
-                                  DashboardHeader(
-                                    user: user,
-                                    onNotificationTap: () {},
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _buildSalesCard(user, l10n),
-                                  const SizedBox(height: 20),
-                                  _buildDateSelector(),
-                                  const SizedBox(height: 20),
-                                  _buildDashboardGrid(
-                                    context,
-                                    l10n,
-                                    user,
-                                    leaderboard,
-                                    goal,
-                                    badge,
-                                    redeemedRewards,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                ),
+                return Container(
+                  color: Colors.white,
+                  child: SafeArea(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Column(
+                        children: [
+                          DashboardHeader(user: user, onNotificationTap: () {}),
+                          const SizedBox(height: 20),
+                          _buildSalesCard(user, l10n),
+                          const SizedBox(height: 20),
+                          _AnimatedDateSelector(key: UniqueKey()), // Use the new self-animating widget
+                          const SizedBox(height: 20),
+                          _buildDashboardGrid(context, l10n, user, leaderboard, goal, badge, redeemedRewards),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
           Positioned(
             bottom: 80,
@@ -209,9 +84,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
                 FloatingActionButton(
                   onPressed: () async {
                     final productService = ProductService();
-                    final product = await productService.getProductBySku(
-                      '6194008541086',
-                    );
+                    final product = await productService.getProductBySku('6194008541086');
                     if (product != null && mounted) {
                       Navigator.push(
                         context,
@@ -240,7 +113,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
 
   Widget _buildSalesCard(UserModel? user, AppLocalizations l10n) {
     final currentPoints = user?.points ?? 0;
-
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(31, 26, 31, 36),
@@ -253,11 +126,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
         children: [
           Text(
             l10n.totalPoints,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
@@ -265,11 +134,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
               RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
               (Match m) => '${m[1]},',
             ),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
@@ -281,70 +146,6 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     );
   }
 
-  Widget _buildDateSelector() {
-    return SizedBox(
-      height: 70,
-      child: ListView.builder(
-        controller: _dateScrollController,
-        scrollDirection: Axis.horizontal,
-        itemCount: _days.length,
-        itemBuilder: (context, index) {
-          final day = _days[index];
-          final isSelected = index == _selectedDay;
-          final isToday = day['isToday'] ?? false;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedDay = index;
-                });
-                _centerToIndex(index);
-              },
-              child: Container(
-                width: 45,
-                height: 65,
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                    color: isSelected
-                        ? Colors.black
-                        : (isToday ? Colors.blue : Colors.grey.shade300),
-                    width: isToday && !isSelected ? 2 : 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      day['day'],
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey.shade600,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      day['date'],
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildDashboardGrid(BuildContext context, AppLocalizations l10n, UserModel user, LeaderboardProvider leaderboard, GoalProvider goal, BadgeProvider badge, RedeemedRewardsProvider redeemedRewards) {
     return GridView.count(
       shrinkWrap: true,
@@ -352,7 +153,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
       crossAxisCount: 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 1.0, // Make cards square
+      childAspectRatio: 1.0,
       children: [
         _buildTotalPointsCard(l10n, user, redeemedRewards),
         _buildYearlyRankCard(context, l10n, user, leaderboard),
@@ -362,56 +163,13 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     );
   }
 
-  // Reusable Card Template
-  Widget _buildDashboardCard({
-    required String title,
-    required Widget mainContent,
-    required String secondaryInfo,
-    required IconData icon,
-    required Color backgroundColor,
-    required Color contentColor,
-    VoidCallback? onTap,
-  }) {
-    return Material(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: TextStyle(fontSize: 12, color: contentColor.withOpacity(0.8), fontWeight: FontWeight.w500)),
-                  Icon(icon, color: contentColor, size: 20),
-                ],
-              ),
-              const Spacer(),
-              Center(child: DefaultTextStyle(style: TextStyle(color: contentColor, fontFamily: 'Poppins'), child: mainContent)),
-              const Spacer(),
-              Center(child: Text(secondaryInfo, style: TextStyle(fontSize: 12, color: contentColor.withOpacity(0.7)))),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Specific Card Implementations
   Widget _buildTotalPointsCard(AppLocalizations l10n, UserModel user, RedeemedRewardsProvider redeemedRewards) {
     final allTimePoints = user.points + redeemedRewards.totalPointsSpent;
     return _buildDashboardCard(
       title: l10n.totalPoints,
       icon: Icons.star_border,
       backgroundColor: const Color(0xFFA7E8E7),
-      contentColor: const Color(0xFF004D40), // Dark Teal
+      contentColor: const Color(0xFF004D40),
       mainContent: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -419,7 +177,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
         children: [
           Text('$allTimePoints', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(width: 2),
-          Text('pts', style: TextStyle(fontSize: 14, color: const Color(0xFF004D40).withOpacity(0.8))),
+          Text('pts', style: TextStyle(fontSize: 14, color: const Color(0xFF004D40).withOpacity(0.8))), 
         ],
       ),
       secondaryInfo: l10n.allTime,
@@ -437,7 +195,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
       title: l10n.yearlyRank,
       icon: Icons.emoji_events_outlined,
       backgroundColor: const Color(0xFF67D6C4),
-      contentColor: const Color(0xFF003D33), // Dark Green
+      contentColor: const Color(0xFF003D33),
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
       mainContent: Text('#$rank', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
       secondaryInfo: l10n.outOfEmployees(leaderboard.leaderboardData.length),
@@ -511,6 +269,173 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
             )
           : const Icon(Icons.lock_outline, size: 40),
       secondaryInfo: mostRecentBadge?.badge.name ?? l10n.noBadgesEarned,
+    );
+  }
+
+  Widget _buildDashboardCard({
+    required String title,
+    required Widget mainContent,
+    required String secondaryInfo,
+    required IconData icon,
+    required Color backgroundColor,
+    required Color contentColor,
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 12, color: contentColor.withOpacity(0.8), fontWeight: FontWeight.w500)),
+                  Icon(icon, color: contentColor, size: 20),
+                ],
+              ),
+              const Spacer(),
+              Center(child: DefaultTextStyle(style: TextStyle(color: contentColor, fontFamily: 'Poppins'), child: mainContent)),
+              const Spacer(),
+              Center(child: Text(secondaryInfo, style: TextStyle(fontSize: 12, color: contentColor.withOpacity(0.7)))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// New, self-contained widget for the date selector
+class _AnimatedDateSelector extends StatefulWidget {
+  const _AnimatedDateSelector({super.key});
+
+  @override
+  State<_AnimatedDateSelector> createState() => _AnimatedDateSelectorState();
+}
+
+class _AnimatedDateSelectorState extends State<_AnimatedDateSelector> {
+  late final ScrollController _scrollController;
+  late final List<Map<String, dynamic>> _days;
+  final int _selectedDayIndex = 7; // Today is always the 8th item (index 7)
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+
+    // Safely schedule the animation to run after the first frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerToIndex(_selectedDayIndex);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize here because it depends on context for l10n.
+    if (!_isInitialized) {
+      _generateDays();
+      _isInitialized = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _generateDays() {
+    final now = DateTime.now();
+    final l10n = AppLocalizations.of(context)!;
+    _days = [];
+    
+    for (int i = -7; i <= 6; i++) {
+      final date = now.add(Duration(days: i));
+      final dayNames = ['', l10n.mon, l10n.tue, l10n.wed, l10n.thu, l10n.fri, l10n.sat, l10n.sun];
+      final label = dayNames[date.weekday];
+      _days.add({
+        'day': label,
+        'date': date.day.toString(),
+        'isToday': i == 0,
+      });
+    }
+  }
+
+  void _centerToIndex(int index) {
+    if (_scrollController.hasClients) {
+      const itemWidth = 55.0;
+      final viewportWidth = _scrollController.position.viewportDimension;
+      final targetOffset = (index * itemWidth) - (viewportWidth / 2) + (itemWidth / 2);
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      
+      _scrollController.animateTo(
+        targetOffset.clamp(0.0, maxScroll),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 70,
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        itemCount: _days.length,
+        itemBuilder: (context, index) {
+          final day = _days[index];
+          final isSelected = index == _selectedDayIndex;
+          final isToday = day['isToday'] ?? false;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: GestureDetector(
+              onTap: () {
+                // The selector is not interactive in this version, but tap could be added here.
+              },
+              child: Container(
+                width: 45,
+                height: 65,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: isSelected ? Colors.black : (isToday ? Colors.blue : Colors.grey.shade300),
+                    width: isToday && !isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      day['day'],
+                      style: TextStyle(color: isSelected ? Colors.white : Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      day['date'],
+                      style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
