@@ -26,7 +26,7 @@ class BadgeProvider with ChangeNotifier {
   final BadgeService _badgeService = BadgeService();
   final UserBadgeService _userBadgeService = UserBadgeService();
   final SaleService _saleService = SaleService();
-  final AuthProvider _authProvider;
+  AuthProvider _authProvider;
 
   List<BadgeDisplayInfo> _badges = [];
   bool _isLoading = false;
@@ -34,6 +34,20 @@ class BadgeProvider with ChangeNotifier {
   BadgeProvider(this._authProvider) {
     if (_authProvider.userProfile != null) {
       fetchBadges();
+    }
+  }
+
+  void update(AuthProvider authProvider) {
+    // Check if the user has changed (e.g., logged in or out)
+    if (authProvider.userProfile?.uid != _authProvider.userProfile?.uid) {
+      _authProvider = authProvider;
+      if (_authProvider.userProfile != null) {
+        fetchBadges();
+      } else {
+        // User logged out, clear the badges
+        _badges = [];
+        notifyListeners();
+      }
     }
   }
 

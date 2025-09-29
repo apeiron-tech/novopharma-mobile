@@ -371,7 +371,7 @@ abstract class AppLocalizations {
   /// No description provided for @noActiveGoals.
   ///
   /// In en, this message translates to:
-  /// **'No active goals yet'**
+  /// **'No active goals.'**
   String get noActiveGoals;
 
   /// No description provided for @checkBackSoon.
@@ -859,6 +859,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count,plural, =1{{count} piece} other{{count} pieces}}'**
   String stockAmount(int count);
+
+  /// No description provided for @allTime.
+  ///
+  /// In en, this message translates to:
+  /// **'All-Time'**
+  String get allTime;
+
+  /// No description provided for @yearlyRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly Rank'**
+  String get yearlyRank;
+
+  /// No description provided for @activeGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Goal'**
+  String get activeGoal;
+
+  /// No description provided for @latestBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest Badge'**
+  String get latestBadge;
+
+  /// No description provided for @noBadgesEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'No badges earned yet.'**
+  String get noBadgesEarned;
 }
 
 class _AppLocalizationsDelegate

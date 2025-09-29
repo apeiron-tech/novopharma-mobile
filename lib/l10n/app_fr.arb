@@ -144,5 +144,11 @@
                 "type": "int"
             }
         }
-    }
+    },
+    "allTime": "Depuis toujours",
+    "yearlyRank": "Rang Annuel",
+    "activeGoal": "Objectif Actif",
+    "latestBadge": "Dernier Badge",
+    "noBadgesEarned": "Aucun badge gagné.",
+    "noActiveGoals": "Aucun objectif actif."
 }

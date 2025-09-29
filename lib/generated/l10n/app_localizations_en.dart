@@ -148,7 +148,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activeGoals => 'Active Goals';
 
   @override
-  String get noActiveGoals => 'No active goals yet';
+  String get noActiveGoals => 'No active goals.';
 
   @override
   String get checkBackSoon => 'Check back soon for new goals!';
@@ -414,4 +414,19 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get allTime => 'All-Time';
+
+  @override
+  String get yearlyRank => 'Yearly Rank';
+
+  @override
+  String get activeGoal => 'Active Goal';
+
+  @override
+  String get latestBadge => 'Latest Badge';
+
+  @override
+  String get noBadgesEarned => 'No badges earned yet.';
 }

@@ -8,6 +8,7 @@ import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/goal_provider.dart';
 import 'package:novopharma/controllers/quiz_provider.dart';
 import 'package:novopharma/controllers/rewards_controller.dart';
+import 'package:novopharma/controllers/redeemed_rewards_provider.dart';
 import 'package:novopharma/controllers/leaderboard_provider.dart';
 import 'package:novopharma/controllers/sales_history_provider.dart';
 import 'package:novopharma/controllers/scan_provider.dart';
@@ -32,16 +33,20 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
         ChangeNotifierProxyProvider<AuthProvider, GoalProvider>(
-          create: (_) => GoalProvider(),
-          update: (_, auth, previous) => GoalProvider(),
+          create: (context) => GoalProvider(Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, previous) => previous!..update(auth),
         ),
         ChangeNotifierProxyProvider<AuthProvider, BadgeProvider>(
           create: (context) => BadgeProvider(Provider.of<AuthProvider>(context, listen: false)),
-          update: (context, auth, previous) => BadgeProvider(auth),
+          update: (context, auth, previous) => previous!..update(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, RedeemedRewardsProvider>(
+          create: (context) => RedeemedRewardsProvider(Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, previous) => previous!..update(auth),
         ),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
-        ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
         ChangeNotifierProvider(create: (_) => ScanProvider()),
         ChangeNotifierProvider(create: (_) => SalesHistoryProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
