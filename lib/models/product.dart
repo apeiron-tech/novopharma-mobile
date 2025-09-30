@@ -14,6 +14,9 @@ class Product {
   final List<String> recommendedWith;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String imageUrl;
+  final String composition;
+  final int clientCode;
 
   Product({
     required this.id,
@@ -29,6 +32,9 @@ class Product {
     required this.recommendedWith,
     required this.createdAt,
     required this.updatedAt,
+    required this.imageUrl,
+    required this.composition,
+    required this.clientCode,
   });
 
   factory Product.fromFirestore(DocumentSnapshot doc) {
@@ -47,6 +53,9 @@ class Product {
       recommendedWith: List<String>.from(data['recommendedWith'] ?? []),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      imageUrl: data['imageUrl'] ?? '',
+      composition: data['composition'] ?? '',
+      clientCode: data['clientCode'] ?? 0,
     );
   }
 }

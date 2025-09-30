@@ -277,6 +277,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get outOfStock => 'En rupture de stock';
 
   @override
+  String get description => 'Description';
+
+  @override
+  String get composition => 'Composition';
+
+  @override
   String get salesHistory => 'Historique des ventes';
 
   @override

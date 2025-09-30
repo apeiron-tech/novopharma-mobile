@@ -608,6 +608,18 @@ abstract class AppLocalizations {
   /// **'Out of Stock'**
   String get outOfStock;
 
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @composition.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition'**
+  String get composition;
+
   /// No description provided for @salesHistory.
   ///
   /// In en, this message translates to:

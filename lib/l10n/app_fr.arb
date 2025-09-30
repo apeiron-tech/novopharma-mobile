@@ -84,6 +84,8 @@
     "recommendedWith": "Recommandé avec",
     "confirmSale": "Confirmer la vente",
     "outOfStock": "En rupture de stock",
+    "description": "Description",
+    "composition": "Composition",
     "salesHistory": "Historique des ventes",
     "noSalesRecorded": "Aucune vente enregistrée pour cette période.",
     "start": "Début :",
