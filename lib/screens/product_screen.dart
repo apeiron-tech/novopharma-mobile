@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
@@ -143,8 +144,9 @@ class _ProductScreenState extends State<ProductScreen> {
           final pharmacy = data.pharmacy;
 
           if (product == null) return Center(child: Text('Product not found.'));
-          if (user == null || pharmacy == null)
+          if (user == null || pharmacy == null) {
             return Center(child: Text('Could not load user profile.'));
+          }
 
           final relatedGoals = _goalService.findMatchingGoals(
             product,
@@ -159,6 +161,18 @@ class _ProductScreenState extends State<ProductScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (product.imageUrl.isNotEmpty)
+                        Center(
+                          child: CachedNetworkImage(
+                            imageUrl: product.imageUrl,
+                            height: 200,
+                            placeholder: (context, url) =>
+                                const Center(child: CircularProgressIndicator()),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
                       Text(
                         product.name,
                         style: const TextStyle(
@@ -173,15 +187,6 @@ class _ProductScreenState extends State<ProductScreen> {
                         style: const TextStyle(
                           fontSize: 16,
                           color: Color(0xFF4A5568),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        product.description,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF4A5568),
-                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -212,6 +217,30 @@ class _ProductScreenState extends State<ProductScreen> {
                         ...data.recommendedProducts.map(
                           (p) => _buildRecommendedProductCard(p),
                         ),
+                      ],
+                      if (product.description.isNotEmpty) ...[
+                        _buildSectionTitle(l10n.description),
+                        Text(
+                          product.description,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF4A5568),
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      if (product.composition.isNotEmpty) ...[
+                        _buildSectionTitle(l10n.composition),
+                        Text(
+                          product.composition,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF4A5568),
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                       ],
                     ],
                   ),
@@ -330,8 +359,9 @@ class _ProductScreenState extends State<ProductScreen> {
                       IconButton(
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: () {
-                          if (quantity < product.stock)
+                          if (quantity < product.stock) {
                             _quantityNotifier.value++;
+                          }
                         },
                       ),
                     ],
@@ -516,7 +546,8 @@ class _ProductScreenState extends State<ProductScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1F9BD1),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -524,7 +555,8 @@ class _ProductScreenState extends State<ProductScreen> {
             ),
             child: Text(
               product.stock > 0 ? l10n.confirmSale : l10n.outOfStock,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ],

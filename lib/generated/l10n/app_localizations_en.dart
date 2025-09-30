@@ -272,6 +272,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outOfStock => 'Out of Stock';
 
   @override
+  String get description => 'Description';
+
+  @override
+  String get composition => 'Composition';
+
+  @override
   String get salesHistory => 'Sales History';
 
   @override

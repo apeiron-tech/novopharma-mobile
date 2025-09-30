@@ -236,9 +236,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         children: [
           Text(label, style: const TextStyle(color: Colors.black)),
           const SizedBox(width: 8),
-          Text(
-            date != null ? DateFormat.yMMMd().format(date) : l10n.select,
-            style: const TextStyle(color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.bold),
+          Flexible(
+            child: Text(
+              date != null ? DateFormat.yMMMd().format(date) : l10n.select,
+              style: const TextStyle(color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
