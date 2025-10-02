@@ -33,11 +33,24 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+    
+                keyAlias keystoreProperties['novopharma_key']
+                keyPassword keystoreProperties['novopharma2025']
+                storeFile keystoreProperties['novopharma.jks'] ? file(keystoreProperties['novopharma.jks']) : null
+                storePassword keystoreProperties['novopharma2025']
+            
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            signingConfig signingConfigs.release
+
         }
     }
 }
