@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/Users/aboul/OneDrive/Bureau/Final Novopharma/novopharma/linux"
+  "cmake.sourceDirectory": "C:/Users/aboul/OneDrive/Bureau/Final Novopharma/novopharma/linux",
+  "dart.flutterSdkPath": ".fvm/versions/3.35.5"
 }
