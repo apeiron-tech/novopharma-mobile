@@ -270,7 +270,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalPrice => 'Total Price';
 
   @override
-  String get protocol => 'Protocol';
+  String get protocol => 'Usage Tips';
 
   @override
   String get activeCampaigns => 'Active Campaigns';

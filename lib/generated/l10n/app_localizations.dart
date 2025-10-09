@@ -605,7 +605,7 @@ abstract class AppLocalizations {
   /// No description provided for @protocol.
   ///
   /// In en, this message translates to:
-  /// **'Protocol'**
+  /// **'Usage Tips'**
   String get protocol;
 
   /// No description provided for @activeCampaigns.
