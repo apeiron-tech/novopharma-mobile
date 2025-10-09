@@ -42,6 +42,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get joinCommunity => 'Join the pharmacy rewards community';
 
   @override
+  String get uploadProfilePicture => 'Upload Profile Picture';
+
+  @override
+  String get allFieldsRequired => '* All fields are required';
+
+  @override
   String get firstName => 'First Name';
 
   @override

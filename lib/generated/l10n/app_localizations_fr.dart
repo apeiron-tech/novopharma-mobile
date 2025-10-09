@@ -44,6 +44,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Rejoignez la communauté des récompenses de la pharmacie';
 
   @override
+  String get uploadProfilePicture => 'Télécharger une photo de profil';
+
+  @override
+  String get allFieldsRequired => '* Tous les champs sont obligatoires';
+
+  @override
   String get firstName => 'Prénom';
 
   @override

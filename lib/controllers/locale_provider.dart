@@ -16,8 +16,10 @@ class LocaleProvider with ChangeNotifier {
     final languageCode = prefs.getString(_languageCodeKey);
     if (languageCode != null) {
       _locale = Locale(languageCode);
-      notifyListeners();
+    } else {
+      _locale = const Locale('fr'); // Default to French
     }
+    notifyListeners();
   }
 
   Future<void> setLocale(Locale locale) async {
