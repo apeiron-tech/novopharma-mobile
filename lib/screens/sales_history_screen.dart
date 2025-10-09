@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/sales_history_provider.dart';
+import 'package:novopharma/screens/product_screen.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:novopharma/widgets/dashboard_header.dart';
@@ -55,6 +56,33 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       // Fetch history immediately after setting the date
       provider.fetchSalesHistory(userId);
     }
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, sale) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: Text(l10n.confirmDeletion),
+          content: Text(l10n.confirmDeletionMessage),
+          actions: <Widget>[
+            TextButton(
+              child: Text(l10n.cancel),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+            TextButton(
+              child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+              onPressed: () {
+                Provider.of<SalesHistoryProvider>(context, listen: false)
+                    .deleteSale(sale);
+                Navigator.of(ctx).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -134,12 +162,25 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             subtitle: Text(
                               '${l10n.quantity}: ${sale.quantity}  •  ${DateFormat.yMMMd().format(sale.saleDate)}',
                             ),
-                            trailing: Text(
-                              '+${sale.pointsEarned} pts',
-                              style: const TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
+                            trailing: SizedBox(
+                              width: 100,
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.blue),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => ProductScreen(sale: sale),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () => _showDeleteConfirmationDialog(context, sale),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

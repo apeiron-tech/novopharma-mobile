@@ -55,4 +55,47 @@ class SalesHistoryProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> deleteSale(Sale sale) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _saleService.deleteSale(sale);
+      _salesHistory.removeWhere((s) => s.id == sale.id);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = "Failed to delete sale.";
+      print('Error deleting sale: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateSale(Sale oldSale, Sale newSale) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _saleService.updateSale(oldSale, newSale);
+      final index = _salesHistory.indexWhere((s) => s.id == oldSale.id);
+      if (index != -1) {
+        _salesHistory[index] = newSale;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = "Failed to update sale.";
+      print('Error updating sale: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

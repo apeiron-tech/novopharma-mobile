@@ -48,6 +48,53 @@ class SaleService {
     });
   }
 
+  Future<void> updateSale(Sale oldSale, Sale newSale) async {
+    final userRef = _firestore.collection('users').doc(newSale.userId);
+    final saleRef = _firestore.collection(_collection).doc(newSale.id);
+    final productRef = _firestore.collection('products').doc(newSale.productId);
+
+    log('Attempting to update sale ${newSale.id}');
+
+    await _firestore.runTransaction((transaction) async {
+      final productSnapshot = await transaction.get(productRef);
+      if (!productSnapshot.exists) throw Exception("Product does not exist!");
+
+      final currentStock = productSnapshot.data()!['stock'] as int;
+      final quantityDifference = newSale.quantity - oldSale.quantity;
+
+      if (currentStock < quantityDifference) {
+        throw Exception("Insufficient stock for update. Available: $currentStock, Requested change: $quantityDifference");
+      }
+
+      transaction.update(saleRef, newSale.toFirestore());
+
+      final pointsDifference = newSale.pointsEarned - oldSale.pointsEarned;
+      transaction.update(userRef, {'points': FieldValue.increment(pointsDifference)});
+      
+      transaction.update(productRef, {'stock': FieldValue.increment(-quantityDifference)});
+    }).catchError((error) {
+      log('Error in updateSale transaction: $error');
+      throw error;
+    });
+  }
+
+  Future<void> deleteSale(Sale sale) async {
+    final userRef = _firestore.collection('users').doc(sale.userId);
+    final saleRef = _firestore.collection(_collection).doc(sale.id);
+    final productRef = _firestore.collection('products').doc(sale.productId);
+
+    log('Attempting to delete sale ${sale.id}');
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.delete(saleRef);
+      transaction.update(userRef, {'points': FieldValue.increment(-sale.pointsEarned)});
+      transaction.update(productRef, {'stock': FieldValue.increment(sale.quantity)});
+    }).catchError((error) {
+      log('Error in deleteSale transaction: $error');
+      throw error;
+    });
+  }
+
   Future<List<Sale>> getSalesHistory(String userId, {DateTime? startDate, DateTime? endDate}) async {
     try {
       Query query = _firestore

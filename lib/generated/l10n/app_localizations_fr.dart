@@ -237,6 +237,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get redeem => 'Échanger';
 
   @override
+  String get confirmDeletion => 'Confirmer la suppression';
+
+  @override
+  String get confirmDeletionMessage =>
+      'Êtes-vous sûr de vouloir supprimer cette vente ? Cette action est irréversible.';
+
+  @override
+  String get delete => 'Supprimer';
+
+  @override
   String get scanBarcodeHere => 'Scannez le code-barres ici';
 
   @override
@@ -272,6 +282,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get confirmSale => 'Confirmer la vente';
+
+  @override
+  String get updateSale => 'Mettre à jour la vente';
 
   @override
   String get outOfStock => 'En rupture de stock';
