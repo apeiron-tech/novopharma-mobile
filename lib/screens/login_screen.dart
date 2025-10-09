@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
+import 'package:novopharma/controllers/locale_provider.dart';
 import 'package:novopharma/screens/signup_screen.dart';
 import 'package:novopharma/screens/forgot_password_screen.dart';
 import 'package:novopharma/theme.dart';
@@ -61,6 +62,84 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: LightModeColors.novoPharmaLightBlue,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Consumer<LocaleProvider>(
+              builder: (context, localeProvider, child) {
+                final isEnglish = localeProvider.locale?.languageCode == 'en';
+                return Container(
+                  width: 100,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () =>
+                              localeProvider.setLocale(const Locale('en')),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isEnglish
+                                  ? LightModeColors.novoPharmaBlue
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'EN',
+                              style: TextStyle(
+                                fontWeight: isEnglish
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color:
+                                    isEnglish ? Colors.white : Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () =>
+                              localeProvider.setLocale(const Locale('fr')),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: !isEnglish
+                                  ? LightModeColors.novoPharmaBlue
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'FR',
+                              style: TextStyle(
+                                fontWeight: !isEnglish
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color:
+                                    !isEnglish ? Colors.white : Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -297,7 +376,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Center(
                       child: TextButton(
                         onPressed: () {
-                          Navigator.pushReplacement(
+                          Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const SignupScreen(),

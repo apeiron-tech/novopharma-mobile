@@ -10,6 +10,8 @@
     "signUp": "S'inscrire",
     "createAccount": "Créer un compte",
     "joinCommunity": "Rejoignez la communauté des récompenses de la pharmacie",
+    "uploadProfilePicture": "Télécharger une photo de profil",
+    "allFieldsRequired": "* Tous les champs sont obligatoires",
     "firstName": "Prénom",
     "lastName": "Nom de famille",
     "emailAddress": "Adresse e-mail",

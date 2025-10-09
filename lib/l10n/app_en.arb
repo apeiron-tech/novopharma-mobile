@@ -10,6 +10,8 @@
     "signUp": "Sign up",
     "createAccount": "Create Account",
     "joinCommunity": "Join the pharmacy rewards community",
+    "uploadProfilePicture": "Upload Profile Picture",
+    "allFieldsRequired": "* All fields are required",
     "firstName": "First Name",
     "lastName": "Last Name",
     "emailAddress": "Email Address",

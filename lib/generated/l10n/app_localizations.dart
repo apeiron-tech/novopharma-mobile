@@ -164,6 +164,18 @@ abstract class AppLocalizations {
   /// **'Join the pharmacy rewards community'**
   String get joinCommunity;
 
+  /// No description provided for @uploadProfilePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Profile Picture'**
+  String get uploadProfilePicture;
+
+  /// No description provided for @allFieldsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'* All fields are required'**
+  String get allFieldsRequired;
+
   /// No description provided for @firstName.
   ///
   /// In en, this message translates to:
