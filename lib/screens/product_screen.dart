@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:novopharma/controllers/sales_history_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/models/goal.dart';
@@ -33,8 +34,9 @@ class _ProductScreenData {
 }
 
 class ProductScreen extends StatefulWidget {
-  final String sku;
-  const ProductScreen({super.key, required this.sku});
+  final String? sku;
+  final Sale? sale;
+  const ProductScreen({super.key, this.sku, this.sale});
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -53,6 +55,9 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.sale != null) {
+      _quantityNotifier.value = widget.sale!.quantity;
+    }
     _dataFuture = _loadData();
   }
 
@@ -63,7 +68,9 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<_ProductScreenData> _loadData() async {
-    final product = await _productService.getProductBySku(widget.sku);
+    final product = widget.sale != null
+        ? await _productService.getProductById(widget.sale!.productId)
+        : await _productService.getProductBySku(widget.sku!);
     if (product == null) return _ProductScreenData(product: null);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -98,22 +105,40 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  void _confirmSale(Product product, UserModel user) {
+  void _submitSale(Product product, UserModel user) {
     final int quantity = _quantityNotifier.value;
     final double totalPrice = product.price * quantity;
 
-    final sale = Sale(
-      id: '',
-      userId: user.uid,
-      pharmacyId: user.pharmacyId,
-      productId: product.id,
-      productNameSnapshot: product.name,
-      quantity: quantity,
-      pointsEarned: product.points * quantity,
-      saleDate: DateTime.now(),
-      totalPrice: totalPrice,
-    );
-    _saleService.createSale(sale);
+    if (widget.sale != null) {
+      // Update existing sale
+      final updatedSale = Sale(
+        id: widget.sale!.id,
+        userId: user.uid,
+        pharmacyId: user.pharmacyId,
+        productId: product.id,
+        productNameSnapshot: product.name,
+        quantity: quantity,
+        pointsEarned: product.points * quantity,
+        saleDate: widget.sale!.saleDate, // Keep original sale date
+        totalPrice: totalPrice,
+      );
+      Provider.of<SalesHistoryProvider>(context, listen: false)
+          .updateSale(widget.sale!, updatedSale);
+    } else {
+      // Create new sale
+      final newSale = Sale(
+        id: '', // Firestore will generate ID
+        userId: user.uid,
+        pharmacyId: user.pharmacyId,
+        productId: product.id,
+        productNameSnapshot: product.name,
+        quantity: quantity,
+        pointsEarned: product.points * quantity,
+        saleDate: DateTime.now(),
+        totalPrice: totalPrice,
+      );
+      _saleService.createSale(newSale);
+    }
     Navigator.of(context).pop();
   }
 
@@ -541,7 +566,7 @@ class _ProductScreenState extends State<ProductScreen> {
           ),
           ElevatedButton(
             onPressed: product.stock > 0
-                ? () => _confirmSale(product, user)
+                ? () => _submitSale(product, user)
                 : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1F9BD1),
@@ -554,7 +579,7 @@ class _ProductScreenState extends State<ProductScreen> {
               elevation: 2,
             ),
             child: Text(
-              product.stock > 0 ? l10n.confirmSale : l10n.outOfStock,
+              widget.sale != null ? l10n.updateSale : (product.stock > 0 ? l10n.confirmSale : l10n.outOfStock),
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),

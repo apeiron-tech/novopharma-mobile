@@ -530,6 +530,24 @@ abstract class AppLocalizations {
   /// **'Redeem'**
   String get redeem;
 
+  /// No description provided for @confirmDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Deletion'**
+  String get confirmDeletion;
+
+  /// No description provided for @confirmDeletionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this sale? This action cannot be undone.'**
+  String get confirmDeletionMessage;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
   /// No description provided for @scanBarcodeHere.
   ///
   /// In en, this message translates to:
@@ -601,6 +619,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm Sale'**
   String get confirmSale;
+
+  /// No description provided for @updateSale.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Sale'**
+  String get updateSale;
 
   /// No description provided for @outOfStock.
   ///
