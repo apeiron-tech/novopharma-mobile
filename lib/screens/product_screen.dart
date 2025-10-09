@@ -239,8 +239,16 @@ class _ProductScreenState extends State<ProductScreen> {
                       ],
                       if (data.recommendedProducts.isNotEmpty) ...[
                         _buildSectionTitle(l10n.recommendedWith),
-                        ...data.recommendedProducts.map(
-                          (p) => _buildRecommendedProductCard(p),
+                        SizedBox(
+                          height: 220,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: data.recommendedProducts.length,
+                            itemBuilder: (context, index) {
+                              return _buildRecommendedProductCard(
+                                  data.recommendedProducts[index]);
+                            },
+                          ),
                         ),
                       ],
                       if (product.description.isNotEmpty) ...[
@@ -342,24 +350,6 @@ class _ProductScreenState extends State<ProductScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n.availableStock,
-                style: const TextStyle(fontSize: 16, color: Color(0xFF4A5568)),
-              ),
-              Text(
-                l10n.stockAmount(product.stock),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF102132),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
                 l10n.quantity,
                 style: const TextStyle(fontSize: 16, color: Color(0xFF4A5568)),
               ),
@@ -384,9 +374,7 @@ class _ProductScreenState extends State<ProductScreen> {
                       IconButton(
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: () {
-                          if (quantity < product.stock) {
-                            _quantityNotifier.value++;
-                          }
+                          _quantityNotifier.value++;
                         },
                       ),
                     ],
@@ -491,26 +479,65 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Widget _buildRecommendedProductCard(Product product) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            const Icon(Icons.link, color: Color(0xFF94A3B8), size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                product.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+    return SizedBox(
+      width: 160,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductScreen(sku: product.sku),
             ),
-          ],
+          );
+        },
+        child: Card(
+          elevation: 2,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.only(right: 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 120,
+                  width: double.infinity,
+                  child: CachedNetworkImage(
+                    imageUrl: product.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.marque,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -565,9 +592,7 @@ class _ProductScreenState extends State<ProductScreen> {
             },
           ),
           ElevatedButton(
-            onPressed: product.stock > 0
-                ? () => _submitSale(product, user)
-                : null,
+            onPressed: () => _submitSale(product, user),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1F9BD1),
               foregroundColor: Colors.white,
@@ -579,7 +604,7 @@ class _ProductScreenState extends State<ProductScreen> {
               elevation: 2,
             ),
             child: Text(
-              widget.sale != null ? l10n.updateSale : (product.stock > 0 ? l10n.confirmSale : l10n.outOfStock),
+              widget.sale != null ? l10n.updateSale : l10n.confirmSale,
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
