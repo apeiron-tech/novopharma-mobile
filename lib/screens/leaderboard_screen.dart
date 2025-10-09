@@ -15,16 +15,46 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
+  final List<List<Color>> _avatarGradients = [
+    [Colors.blue.shade300, Colors.blue.shade600],
+    [Colors.green.shade300, Colors.green.shade600],
+    [Colors.purple.shade300, Colors.purple.shade600],
+    [Colors.orange.shade300, Colors.orange.shade600],
+    [Colors.teal.shade300, Colors.teal.shade600],
+    [Colors.pink.shade300, Colors.pink.shade600],
+  ];
+
   @override
   void initState() {
     super.initState();
     // Data is fetched automatically by the provider's constructor
   }
 
+  String _getInitials(String name) {
+    if (name.isEmpty) return '';
+    List<String> names = name.trim().split(' ');
+    if (names.length > 1 && names.last.isNotEmpty) {
+      return '${names.first[0]}.${names.last[0]}'.toUpperCase();
+    } else if (names.isNotEmpty && names.first.isNotEmpty) {
+      return names.first[0].toUpperCase();
+    }
+    return '';
+  }
+
+  List<Color> _getAvatarGradient(String userId) {
+    final index = userId.hashCode.abs() % _avatarGradients.length;
+    return _avatarGradients[index];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final List<String> tabs = [l10n.daily, l10n.weekly, l10n.monthly, l10n.yearly];
+    final List<String> tabs = [
+      l10n.daily,
+      l10n.weekly,
+      l10n.monthly,
+      l10n.yearly
+    ];
     final List<String> periods = ['daily', 'weekly', 'monthly', 'yearly'];
 
     return BottomNavigationScaffoldWrapper(
@@ -38,18 +68,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: leaderboardProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
                       child: Column(
                         children: [
                           _buildHeader(l10n),
                           const SizedBox(height: 20),
-                          _buildCurrentUserCard(leaderboardProvider.leaderboardData, l10n),
+                          _buildCurrentUserCard(
+                              leaderboardProvider.leaderboardData, l10n),
                           const SizedBox(height: 20),
                           _buildTabSelector(leaderboardProvider, tabs, periods),
                           const SizedBox(height: 20),
-                          _buildTopThreeSection(leaderboardProvider.leaderboardData, l10n),
+                          _buildTopThreeSection(
+                              leaderboardProvider.leaderboardData, l10n),
                           const SizedBox(height: 20),
-                          _buildLeaderboardList(leaderboardProvider.leaderboardData, l10n),
+                          _buildLeaderboardList(
+                              leaderboardProvider.leaderboardData, l10n),
                         ],
                       ),
                     ),
@@ -92,7 +126,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget _buildTabSelector(LeaderboardProvider provider, List<String> tabs, List<String> periods) {
+  Widget _buildTabSelector(
+      LeaderboardProvider provider, List<String> tabs, List<String> periods) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(tabs.length, (index) {
@@ -104,10 +139,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: EdgeInsets.symmetric(horizontal: index == 0 ? 0 : 4, vertical: 0),
+              margin: EdgeInsets.symmetric(
+                  horizontal: index == 0 ? 0 : 4, vertical: 0),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isActive ? const Color(0xFF1F9BD1) : const Color(0xFFF3F4F6),
+                color: isActive
+                    ? const Color(0xFF1F9BD1)
+                    : const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Center(
@@ -127,7 +165,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget _buildCurrentUserCard(List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
+  Widget _buildCurrentUserCard(
+      List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
     final currentUserData = leaderboardData.firstWhere(
@@ -187,10 +226,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget _buildTopThreeSection(List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
+  Widget _buildTopThreeSection(
+      List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
     if (leaderboardData.isEmpty) return const SizedBox.shrink();
     final topThree = leaderboardData.take(3).toList();
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -222,39 +262,56 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget _buildPodiumItem(Map<String, dynamic> user, int position, double height) {
+  Widget _buildPodiumItem(
+      Map<String, dynamic> user, int position, double height) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
     final isCurrentUser = user['userId'] == currentUserId;
-    final avatarUrl = isCurrentUser ? authProvider.userProfile?.avatarUrl : user['avatarUrl'];
 
     Color medalColor;
-    IconData medalIcon;
-    
     switch (position) {
       case 1:
         medalColor = Colors.amber;
-        medalIcon = Icons.looks_one;
         break;
       case 2:
         medalColor = Colors.grey.shade400;
-        medalIcon = Icons.looks_two;
         break;
       case 3:
         medalColor = Colors.orange.shade700;
-        medalIcon = Icons.looks_3;
         break;
       default:
         medalColor = Colors.grey;
-        medalIcon = Icons.circle;
     }
 
     return Column(
       children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundImage: NetworkImage(avatarUrl ?? UserModel.defaultAvatarUrl),
-        ),
+        if (isCurrentUser)
+          CircleAvatar(
+            radius: 25,
+            backgroundImage: NetworkImage(
+                authProvider.userProfile?.avatarUrl ??
+                    UserModel.defaultAvatarUrl),
+          )
+        else
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: _getAvatarGradient(user['userId']),
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                _getInitials(user['name']),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ),
+          ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(6),
@@ -263,14 +320,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             shape: BoxShape.circle,
           ),
           child: Icon(
-            medalIcon,
+            Icons.star,
             color: Colors.white,
             size: 16,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          user['name'].split(' ')[0],
+          isCurrentUser ? user['name'] : _getInitials(user['name']),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 12,
@@ -308,7 +365,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget _buildLeaderboardList(List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
+  Widget _buildLeaderboardList(
+      List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
 
@@ -356,25 +414,31 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             itemBuilder: (context, index) {
               final user = leaderboardData[index];
               final isCurrentUser = user['userId'] == currentUserId;
-              final avatarUrl = isCurrentUser ? authProvider.userProfile?.avatarUrl : user['avatarUrl'];
-              
+
               return Container(
-                color: isCurrentUser ? LightModeColors.dashboardLightCyan.withOpacity(0.1) : Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                color: isCurrentUser
+                    ? LightModeColors.dashboardLightCyan.withOpacity(0.1)
+                    : Colors.transparent,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   children: [
                     Container(
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: isCurrentUser ? LightModeColors.dashboardLightCyan : Colors.grey.shade300,
+                        color: isCurrentUser
+                            ? LightModeColors.dashboardLightCyan
+                            : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
                         child: Text(
                           '${user['rank']}',
                           style: TextStyle(
-                            color: isCurrentUser ? Colors.white : Colors.grey.shade600,
+                            color: isCurrentUser
+                                ? Colors.white
+                                : Colors.grey.shade600,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -382,25 +446,52 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundImage: NetworkImage(avatarUrl ?? UserModel.defaultAvatarUrl),
-                    ),
+                    if (isCurrentUser)
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundImage: NetworkImage(authProvider
+                                .userProfile?.avatarUrl ??
+                            UserModel.defaultAvatarUrl),
+                      )
+                    else
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: _getAvatarGradient(user['userId']),
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _getInitials(user['name']),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                        ),
+                      ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        user['name'],
+                        isCurrentUser ? user['name'] : _getInitials(user['name']),
                         style: TextStyle(
                           color: LightModeColors.dashboardTextPrimary,
                           fontSize: 14,
-                          fontWeight: isCurrentUser ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight:
+                              isCurrentUser ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),
                     ),
                     Text(
                       '${user['points']} pts',
                       style: TextStyle(
-                        color: isCurrentUser ? LightModeColors.dashboardLightCyan : Colors.grey.shade600,
+                        color: isCurrentUser
+                            ? LightModeColors.dashboardLightCyan
+                            : Colors.grey.shade600,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
