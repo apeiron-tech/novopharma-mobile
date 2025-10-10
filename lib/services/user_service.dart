@@ -27,12 +27,13 @@ class UserService {
     required String pharmacyId,
     required String pharmacyName,
     required String phone,
+    required String avatarUrl,
   }) async {
     try {
       await _firestore.collection(_collection).doc(user.uid).set({
         'name': name,
         'email': user.email,
-        'avatarUrl': null,
+        'avatarUrl': avatarUrl,
         'dateOfBirth': Timestamp.fromDate(dateOfBirth),
         'phone': phone,
         'role': 'user',

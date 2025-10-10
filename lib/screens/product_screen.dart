@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:novopharma/controllers/sales_history_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/models/goal.dart';
@@ -33,8 +34,9 @@ class _ProductScreenData {
 }
 
 class ProductScreen extends StatefulWidget {
-  final String sku;
-  const ProductScreen({super.key, required this.sku});
+  final String? sku;
+  final Sale? sale;
+  const ProductScreen({super.key, this.sku, this.sale});
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -53,6 +55,9 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.sale != null) {
+      _quantityNotifier.value = widget.sale!.quantity;
+    }
     _dataFuture = _loadData();
   }
 
@@ -63,7 +68,9 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<_ProductScreenData> _loadData() async {
-    final product = await _productService.getProductBySku(widget.sku);
+    final product = widget.sale != null
+        ? await _productService.getProductById(widget.sale!.productId)
+        : await _productService.getProductBySku(widget.sku!);
     if (product == null) return _ProductScreenData(product: null);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -98,22 +105,40 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  void _confirmSale(Product product, UserModel user) {
+  void _submitSale(Product product, UserModel user) {
     final int quantity = _quantityNotifier.value;
     final double totalPrice = product.price * quantity;
 
-    final sale = Sale(
-      id: '',
-      userId: user.uid,
-      pharmacyId: user.pharmacyId,
-      productId: product.id,
-      productNameSnapshot: product.name,
-      quantity: quantity,
-      pointsEarned: product.points * quantity,
-      saleDate: DateTime.now(),
-      totalPrice: totalPrice,
-    );
-    _saleService.createSale(sale);
+    if (widget.sale != null) {
+      // Update existing sale
+      final updatedSale = Sale(
+        id: widget.sale!.id,
+        userId: user.uid,
+        pharmacyId: user.pharmacyId,
+        productId: product.id,
+        productNameSnapshot: product.name,
+        quantity: quantity,
+        pointsEarned: product.points * quantity,
+        saleDate: widget.sale!.saleDate, // Keep original sale date
+        totalPrice: totalPrice,
+      );
+      Provider.of<SalesHistoryProvider>(context, listen: false)
+          .updateSale(widget.sale!, updatedSale);
+    } else {
+      // Create new sale
+      final newSale = Sale(
+        id: '', // Firestore will generate ID
+        userId: user.uid,
+        pharmacyId: user.pharmacyId,
+        productId: product.id,
+        productNameSnapshot: product.name,
+        quantity: quantity,
+        pointsEarned: product.points * quantity,
+        saleDate: DateTime.now(),
+        totalPrice: totalPrice,
+      );
+      _saleService.createSale(newSale);
+    }
     Navigator.of(context).pop();
   }
 
@@ -214,8 +239,16 @@ class _ProductScreenState extends State<ProductScreen> {
                       ],
                       if (data.recommendedProducts.isNotEmpty) ...[
                         _buildSectionTitle(l10n.recommendedWith),
-                        ...data.recommendedProducts.map(
-                          (p) => _buildRecommendedProductCard(p),
+                        SizedBox(
+                          height: 220,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: data.recommendedProducts.length,
+                            itemBuilder: (context, index) {
+                              return _buildRecommendedProductCard(
+                                  data.recommendedProducts[index]);
+                            },
+                          ),
                         ),
                       ],
                       if (product.description.isNotEmpty) ...[
@@ -317,24 +350,6 @@ class _ProductScreenState extends State<ProductScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n.availableStock,
-                style: const TextStyle(fontSize: 16, color: Color(0xFF4A5568)),
-              ),
-              Text(
-                l10n.stockAmount(product.stock),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF102132),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
                 l10n.quantity,
                 style: const TextStyle(fontSize: 16, color: Color(0xFF4A5568)),
               ),
@@ -359,9 +374,7 @@ class _ProductScreenState extends State<ProductScreen> {
                       IconButton(
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: () {
-                          if (quantity < product.stock) {
-                            _quantityNotifier.value++;
-                          }
+                          _quantityNotifier.value++;
                         },
                       ),
                     ],
@@ -466,26 +479,65 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Widget _buildRecommendedProductCard(Product product) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            const Icon(Icons.link, color: Color(0xFF94A3B8), size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                product.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+    return SizedBox(
+      width: 160,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductScreen(sku: product.sku),
             ),
-          ],
+          );
+        },
+        child: Card(
+          elevation: 2,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.only(right: 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 120,
+                  width: double.infinity,
+                  child: CachedNetworkImage(
+                    imageUrl: product.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.marque,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -540,9 +592,7 @@ class _ProductScreenState extends State<ProductScreen> {
             },
           ),
           ElevatedButton(
-            onPressed: product.stock > 0
-                ? () => _confirmSale(product, user)
-                : null,
+            onPressed: () => _submitSale(product, user),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1F9BD1),
               foregroundColor: Colors.white,
@@ -554,7 +604,7 @@ class _ProductScreenState extends State<ProductScreen> {
               elevation: 2,
             ),
             child: Text(
-              product.stock > 0 ? l10n.confirmSale : l10n.outOfStock,
+              widget.sale != null ? l10n.updateSale : l10n.confirmSale,
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),

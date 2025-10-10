@@ -35,6 +35,19 @@ class ProductService {
     }
   }
 
+  Future<Product?> getProductById(String id) async {
+    try {
+      final docSnapshot = await _firestore.collection(_collection).doc(id).get();
+      if (docSnapshot.exists) {
+        return Product.fromFirestore(docSnapshot);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching product by id: $e');
+      return null;
+    }
+  }
+
   Future<List<Product>> getProductsByIds(List<String> ids) async {
     if (ids.isEmpty) {
       return [];

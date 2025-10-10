@@ -42,6 +42,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get joinCommunity => 'Join the pharmacy rewards community';
 
   @override
+  String get uploadProfilePicture => 'Upload Profile Picture';
+
+  @override
+  String get allFieldsRequired => '* All fields are required';
+
+  @override
   String get firstName => 'First Name';
 
   @override
@@ -233,6 +239,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get redeem => 'Redeem';
 
   @override
+  String get confirmDeletion => 'Confirm Deletion';
+
+  @override
+  String get confirmDeletionMessage =>
+      'Are you sure you want to delete this sale? This action cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
   String get scanBarcodeHere => 'Scan barcode here';
 
   @override
@@ -254,7 +270,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalPrice => 'Total Price';
 
   @override
-  String get protocol => 'Protocol';
+  String get protocol => 'Usage Tips';
 
   @override
   String get activeCampaigns => 'Active Campaigns';
@@ -267,6 +283,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmSale => 'Confirm Sale';
+
+  @override
+  String get updateSale => 'Update Sale';
 
   @override
   String get outOfStock => 'Out of Stock';

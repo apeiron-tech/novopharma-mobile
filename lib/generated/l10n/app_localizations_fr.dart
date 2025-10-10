@@ -44,6 +44,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Rejoignez la communauté des récompenses de la pharmacie';
 
   @override
+  String get uploadProfilePicture => 'Télécharger une photo de profil';
+
+  @override
+  String get allFieldsRequired => '* Tous les champs sont obligatoires';
+
+  @override
   String get firstName => 'Prénom';
 
   @override
@@ -237,6 +243,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get redeem => 'Échanger';
 
   @override
+  String get confirmDeletion => 'Confirmer la suppression';
+
+  @override
+  String get confirmDeletionMessage =>
+      'Êtes-vous sûr de vouloir supprimer cette vente ? Cette action est irréversible.';
+
+  @override
+  String get delete => 'Supprimer';
+
+  @override
   String get scanBarcodeHere => 'Scannez le code-barres ici';
 
   @override
@@ -259,7 +275,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get totalPrice => 'Prix total';
 
   @override
-  String get protocol => 'Protocole';
+  String get protocol => 'Conseils d\'utilisation';
 
   @override
   String get activeCampaigns => 'Campagnes actives';
@@ -272,6 +288,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get confirmSale => 'Confirmer la vente';
+
+  @override
+  String get updateSale => 'Mettre à jour la vente';
 
   @override
   String get outOfStock => 'En rupture de stock';
