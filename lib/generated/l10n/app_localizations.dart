@@ -224,6 +224,24 @@ abstract class AppLocalizations {
   /// **'I agree to the Terms of Service and Privacy Policy'**
   String get agreeToTerms;
 
+  /// No description provided for @iAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept '**
+  String get iAccept;
+
+  /// No description provided for @byContinuingYouAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing, you agree to '**
+  String get byContinuingYouAgree;
+
+  /// No description provided for @termsAndPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use and Privacy Policy'**
+  String get termsAndPrivacy;
+
   /// No description provided for @alreadyHaveAccount.
   ///
   /// In en, this message translates to:
@@ -596,16 +614,22 @@ abstract class AppLocalizations {
   /// **'Quantity'**
   String get quantity;
 
-  /// No description provided for @totalPrice.
+  /// No description provided for @recommendedPrice.
   ///
   /// In en, this message translates to:
-  /// **'Total Price'**
-  String get totalPrice;
+  /// **'Recommended Public Price'**
+  String get recommendedPrice;
+
+  /// No description provided for @usageTips.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage Tips'**
+  String get usageTips;
 
   /// No description provided for @protocol.
   ///
   /// In en, this message translates to:
-  /// **'Usage Tips'**
+  /// **'Protocol'**
   String get protocol;
 
   /// No description provided for @activeCampaigns.
@@ -623,7 +647,7 @@ abstract class AppLocalizations {
   /// No description provided for @recommendedWith.
   ///
   /// In en, this message translates to:
-  /// **'Recommended With'**
+  /// **'Protocol'**
   String get recommendedWith;
 
   /// No description provided for @confirmSale.
@@ -937,6 +961,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No badges earned yet.'**
   String get noBadgesEarned;
+
+  /// Available points after pending deductions
+  ///
+  /// In en, this message translates to:
+  /// **'Available: {points} pts'**
+  String availablePoints(int points);
+
+  /// Points pending approval
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts pending approval'**
+  String pendingPoints(int points);
+
+  /// No description provided for @pluxeeCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Pluxee Credits'**
+  String get pluxeeCredits;
+
+  /// No description provided for @redeemPluxeeCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem Pluxee Credits'**
+  String get redeemPluxeeCredits;
+
+  /// No description provided for @howItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get howItWorks;
+
+  /// No description provided for @choosePointsToConvert.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how many points you want to convert'**
+  String get choosePointsToConvert;
+
+  /// No description provided for @submitForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit your request for admin review'**
+  String get submitForReview;
+
+  /// No description provided for @onceApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Once approved, points will be converted to Pluxee credits'**
+  String get onceApproved;
+
+  /// No description provided for @conversionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} points = 1 Pluxee credit'**
+  String conversionRate(int points);
+
+  /// No description provided for @redeemPointsNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem Points Now'**
+  String get redeemPointsNow;
+
+  /// No description provided for @pendingRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Requests'**
+  String get pendingRequests;
+
+  /// No description provided for @redemptionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Redemption History'**
+  String get redemptionHistory;
+
+  /// No description provided for @viewRedemptionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'View Redemption History'**
+  String get viewRedemptionHistory;
+
+  /// No description provided for @noRedemptionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No Redemption History'**
+  String get noRedemptionHistory;
+
+  /// No description provided for @noRedemptionHistoryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have not made any redemption requests yet.'**
+  String get noRedemptionHistoryMessage;
+
+  /// No description provided for @pointsToRedeem.
+  ///
+  /// In en, this message translates to:
+  /// **'Points to Redeem'**
+  String get pointsToRedeem;
+
+  /// No description provided for @enterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount'**
+  String get enterAmount;
+
+  /// No description provided for @youWillReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'You will receive:'**
+  String get youWillReceive;
+
+  /// No description provided for @pluxeeCreditsAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} Pluxee Credits'**
+  String pluxeeCreditsAmount(String amount);
+
+  /// No description provided for @submitRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Request'**
+  String get submitRequest;
+
+  /// No description provided for @requestSubmittedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Request submitted successfully! It will be reviewed by an admin.'**
+  String get requestSubmittedSuccess;
+
+  /// No description provided for @requestedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get requestedDate;
+
+  /// No description provided for @processedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed'**
+  String get processedDate;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @statusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get statusApproved;
+
+  /// No description provided for @statusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get statusRejected;
+
+  /// No description provided for @tapToViewReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to view rejection reason'**
+  String get tapToViewReason;
+
+  /// No description provided for @rejectionReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejection Reason'**
+  String get rejectionReason;
+
+  /// No description provided for @noReasonProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'No reason provided'**
+  String get noReasonProvided;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @pointsPendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} points pending approval'**
+  String pointsPendingApproval(int points);
+
+  /// No description provided for @productNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Not Available'**
+  String get productNotAvailable;
+
+  /// No description provided for @productNotAvailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is not available at the moment. Please try again later.'**
+  String get productNotAvailableMessage;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get goBack;
 }
 
 class _AppLocalizationsDelegate

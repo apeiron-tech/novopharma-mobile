@@ -10,11 +10,8 @@ import 'package:novopharma/screens/badges_screen.dart';
 import 'package:novopharma/screens/goals_screen.dart';
 import 'package:novopharma/screens/leaderboard_screen.dart';
 import 'package:novopharma/screens/product_screen.dart';
-import 'package:novopharma/services/product_service.dart';
-import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/dashboard_header.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
-import 'package:novopharma/widgets/rewards_fab_core.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
@@ -116,37 +113,21 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 ),
           ),
           Positioned(
-            bottom: 80,
-            right: 30,
-            left: 30,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                FloatingActionButton(
-                  onPressed: () async {
-                    final productService = ProductService();
-                    final product = await productService.getProductBySku(
-                      '3760007337888',
-                    );
-                    if (product != null && mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProductScreen(sku: product.sku),
-                        ),
-                      );
-                    } else if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Product not found!')),
-                      );
-                    }
-                  },
-                  heroTag: 'scan_test_btn',
-                  backgroundColor: Colors.blueAccent,
-                  child: const Icon(Icons.qr_code_scanner),
-                ),
-                const RewardsFABCore(),
-              ],
+            right: 20,
+            bottom: 90,
+            child: FloatingActionButton(
+              heroTag: 'scan_product',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const ProductScreen(sku: '3760007337888'),
+                  ),
+                );
+              },
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.qr_code_scanner, color: Colors.white),
             ),
           ),
         ],
@@ -156,42 +137,201 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
 
   Widget _buildSalesCard(UserModel? user, AppLocalizations l10n) {
     final currentPoints = user?.points ?? 0;
+    final pendingPoints = user?.pendingPluxeePoints ?? 0;
+    final availablePoints = user?.availablePoints ?? 0;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(31, 26, 31, 36),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: LightModeColors.dashboardTealBlue,
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF074F75), Color(0xFF1F9BD1)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1F9BD1).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.totalPoints,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  l10n.totalPoints.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.stars_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            currentPoints.toString().replaceAllMapped(
-              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-              (Match m) => '${m[1]},',
-            ),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    currentPoints.toString().replaceAllMapped(
+                      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                      (Match m) => '${m[1]},',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 42,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'pts',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Material(
+                color: const Color(0xFFEF4444),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/rewards');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.card_giftcard,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.redeemYourPoints,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             l10n.currentBalance,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.85),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
+          if (pendingPoints > 0) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.availablePoints(availablePoints),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.pendingPoints(pendingPoints),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -230,9 +370,14 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     final allTimePoints = user.points + redeemedRewards.totalPointsSpent;
     return _buildDashboardCard(
       title: l10n.totalPoints,
-      icon: Icons.star_border,
-      backgroundColor: const Color(0xFFA7E8E7),
-      contentColor: const Color(0xFF004D40),
+      icon: Icons.stars_rounded,
+      backgroundColor: const Color(0xFF10B981),
+      contentColor: Colors.white,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF10B981), Color(0xFF059669)],
+      ),
       mainContent: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -240,14 +385,19 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         children: [
           Text(
             '$allTimePoints',
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
           ),
-          const SizedBox(width: 2),
+          const SizedBox(width: 4),
           Text(
             'pts',
             style: TextStyle(
-              fontSize: 14,
-              color: const Color(0xFF004D40).withOpacity(0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.85),
             ),
           ),
         ],
@@ -270,16 +420,25 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
 
     return _buildDashboardCard(
       title: l10n.yearlyRank,
-      icon: Icons.emoji_events_outlined,
-      backgroundColor: const Color(0xFF67D6C4),
-      contentColor: const Color(0xFF003D33),
+      icon: Icons.emoji_events_rounded,
+      backgroundColor: const Color(0xFFF59E0B),
+      contentColor: Colors.white,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+      ),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
       ),
       mainContent: Text(
         '#$rank',
-        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
       ),
       secondaryInfo: l10n.outOfEmployees(leaderboard.leaderboardData.length),
     );
@@ -305,9 +464,14 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
 
     return _buildDashboardCard(
       title: l10n.activeGoal,
-      icon: Icons.track_changes_outlined,
-      backgroundColor: const Color(0xFF022E57),
+      icon: Icons.track_changes_rounded,
+      backgroundColor: const Color(0xFF6366F1),
       contentColor: Colors.white,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+      ),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const GoalsScreen()),
@@ -320,25 +484,44 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   topGoal.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: maxProgress.clamp(0.0, 1.0),
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
+                const SizedBox(height: 12),
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: maxProgress.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             )
-          : Text(l10n.noActiveGoals, style: const TextStyle(fontSize: 14)),
+          : Text(
+              l10n.noActiveGoals,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
       secondaryInfo: topGoal != null
           ? '${(maxProgress * 100).toStringAsFixed(0)}% ${l10n.complete}'
           : '',
@@ -362,34 +545,54 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
 
     return _buildDashboardCard(
       title: l10n.latestBadge,
-      icon: Icons.shield_outlined,
-      backgroundColor: const Color(0xFF2979FF),
+      icon: Icons.workspace_premium_rounded,
+      backgroundColor: const Color(0xFFEF4444),
       contentColor: Colors.white,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+      ),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const BadgesScreen()),
       ),
       mainContent: mostRecentBadge != null
           ? Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.white.withOpacity(0.3),
-                    blurRadius: 10,
+                    blurRadius: 16,
                     spreadRadius: 2,
                   ),
                 ],
               ),
               child: Image.network(
                 mostRecentBadge.badge.imageUrl,
-                height: 50,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.shield, size: 50, color: Colors.white),
+                height: 48,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.workspace_premium,
+                  size: 48,
+                  color: Colors.white,
+                ),
               ),
             )
-          : const Icon(Icons.lock_outline, size: 40),
+          : Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
+              ),
+              child: const Icon(
+                Icons.lock_outline,
+                size: 32,
+                color: Colors.white,
+              ),
+            ),
       secondaryInfo: mostRecentBadge?.badge.name ?? l10n.noBadgesEarned,
     );
   }
@@ -401,52 +604,95 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     required IconData icon,
     required Color backgroundColor,
     required Color contentColor,
+    Gradient? gradient,
     VoidCallback? onTap,
   }) {
-    return Material(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    title,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        color: gradient == null ? backgroundColor : null,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: backgroundColor.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: backgroundColor.withOpacity(0.15),
+            blurRadius: 40,
+            offset: const Offset(0, 16),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          splashColor: Colors.white.withOpacity(0.1),
+          highlightColor: Colors.white.withOpacity(0.05),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: contentColor.withOpacity(0.85),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.1,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: contentColor, size: 20),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Center(
+                  child: DefaultTextStyle(
+                    style: TextStyle(
+                      color: contentColor,
+                      fontFamily: 'Poppins',
+                    ),
+                    child: mainContent,
+                  ),
+                ),
+                const Spacer(),
+                Center(
+                  child: Text(
+                    secondaryInfo,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
                       color: contentColor.withOpacity(0.8),
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
                     ),
                   ),
-                  Icon(icon, color: contentColor, size: 20),
-                ],
-              ),
-              const Spacer(),
-              Center(
-                child: DefaultTextStyle(
-                  style: TextStyle(color: contentColor, fontFamily: 'Poppins'),
-                  child: mainContent,
                 ),
-              ),
-              const Spacer(),
-              Center(
-                child: Text(
-                  secondaryInfo,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: contentColor.withOpacity(0.7),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -572,16 +818,16 @@ class _AnimatedDateSelectorState extends State<_AnimatedDateSelector> {
                       day['day'],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.grey.shade600,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       day['date'],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
