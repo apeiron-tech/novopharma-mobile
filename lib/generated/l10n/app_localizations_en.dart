@@ -73,6 +73,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'I agree to the Terms of Service and Privacy Policy';
 
   @override
+  String get iAccept => 'I accept ';
+
+  @override
+  String get byContinuingYouAgree => 'By continuing, you agree to ';
+
+  @override
+  String get termsAndPrivacy => 'Terms of Use and Privacy Policy';
+
+  @override
   String get alreadyHaveAccount => 'Already have an account? ';
 
   @override
@@ -267,10 +276,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quantity => 'Quantity';
 
   @override
-  String get totalPrice => 'Total Price';
+  String get recommendedPrice => 'Recommended Public Price';
 
   @override
-  String get protocol => 'Usage Tips';
+  String get usageTips => 'Usage Tips';
+
+  @override
+  String get protocol => 'Protocol';
 
   @override
   String get activeCampaigns => 'Active Campaigns';
@@ -279,7 +291,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get relatedGoals => 'Related Goals';
 
   @override
-  String get recommendedWith => 'Recommended With';
+  String get recommendedWith => 'Protocol';
 
   @override
   String get confirmSale => 'Confirm Sale';
@@ -454,4 +466,121 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noBadgesEarned => 'No badges earned yet.';
+
+  @override
+  String availablePoints(int points) {
+    return 'Available: $points pts';
+  }
+
+  @override
+  String pendingPoints(int points) {
+    return '$points pts pending approval';
+  }
+
+  @override
+  String get pluxeeCredits => 'Pluxee Credits';
+
+  @override
+  String get redeemPluxeeCredits => 'Redeem Pluxee Credits';
+
+  @override
+  String get howItWorks => 'How it works';
+
+  @override
+  String get choosePointsToConvert =>
+      'Choose how many points you want to convert';
+
+  @override
+  String get submitForReview => 'Submit your request for admin review';
+
+  @override
+  String get onceApproved =>
+      'Once approved, points will be converted to Pluxee credits';
+
+  @override
+  String conversionRate(int points) {
+    return '$points points = 1 Pluxee credit';
+  }
+
+  @override
+  String get redeemPointsNow => 'Redeem Points Now';
+
+  @override
+  String get pendingRequests => 'Pending Requests';
+
+  @override
+  String get redemptionHistory => 'Redemption History';
+
+  @override
+  String get viewRedemptionHistory => 'View Redemption History';
+
+  @override
+  String get noRedemptionHistory => 'No Redemption History';
+
+  @override
+  String get noRedemptionHistoryMessage =>
+      'You have not made any redemption requests yet.';
+
+  @override
+  String get pointsToRedeem => 'Points to Redeem';
+
+  @override
+  String get enterAmount => 'Enter amount';
+
+  @override
+  String get youWillReceive => 'You will receive:';
+
+  @override
+  String pluxeeCreditsAmount(String amount) {
+    return '$amount Pluxee Credits';
+  }
+
+  @override
+  String get submitRequest => 'Submit Request';
+
+  @override
+  String get requestSubmittedSuccess =>
+      'Request submitted successfully! It will be reviewed by an admin.';
+
+  @override
+  String get requestedDate => 'Requested';
+
+  @override
+  String get processedDate => 'Processed';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusApproved => 'Approved';
+
+  @override
+  String get statusRejected => 'Rejected';
+
+  @override
+  String get tapToViewReason => 'Tap to view rejection reason';
+
+  @override
+  String get rejectionReason => 'Rejection Reason';
+
+  @override
+  String get noReasonProvided => 'No reason provided';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String pointsPendingApproval(int points) {
+    return '$points points pending approval';
+  }
+
+  @override
+  String get productNotAvailable => 'Product Not Available';
+
+  @override
+  String get productNotAvailableMessage =>
+      'This product is not available at the moment. Please try again later.';
+
+  @override
+  String get goBack => 'Go Back';
 }

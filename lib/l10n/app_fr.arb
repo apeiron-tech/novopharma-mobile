@@ -20,6 +20,9 @@
     "yourPharmacy": "Votre pharmacie",
     "confirmPassword": "Confirmez le mot de passe",
     "agreeToTerms": "J'accepte les conditions d'utilisation et la politique de confidentialité",
+    "iAccept": "J'accepte ",
+    "byContinuingYouAgree": "En continuant, vous acceptez ",
+    "termsAndPrivacy": "les conditions d'utilisation et la politique de confidentialité",
     "alreadyHaveAccount": "Vous avez déjà un compte? ",
     "selectYourPharmacy": "Sélectionnez votre pharmacie",
     "pleaseSelectPharmacy": "Veuillez sélectionner une pharmacie",
@@ -82,11 +85,12 @@
     "saleDetails": "Détails de la vente",
     "availableStock": "Stock disponible",
     "quantity": "Quantité",
-    "totalPrice": "Prix total",
-    "protocol": "Conseils d'utilisation",
+    "recommendedPrice": "Prix public conseillé",
+    "usageTips": "Conseil d'utilisation",
+    "protocol": "Protocole",
     "activeCampaigns": "Campagnes actives",
     "relatedGoals": "Objectifs associés",
-    "recommendedWith": "Recommandé avec",
+    "recommendedWith": "Protocole",
     "confirmSale": "Confirmer la vente",
     "updateSale": "Mettre à jour la vente",
     "outOfStock": "En rupture de stock",
@@ -158,5 +162,76 @@
     "activeGoal": "Objectif Actif",
     "latestBadge": "Dernier Badge",
     "noBadgesEarned": "Aucun badge gagné.",
-    "noActiveGoals": "Aucun objectif actif."
+    "noActiveGoals": "Aucun objectif actif.",
+    "availablePoints": "Disponible: {points} pts",
+    "@availablePoints": {
+        "description": "Points disponibles après déductions en attente",
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "pendingPoints": "{points} pts en attente d'approbation",
+    "@pendingPoints": {
+        "description": "Points en attente d'approbation",
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "pluxeeCredits": "Crédits Pluxee",
+    "redeemPluxeeCredits": "Échanger des crédits Pluxee",
+    "howItWorks": "Comment ça marche",
+    "choosePointsToConvert": "Choisissez combien de points vous voulez convertir",
+    "submitForReview": "Soumettez votre demande pour examen par un administrateur",
+    "onceApproved": "Une fois approuvée, les points seront convertis en crédits Pluxee",
+    "conversionRate": "{points} points = 1 crédit Pluxee",
+    "@conversionRate": {
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "redeemPointsNow": "Échanger des points maintenant",
+    "pendingRequests": "Demandes en attente",
+    "redemptionHistory": "Historique des échanges",
+    "viewRedemptionHistory": "Voir l'historique des échanges",
+    "noRedemptionHistory": "Aucun historique d'échange",
+    "noRedemptionHistoryMessage": "Vous n'avez pas encore fait de demande d'échange.",
+    "pointsToRedeem": "Points à échanger",
+    "enterAmount": "Entrez le montant",
+    "youWillReceive": "Vous recevrez:",
+    "pluxeeCreditsAmount": "{amount} crédits Pluxee",
+    "@pluxeeCreditsAmount": {
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "submitRequest": "Soumettre la demande",
+    "requestSubmittedSuccess": "Demande soumise avec succès ! Elle sera examinée par un administrateur.",
+    "requestedDate": "Demandé",
+    "processedDate": "Traité",
+    "statusPending": "En attente",
+    "statusApproved": "Approuvé",
+    "statusRejected": "Rejeté",
+    "tapToViewReason": "Appuyez pour voir la raison du rejet",
+    "rejectionReason": "Raison du rejet",
+    "noReasonProvided": "Aucune raison fournie",
+    "close": "Fermer",
+    "pointsPendingApproval": "{points} points en attente d'approbation",
+    "@pointsPendingApproval": {
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "productNotAvailable": "Produit non disponible",
+    "productNotAvailableMessage": "Ce produit n'est pas disponible pour le moment. Veuillez réessayer plus tard.",
+    "goBack": "Retour"
 }

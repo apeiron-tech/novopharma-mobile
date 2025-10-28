@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/locale_provider.dart';
@@ -6,6 +7,7 @@ import 'package:novopharma/screens/forgot_password_screen.dart';
 import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -99,8 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: isEnglish
                                     ? FontWeight.bold
                                     : FontWeight.normal,
-                                color:
-                                    isEnglish ? Colors.white : Colors.black54,
+                                color: isEnglish
+                                    ? Colors.white
+                                    : Colors.black54,
                               ),
                             ),
                           ),
@@ -125,8 +128,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: !isEnglish
                                     ? FontWeight.bold
                                     : FontWeight.normal,
-                                color:
-                                    !isEnglish ? Colors.white : Colors.black54,
+                                color: !isEnglish
+                                    ? Colors.white
+                                    : Colors.black54,
                               ),
                             ),
                           ),
@@ -408,24 +412,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     Center(
                       child: RichText(
                         textAlign: TextAlign.center,
-                        text: const TextSpan(
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                           children: [
-                            TextSpan(text: 'By continuing, you agree to\n'),
+                            TextSpan(text: l10n.byContinuingYouAgree),
                             TextSpan(
-                              text: 'Terms of Use',
-                              style: TextStyle(
+                              text: l10n.termsAndPrivacy,
+                              style: const TextStyle(
                                 color: LightModeColors.novoPharmaBlue,
                                 decoration: TextDecoration.underline,
                               ),
-                            ),
-                            TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: TextStyle(
-                                color: LightModeColors.novoPharmaBlue,
-                                decoration: TextDecoration.underline,
-                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () async {
+                                  final url = Uri.parse(
+                                    'https://docs.google.com/document/d/1DJkotuIfIlnSE7QFdmW8ExhcnPqaHBYUAcbMTRah3sQ/edit?usp=sharing',
+                                  );
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
+                                },
                             ),
                           ],
                         ),

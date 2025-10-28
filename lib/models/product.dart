@@ -17,6 +17,7 @@ class Product {
   final String imageUrl;
   final String composition;
   final int clientCode;
+  final String status; // 'enabled' or 'disabled'
 
   Product({
     required this.id,
@@ -35,7 +36,12 @@ class Product {
     required this.imageUrl,
     required this.composition,
     required this.clientCode,
+    this.status = 'enabled', // Default to enabled for backward compatibility
   });
+
+  // Helper getters for status checking
+  bool get isEnabled => status == 'enabled';
+  bool get isDisabled => status == 'disabled';
 
   factory Product.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -56,6 +62,7 @@ class Product {
       imageUrl: data['imageUrl'] ?? '',
       composition: data['composition'] ?? '',
       clientCode: data['clientCode'] ?? 0,
+      status: data['status'] ?? 'enabled', // Add status field
     );
   }
 }

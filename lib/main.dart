@@ -9,6 +9,7 @@ import 'package:novopharma/controllers/goal_provider.dart';
 import 'package:novopharma/controllers/quiz_provider.dart';
 import 'package:novopharma/controllers/rewards_controller.dart';
 import 'package:novopharma/controllers/redeemed_rewards_provider.dart';
+import 'package:novopharma/controllers/pluxee_redemption_provider.dart';
 import 'package:novopharma/controllers/leaderboard_provider.dart';
 import 'package:novopharma/controllers/sales_history_provider.dart';
 import 'package:novopharma/controllers/scan_provider.dart';
@@ -24,7 +25,7 @@ import 'package:novopharma/screens/profile_screen.dart';
 import 'package:novopharma/screens/goals_screen.dart';
 import 'package:novopharma/screens/barcode_scanner_screen.dart';
 import 'package:novopharma/screens/login_screen.dart';
-import 'package:novopharma/screens/rewards_screen.dart';
+import 'package:novopharma/screens/pluxee_redemption_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,15 +36,25 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
         ChangeNotifierProxyProvider<AuthProvider, GoalProvider>(
-          create: (context) => GoalProvider(Provider.of<AuthProvider>(context, listen: false)),
+          create: (context) =>
+              GoalProvider(Provider.of<AuthProvider>(context, listen: false)),
           update: (context, auth, previous) => previous!..update(auth),
         ),
         ChangeNotifierProxyProvider<AuthProvider, BadgeProvider>(
-          create: (context) => BadgeProvider(Provider.of<AuthProvider>(context, listen: false)),
+          create: (context) =>
+              BadgeProvider(Provider.of<AuthProvider>(context, listen: false)),
           update: (context, auth, previous) => previous!..update(auth),
         ),
         ChangeNotifierProxyProvider<AuthProvider, RedeemedRewardsProvider>(
-          create: (context) => RedeemedRewardsProvider(Provider.of<AuthProvider>(context, listen: false)),
+          create: (context) => RedeemedRewardsProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
+          update: (context, auth, previous) => previous!..update(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, PluxeeRedemptionProvider>(
+          create: (context) => PluxeeRedemptionProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
           update: (context, auth, previous) => previous!..update(auth),
         ),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
@@ -83,7 +94,7 @@ class NovoPharmaApp extends StatelessWidget {
         '/goals': (context) => const GoalsScreen(),
         '/scanner': (context) => const BarcodeScannerScreen(),
         '/login': (context) => const LoginScreen(),
-        '/rewards': (context) => const RewardsScreen(),
+        '/rewards': (context) => const PluxeeRedemptionScreen(),
       },
     );
   }
