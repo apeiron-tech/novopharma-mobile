@@ -12,7 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -425,22 +424,23 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      decoration: _buildModernInputDecoration(
-                        hintText: 'At least 8 characters',
-                        prefixIcon: Icons.lock_outline,
-                      ).copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: const Color(0xFF9CA3AF),
+                      decoration:
+                          _buildModernInputDecoration(
+                            hintText: 'At least 8 characters',
+                            prefixIcon: Icons.lock_outline,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: const Color(0xFF9CA3AF),
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                            ),
                           ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                      ),
                       validator: (value) {
                         if (value?.isEmpty ?? true)
                           return 'Password is required';
@@ -455,23 +455,24 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirmPassword,
-                      decoration: _buildModernInputDecoration(
-                        hintText: 'Re-enter your password',
-                        prefixIcon: Icons.lock_outline,
-                      ).copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: const Color(0xFF9CA3AF),
+                      decoration:
+                          _buildModernInputDecoration(
+                            hintText: 'Re-enter your password',
+                            prefixIcon: Icons.lock_outline,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: const Color(0xFF9CA3AF),
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureConfirmPassword =
+                                    !_obscureConfirmPassword,
+                              ),
+                            ),
                           ),
-                          onPressed: () => setState(
-                            () => _obscureConfirmPassword =
-                                !_obscureConfirmPassword,
-                          ),
-                        ),
-                      ),
                       validator: (value) {
                         if (value?.isEmpty ?? true)
                           return 'Please confirm your password';
@@ -793,11 +794,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   color: const Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF1F9BD1),
-                  size: 20,
-                ),
+                child: Icon(icon, color: const Color(0xFF1F9BD1), size: 20),
               ),
               const SizedBox(width: 12),
               Text(
@@ -839,10 +836,7 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF1F9BD1),
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF1F9BD1), width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -860,10 +854,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required String hintText,
     IconData? prefixIcon,
   }) {
-    return _buildInputDecoration(
-      hintText: hintText,
-      prefixIcon: prefixIcon,
-    );
+    return _buildInputDecoration(hintText: hintText, prefixIcon: prefixIcon);
   }
 
   Widget _buildPharmacyDropdown() {
