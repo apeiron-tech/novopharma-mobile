@@ -55,9 +55,7 @@ class _GoalsScreenState extends State<GoalsScreen>
   void _onNavigateToQuizzes() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const QuizListScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const QuizListScreen()),
     );
   }
 
@@ -74,48 +72,95 @@ class _GoalsScreenState extends State<GoalsScreen>
               // Header
               SliverAppBar(
                 pinned: true,
-                expandedHeight: 120,
-                backgroundColor: const Color(0xFFF6F8FB),
+                expandedHeight: 140,
+                backgroundColor: Colors.white,
                 elevation: 0,
                 automaticallyImplyLeading: false,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFFF6F8FB),
-                          Color(0xFFFFFFFF),
+                          const Color(0xFF1F9BD1).withOpacity(0.05),
+                          Colors.white,
                         ],
                       ),
                     ),
                     child: SafeArea(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              l10n.goals,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF102132),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Consumer<GoalProvider>(
-                              builder: (context, goalProvider, child) {
-                                final goalCount = goalProvider.goals.length;
-                                return Text(
-                                  l10n.activeGoalsCount(goalCount),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFF4A5568),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF1F9BD1),
+                                        Color(0xFF1887B8),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF1F9BD1,
+                                        ).withOpacity(0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
+                                  child: const Icon(
+                                    Icons.flag_rounded,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.goals,
+                                        style: const TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF102132),
+                                          letterSpacing: -0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Consumer<GoalProvider>(
+                                        builder:
+                                            (context, goalProvider, child) {
+                                              final goalCount =
+                                                  goalProvider.goals.length;
+                                              return Text(
+                                                l10n.activeGoalsCount(
+                                                  goalCount,
+                                                ),
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: Color(0xFF64748B),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              );
+                                            },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -204,8 +249,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                           ),
                         ),
                       ),
-                    const SizedBox(
-                        height: 100), // Bottom padding for navbar
+                    const SizedBox(height: 100), // Bottom padding for navbar
                   ],
                 ),
               ),
@@ -218,42 +262,37 @@ class _GoalsScreenState extends State<GoalsScreen>
 
   Widget _buildQuizNavigationCard(AppLocalizations l10n) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1F9BD1),
-            const Color(0xFF1F9BD1).withAlpha(204),
-          ],
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1F9BD1).withAlpha(76),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF6366F1).withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(51),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(18),
             ),
             child: const Center(
-              child: Text(
-                '💡',
-                style: TextStyle(fontSize: 24),
-              ),
+              child: Text('💡', style: TextStyle(fontSize: 28)),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,38 +300,55 @@ class _GoalsScreenState extends State<GoalsScreen>
                 Text(
                   l10n.quizzes,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   l10n.testYourKnowledge,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withAlpha(230),
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: _onNavigateToQuizzes,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF1F9BD1),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              minimumSize: const Size(100, 44),
-            ),
-            child: Text(
-              l10n.viewAll,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: _onNavigateToQuizzes,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.viewAll,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xFF6366F1),
+                      size: 18,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -336,10 +392,7 @@ class _GoalsScreenState extends State<GoalsScreen>
           const SizedBox(height: 8),
           Text(
             l10n.checkBackSoon,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF94A3B8),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
           ),
         ],
       ),
@@ -508,7 +561,8 @@ class GoalBottomSheet extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => GoalDetailsScreen(goal: goal),
+                                builder: (context) =>
+                                    GoalDetailsScreen(goal: goal),
                               ),
                             );
                           },
@@ -523,9 +577,7 @@ class GoalBottomSheet extends StatelessWidget {
                           ),
                           child: Text(
                             l10n.viewRules,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),

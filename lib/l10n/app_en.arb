@@ -20,6 +20,9 @@
     "yourPharmacy": "Your Pharmacy",
     "confirmPassword": "Confirm Password",
     "agreeToTerms": "I agree to the Terms of Service and Privacy Policy",
+    "iAccept": "I accept ",
+    "byContinuingYouAgree": "By continuing, you agree to ",
+    "termsAndPrivacy": "Terms of Use and Privacy Policy",
     "alreadyHaveAccount": "Already have an account? ",
     "selectYourPharmacy": "Select your pharmacy",
     "pleaseSelectPharmacy": "Please select a pharmacy",
@@ -82,11 +85,12 @@
     "saleDetails": "Sale Details",
     "availableStock": "Available Stock",
     "quantity": "Quantity",
-    "totalPrice": "Total Price",
-    "protocol": "Usage Tips",
+    "recommendedPrice": "Recommended Public Price",
+    "usageTips": "Usage Tips",
+    "protocol": "Protocol",
     "activeCampaigns": "Active Campaigns",
     "relatedGoals": "Related Goals",
-    "recommendedWith": "Recommended With",
+    "recommendedWith": "Protocol",
     "confirmSale": "Confirm Sale",
     "updateSale": "Update Sale",
     "outOfStock": "Out of Stock",
@@ -158,5 +162,76 @@
     "activeGoal": "Active Goal",
     "latestBadge": "Latest Badge",
     "noBadgesEarned": "No badges earned yet.",
-    "noActiveGoals": "No active goals."
+    "noActiveGoals": "No active goals.",
+    "availablePoints": "Available: {points} pts",
+    "@availablePoints": {
+        "description": "Available points after pending deductions",
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "pendingPoints": "{points} pts pending approval",
+    "@pendingPoints": {
+        "description": "Points pending approval",
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "pluxeeCredits": "Pluxee Credits",
+    "redeemPluxeeCredits": "Redeem Pluxee Credits",
+    "howItWorks": "How it works",
+    "choosePointsToConvert": "Choose how many points you want to convert",
+    "submitForReview": "Submit your request for admin review",
+    "onceApproved": "Once approved, points will be converted to Pluxee credits",
+    "conversionRate": "{points} points = 1 Pluxee credit",
+    "@conversionRate": {
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "redeemPointsNow": "Redeem Points Now",
+    "pendingRequests": "Pending Requests",
+    "redemptionHistory": "Redemption History",
+    "viewRedemptionHistory": "View Redemption History",
+    "noRedemptionHistory": "No Redemption History",
+    "noRedemptionHistoryMessage": "You have not made any redemption requests yet.",
+    "pointsToRedeem": "Points to Redeem",
+    "enterAmount": "Enter amount",
+    "youWillReceive": "You will receive:",
+    "pluxeeCreditsAmount": "{amount} Pluxee Credits",
+    "@pluxeeCreditsAmount": {
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "submitRequest": "Submit Request",
+    "requestSubmittedSuccess": "Request submitted successfully! It will be reviewed by an admin.",
+    "requestedDate": "Requested",
+    "processedDate": "Processed",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "tapToViewReason": "Tap to view rejection reason",
+    "rejectionReason": "Rejection Reason",
+    "noReasonProvided": "No reason provided",
+    "close": "Close",
+    "pointsPendingApproval": "{points} points pending approval",
+    "@pointsPendingApproval": {
+        "placeholders": {
+            "points": {
+                "type": "int"
+            }
+        }
+    },
+    "productNotAvailable": "Product Not Available",
+    "productNotAvailableMessage": "This product is not available at the moment. Please try again later.",
+    "goBack": "Go Back"
 }

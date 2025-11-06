@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -7,9 +8,9 @@ import 'package:novopharma/models/pharmacy.dart';
 import 'package:novopharma/screens/login_screen.dart';
 import 'package:novopharma/services/pharmacy_service.dart';
 import 'package:novopharma/services/storage_service.dart';
-import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -74,7 +75,8 @@ class _SignupScreenState extends State<SignupScreen> {
     final bool isFormValid = _formKey.currentState?.validate() ?? false;
     final bool isPasswordMatching =
         _passwordController.text == _confirmPasswordController.text;
-    final bool allFieldsFilled = _firstNameController.text.isNotEmpty &&
+    final bool allFieldsFilled =
+        _firstNameController.text.isNotEmpty &&
         _lastNameController.text.isNotEmpty &&
         _emailController.text.isNotEmpty &&
         _passwordController.text.isNotEmpty &&
@@ -108,7 +110,8 @@ class _SignupScreenState extends State<SignupScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate:
-          _selectedDate ?? DateTime.now().subtract(const Duration(days: 365 * 18)),
+          _selectedDate ??
+          DateTime.now().subtract(const Duration(days: 365 * 18)),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
     );
@@ -129,8 +132,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final tempUserId = DateTime.now().millisecondsSinceEpoch.toString();
-    final downloadUrl = await StorageService()
-        .uploadProfilePicture(tempUserId, _profileImage!);
+    final downloadUrl = await StorageService().uploadProfilePicture(
+      tempUserId,
+      _profileImage!,
+    );
 
     final error = await authProvider.signUp(
       name:
@@ -147,9 +152,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign up failed: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sign up failed: $error')));
       } else {
         // Pop the screen to let the AuthWrapper handle redirection
         Navigator.of(context).pop();
@@ -162,7 +167,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF6F8FB),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -170,12 +175,19 @@ class _SignupScreenState extends State<SignupScreen> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.black87,
+              color: Color(0xFF102132),
               size: 16,
             ),
           ),
@@ -192,248 +204,444 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                Text(
-                  l10n.createAccount,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                // Modern Header Section
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1F9BD1).withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.joinCommunity,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: LightModeColors.novoPharmaGray,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.allFieldsRequired,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.red.shade700),
-                ),
-                const SizedBox(height: 24),
-                _buildAvatarPicker(),
-                const SizedBox(height: 24),
-                // Name fields...
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            l10n.firstName,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.person_add_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.createAccount,
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _firstNameController,
-                            decoration: _buildInputDecoration(hintText: 'John'),
-                            validator: (value) =>
-                                (value?.isEmpty ?? true) ? 'Required' : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.lastName,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                const SizedBox(height: 4),
+                                Text(
+                                  l10n.joinCommunity,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
                                 ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _lastNameController,
-                            decoration: _buildInputDecoration(hintText: 'Doe'),
-                            validator: (value) =>
-                                (value?.isEmpty ?? true) ? 'Required' : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // Email field...
-                _buildSectionHeader(l10n.emailAddress),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: _buildInputDecoration(
-                    hintText: 'john.doe@email.com',
-                    prefixIcon: Icons.email_outlined,
-                  ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return 'Email is required';
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!))
-                      return 'Enter a valid email';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                // Phone Number
-                _buildSectionHeader(l10n.phoneNumber),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: _buildInputDecoration(
-                    hintText: 'Enter your phone number',
-                    prefixIcon: Icons.phone_outlined,
-                  ),
-                  validator: (value) =>
-                      (value?.isEmpty ?? true) ? 'Phone number is required' : null,
-                ),
-                const SizedBox(height: 24),
-                // Date of Birth
-                _buildSectionHeader(l10n.dateOfBirth),
-                TextFormField(
-                  controller: _dobController,
-                  readOnly: true,
-                  onTap: () => _selectDate(context),
-                  decoration: _buildInputDecoration(
-                    hintText: 'Select your birthdate',
-                    prefixIcon: Icons.calendar_today_outlined,
-                  ),
-                  validator: (value) =>
-                      (value?.isEmpty ?? true) ? 'Date of birth is required' : null,
-                ),
-                const SizedBox(height: 24),
-                // Pharmacy Dropdown
-                _buildSectionHeader(l10n.yourPharmacy),
-                _buildPharmacyDropdown(),
-                const SizedBox(height: 24),
-                // Password field...
-                _buildSectionHeader(l10n.password),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: _buildInputDecoration(
-                    hintText: 'At least 8 characters',
-                    prefixIcon: Icons.lock_outline,
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: LightModeColors.novoPharmaGray),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return 'Password is required';
-                    if (value!.length < 8)
-                      return 'Password must be at least 8 characters';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                // Confirm Password field...
-                _buildSectionHeader(l10n.confirmPassword),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: _buildInputDecoration(
-                    hintText: 'Re-enter your password',
-                    prefixIcon: Icons.lock_outline,
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: LightModeColors.novoPharmaGray),
-                      onPressed: () => setState(
-                          () => _obscureConfirmPassword = !_obscureConfirmPassword),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true)
-                      return 'Please confirm your password';
-                    if (value != _passwordController.text)
-                      return 'Passwords do not match';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-                // Terms checkbox...
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _agreeToTerms,
-                      onChanged: (value) {
-                        setState(() => _agreeToTerms = value ?? false);
-                        _updateButtonState();
-                      },
-                      activeColor: LightModeColors.novoPharmaBlue,
-                    ),
-                    Expanded(
-                      child: Text(l10n.agreeToTerms),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                // Create Account Button...
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed:
-                        _isButtonEnabled && !_isLoading ? _handleSignUp : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: LightModeColors.novoPharmaBlue,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(l10n.createAccount,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                // Sign in link...
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    ),
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(color: Colors.black87),
-                        children: [
-                          TextSpan(text: l10n.alreadyHaveAccount),
-                          TextSpan(
-                            text: l10n.signIn,
-                            style: const TextStyle(
-                              color: LightModeColors.novoPharmaBlue,
-                              fontWeight: FontWeight.w600,
+                              ],
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.allFieldsRequired,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildAvatarPicker(),
+                const SizedBox(height: 24),
+                // Name fields in modern card
+                _buildModernCard(
+                  icon: Icons.person_outline,
+                  title: 'Personal Information',
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildModernLabel(l10n.firstName),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: _firstNameController,
+                                decoration: _buildModernInputDecoration(
+                                  hintText: 'John',
+                                ),
+                                validator: (value) => (value?.isEmpty ?? true)
+                                    ? 'Required'
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildModernLabel(l10n.lastName),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: _lastNameController,
+                                decoration: _buildModernInputDecoration(
+                                  hintText: 'Doe',
+                                ),
+                                validator: (value) => (value?.isEmpty ?? true)
+                                    ? 'Required'
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Contact Information Card
+                _buildModernCard(
+                  icon: Icons.email_outlined,
+                  title: 'Contact Information',
+                  children: [
+                    _buildModernLabel(l10n.emailAddress),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: _buildModernInputDecoration(
+                        hintText: 'john.doe@email.com',
+                        prefixIcon: Icons.email_outlined,
+                      ),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) return 'Email is required';
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!))
+                          return 'Enter a valid email';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildModernLabel(l10n.phoneNumber),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: _buildModernInputDecoration(
+                        hintText: 'Enter your phone number',
+                        prefixIcon: Icons.phone_outlined,
+                      ),
+                      validator: (value) => (value?.isEmpty ?? true)
+                          ? 'Phone number is required'
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Additional Details Card
+                _buildModernCard(
+                  icon: Icons.badge_outlined,
+                  title: 'Additional Details',
+                  children: [
+                    _buildModernLabel(l10n.dateOfBirth),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _dobController,
+                      readOnly: true,
+                      onTap: () => _selectDate(context),
+                      decoration: _buildModernInputDecoration(
+                        hintText: 'Select your birthdate',
+                        prefixIcon: Icons.calendar_today_outlined,
+                      ),
+                      validator: (value) => (value?.isEmpty ?? true)
+                          ? 'Date of birth is required'
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildModernLabel(l10n.yourPharmacy),
+                    const SizedBox(height: 8),
+                    _buildPharmacyDropdown(),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Security Card
+                _buildModernCard(
+                  icon: Icons.lock_outline,
+                  title: 'Security',
+                  children: [
+                    _buildModernLabel(l10n.password),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration:
+                          _buildModernInputDecoration(
+                            hintText: 'At least 8 characters',
+                            prefixIcon: Icons.lock_outline,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: const Color(0xFF9CA3AF),
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                            ),
+                          ),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true)
+                          return 'Password is required';
+                        if (value!.length < 8)
+                          return 'Password must be at least 8 characters';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildModernLabel(l10n.confirmPassword),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration:
+                          _buildModernInputDecoration(
+                            hintText: 'Re-enter your password',
+                            prefixIcon: Icons.lock_outline,
+                          ).copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: const Color(0xFF9CA3AF),
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureConfirmPassword =
+                                    !_obscureConfirmPassword,
+                              ),
+                            ),
+                          ),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true)
+                          return 'Please confirm your password';
+                        if (value != _passwordController.text)
+                          return 'Passwords do not match';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Terms checkbox...
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _agreeToTerms,
+                        onChanged: (value) {
+                          setState(() => _agreeToTerms = value ?? false);
+                          _updateButtonState();
+                        },
+                        activeColor: const Color(0xFF1F9BD1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B7280),
+                            ),
+                            children: [
+                              TextSpan(text: l10n.iAccept),
+                              TextSpan(
+                                text: l10n.termsAndPrivacy,
+                                style: const TextStyle(
+                                  color: Color(0xFF1F9BD1),
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () async {
+                                    final url = Uri.parse(
+                                      'https://docs.google.com/document/d/1DJkotuIfIlnSE7QFdmW8ExhcnPqaHBYUAcbMTRah3sQ/edit?usp=sharing',
+                                    );
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(
+                                        url,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    }
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Create Account Button with modern design
+                Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: _isButtonEnabled
+                        ? const LinearGradient(
+                            colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
+                          )
+                        : null,
+                    color: _isButtonEnabled ? null : const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: _isButtonEnabled
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFF1F9BD1).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _isButtonEnabled && !_isLoading
+                        ? _handleSignUp
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.person_add_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(
+                                l10n.createAccount,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Sign in link with modern design
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: TextButton(
+                      onPressed: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 14,
+                          ),
+                          children: [
+                            TextSpan(text: l10n.alreadyHaveAccount),
+                            const TextSpan(text: ' '),
+                            TextSpan(
+                              text: l10n.signIn,
+                              style: const TextStyle(
+                                color: Color(0xFF1F9BD1),
+                                fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -452,28 +660,93 @@ class _SignupScreenState extends State<SignupScreen> {
     return Center(
       child: Column(
         children: [
-          Text(
-            l10n.uploadProfilePicture,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_upload_outlined,
+                  color: Color(0xFF1F9BD1),
+                  size: 18,
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.uploadProfilePicture,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F9BD1),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           GestureDetector(
             onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage:
-                  _profileImage != null ? FileImage(_profileImage!) : null,
-              child: _profileImage == null
-                  ? Icon(
-                      Icons.camera_alt,
-                      color: Colors.grey.shade800,
-                      size: 40,
-                    )
-                  : null,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1F9BD1).withOpacity(0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.white,
+                    child: CircleAvatar(
+                      radius: 56,
+                      backgroundColor: const Color(0xFFF6F8FB),
+                      backgroundImage: _profileImage != null
+                          ? FileImage(_profileImage!)
+                          : null,
+                      child: _profileImage == null
+                          ? const Icon(
+                              Icons.person_outline,
+                              color: Color(0xFF9CA3AF),
+                              size: 50,
+                            )
+                          : null,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1F9BD1).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -481,46 +754,107 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-        ),
-        const SizedBox(height: 8),
-      ],
+  Widget _buildModernLabel(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF6B7280),
+      ),
     );
   }
 
-  InputDecoration _buildInputDecoration(
-      {required String hintText, IconData? prefixIcon}) {
+  Widget _buildModernCard({
+    required IconData icon,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: const Color(0xFF1F9BD1), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF102132),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration({
+    required String hintText,
+    IconData? prefixIcon,
+  }) {
     return InputDecoration(
       hintText: hintText,
+      hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
       prefixIcon: prefixIcon != null
-          ? Icon(prefixIcon, color: LightModeColors.novoPharmaGray)
+          ? Icon(prefixIcon, color: const Color(0xFF9CA3AF), size: 20)
           : null,
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: const Color(0xFFF9FAFB),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: LightModeColors.novoPharmaBlue, width: 2),
+        borderSide: const BorderSide(color: Color(0xFF1F9BD1), width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
+  }
+
+  InputDecoration _buildModernInputDecoration({
+    required String hintText,
+    IconData? prefixIcon,
+  }) {
+    return _buildInputDecoration(hintText: hintText, prefixIcon: prefixIcon);
   }
 
   Widget _buildPharmacyDropdown() {
@@ -541,6 +875,7 @@ class _SignupScreenState extends State<SignupScreen> {
         final pharmacies = snapshot.data!;
         return DropdownButtonFormField<Pharmacy>(
           value: _selectedPharmacy,
+          isExpanded: true,
           decoration: _buildInputDecoration(
             hintText: l10n.selectYourPharmacy,
             prefixIcon: Icons.local_hospital_outlined,
@@ -548,7 +883,11 @@ class _SignupScreenState extends State<SignupScreen> {
           items: pharmacies.map((pharmacy) {
             return DropdownMenuItem<Pharmacy>(
               value: pharmacy,
-              child: Text(pharmacy.name),
+              child: Text(
+                pharmacy.name,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             );
           }).toList(),
           onChanged: (Pharmacy? newValue) {

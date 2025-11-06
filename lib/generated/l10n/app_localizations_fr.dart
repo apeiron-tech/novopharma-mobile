@@ -75,6 +75,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'J\'accepte les conditions d\'utilisation et la politique de confidentialité';
 
   @override
+  String get iAccept => 'J\'accepte ';
+
+  @override
+  String get byContinuingYouAgree => 'En continuant, vous acceptez ';
+
+  @override
+  String get termsAndPrivacy =>
+      'les conditions d\'utilisation et la politique de confidentialité';
+
+  @override
   String get alreadyHaveAccount => 'Vous avez déjà un compte? ';
 
   @override
@@ -272,10 +282,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get quantity => 'Quantité';
 
   @override
-  String get totalPrice => 'Prix total';
+  String get recommendedPrice => 'Prix public conseillé';
 
   @override
-  String get protocol => 'Conseils d\'utilisation';
+  String get usageTips => 'Conseil d\'utilisation';
+
+  @override
+  String get protocol => 'Protocole';
 
   @override
   String get activeCampaigns => 'Campagnes actives';
@@ -284,7 +297,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get relatedGoals => 'Objectifs associés';
 
   @override
-  String get recommendedWith => 'Recommandé avec';
+  String get recommendedWith => 'Protocole';
 
   @override
   String get confirmSale => 'Confirmer la vente';
@@ -460,4 +473,122 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noBadgesEarned => 'Aucun badge gagné.';
+
+  @override
+  String availablePoints(int points) {
+    return 'Disponible: $points pts';
+  }
+
+  @override
+  String pendingPoints(int points) {
+    return '$points pts en attente d\'approbation';
+  }
+
+  @override
+  String get pluxeeCredits => 'Crédits Pluxee';
+
+  @override
+  String get redeemPluxeeCredits => 'Échanger des crédits Pluxee';
+
+  @override
+  String get howItWorks => 'Comment ça marche';
+
+  @override
+  String get choosePointsToConvert =>
+      'Choisissez combien de points vous voulez convertir';
+
+  @override
+  String get submitForReview =>
+      'Soumettez votre demande pour examen par un administrateur';
+
+  @override
+  String get onceApproved =>
+      'Une fois approuvée, les points seront convertis en crédits Pluxee';
+
+  @override
+  String conversionRate(int points) {
+    return '$points points = 1 crédit Pluxee';
+  }
+
+  @override
+  String get redeemPointsNow => 'Échanger des points maintenant';
+
+  @override
+  String get pendingRequests => 'Demandes en attente';
+
+  @override
+  String get redemptionHistory => 'Historique des échanges';
+
+  @override
+  String get viewRedemptionHistory => 'Voir l\'historique des échanges';
+
+  @override
+  String get noRedemptionHistory => 'Aucun historique d\'échange';
+
+  @override
+  String get noRedemptionHistoryMessage =>
+      'Vous n\'avez pas encore fait de demande d\'échange.';
+
+  @override
+  String get pointsToRedeem => 'Points à échanger';
+
+  @override
+  String get enterAmount => 'Entrez le montant';
+
+  @override
+  String get youWillReceive => 'Vous recevrez:';
+
+  @override
+  String pluxeeCreditsAmount(String amount) {
+    return '$amount crédits Pluxee';
+  }
+
+  @override
+  String get submitRequest => 'Soumettre la demande';
+
+  @override
+  String get requestSubmittedSuccess =>
+      'Demande soumise avec succès ! Elle sera examinée par un administrateur.';
+
+  @override
+  String get requestedDate => 'Demandé';
+
+  @override
+  String get processedDate => 'Traité';
+
+  @override
+  String get statusPending => 'En attente';
+
+  @override
+  String get statusApproved => 'Approuvé';
+
+  @override
+  String get statusRejected => 'Rejeté';
+
+  @override
+  String get tapToViewReason => 'Appuyez pour voir la raison du rejet';
+
+  @override
+  String get rejectionReason => 'Raison du rejet';
+
+  @override
+  String get noReasonProvided => 'Aucune raison fournie';
+
+  @override
+  String get close => 'Fermer';
+
+  @override
+  String pointsPendingApproval(int points) {
+    return '$points points en attente d\'approbation';
+  }
+
+  @override
+  String get productNotAvailable => 'Produit non disponible';
+
+  @override
+  String get productNotAvailableMessage =>
+      'Ce produit n\'est pas disponible pour le moment. Veuillez réessayer plus tard.';
+
+  @override
+  String get goBack => 'Retour';
 }
