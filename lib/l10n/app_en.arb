@@ -69,10 +69,10 @@
     "phone": "Phone",
     "updateProfile": "Update Profile",
     "disconnect": "Disconnect",
-    "rewardsAndRedeem": "Rewards & Redeem",
+    "rewardsAndRedeem": "Rewards & Points Exchange",
     "allTimeRewardPoints": "All time reward points earned: {points}",
     "viewRewardPointsHistory": "View reward points history",
-    "redeemYourPoints": "Redeem your points",
+    "redeemYourPoints": "Redeem my points",
     "noRewardsAvailable": "No rewards available",
     "cancel": "Cancel",
     "redeem": "Redeem",
@@ -85,12 +85,12 @@
     "saleDetails": "Sale Details",
     "availableStock": "Available Stock",
     "quantity": "Quantity",
-    "recommendedPrice": "Recommended Public Price",
+    "recommendedPrice": "Recommended Price",
     "usageTips": "Usage Tips",
-    "protocol": "Protocol",
+    "protocol": "Products to Suggest With",
     "activeCampaigns": "Active Campaigns",
     "relatedGoals": "Related Goals",
-    "recommendedWith": "Protocol",
+    "recommendedWith": "Products to Suggest With",
     "confirmSale": "Confirm Sale",
     "updateSale": "Update Sale",
     "outOfStock": "Out of Stock",
@@ -181,7 +181,7 @@
             }
         }
     },
-    "pluxeeCredits": "Pluxee Credits",
+    "pluxeeCredits": "Rewards & Points Exchange",
     "redeemPluxeeCredits": "Redeem Pluxee Credits",
     "howItWorks": "How it works",
     "choosePointsToConvert": "Choose how many points you want to convert",
@@ -195,7 +195,7 @@
             }
         }
     },
-    "redeemPointsNow": "Redeem Points Now",
+    "redeemPointsNow": "Redeem your points",
     "pendingRequests": "Pending Requests",
     "redemptionHistory": "Redemption History",
     "viewRedemptionHistory": "View Redemption History",
@@ -233,5 +233,33 @@
     },
     "productNotAvailable": "Product Not Available",
     "productNotAvailableMessage": "This product is not available at the moment. Please try again later.",
-    "goBack": "Go Back"
+    "goBack": "Go Back",
+    "pointsAccumulatedToDate": "Points cumulés\nà ce jour en",
+    "currentPointsBalance": "Solde de points\nactuels",
+    "rankingOn": "Classement sur xx inscrits",
+    "outOf": "out of {count} registered",
+    "@outOf": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "performanceTracking": "Suivi des\nperformances",
+    "objectives": "Objectifs",
+    "lastBadge": "Dernier badge",
+    "nationalRanking": "Classement national",
+    "rankOnMychallenge": "{rank}e sur {total} inscrits sur mychallenge",
+    "@rankOnMychallenge": {
+        "placeholders": {
+            "rank": {
+                "type": "String"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "nationalPodium": "Le podium national",
+    "myNationalPosition": "Ma position sur le classement national"
 }

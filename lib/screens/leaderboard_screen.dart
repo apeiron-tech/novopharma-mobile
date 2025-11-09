@@ -53,7 +53,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       l10n.daily,
       l10n.weekly,
       l10n.monthly,
-      l10n.yearly
+      l10n.yearly,
     ];
     final List<String> periods = ['daily', 'weekly', 'monthly', 'yearly'];
 
@@ -69,21 +69,29 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       child: Column(
                         children: [
                           _buildHeader(l10n),
                           const SizedBox(height: 20),
                           _buildCurrentUserCard(
-                              leaderboardProvider.leaderboardData, l10n),
+                            leaderboardProvider.leaderboardData,
+                            l10n,
+                          ),
                           const SizedBox(height: 20),
                           _buildTabSelector(leaderboardProvider, tabs, periods),
                           const SizedBox(height: 20),
                           _buildTopThreeSection(
-                              leaderboardProvider.leaderboardData, l10n),
+                            leaderboardProvider.leaderboardData,
+                            l10n,
+                          ),
                           const SizedBox(height: 20),
                           _buildLeaderboardList(
-                              leaderboardProvider.leaderboardData, l10n),
+                            leaderboardProvider.leaderboardData,
+                            l10n,
+                          ),
                         ],
                       ),
                     ),
@@ -109,7 +117,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: Text(
-            l10n.leaderboard,
+            l10n.nationalRanking,
             style: const TextStyle(
               color: LightModeColors.dashboardTextPrimary,
               fontSize: 18,
@@ -127,7 +135,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildTabSelector(
-      LeaderboardProvider provider, List<String> tabs, List<String> periods) {
+    LeaderboardProvider provider,
+    List<String> tabs,
+    List<String> periods,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(tabs.length, (index) {
@@ -140,7 +151,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: EdgeInsets.symmetric(
-                  horizontal: index == 0 ? 0 : 4, vertical: 0),
+                horizontal: index == 0 ? 0 : 4,
+                vertical: 0,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 color: isActive
@@ -166,7 +179,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildCurrentUserCard(
-      List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
+    List<Map<String, dynamic>> leaderboardData,
+    AppLocalizations l10n,
+  ) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
     final currentUserData = leaderboardData.firstWhere(
@@ -176,49 +191,182 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(31, 26, 31, 36),
       decoration: BoxDecoration(
-        color: LightModeColors.dashboardTealBlue,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.yourRank,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '#${currentUserData['rank']}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1F9BD1).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${currentUserData['points']} pts',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles in background
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.outOfEmployees(leaderboardData.length),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
+          Positioned(
+            left: -30,
+            bottom: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+          ),
+          // Main content
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        l10n.yourRank.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Color(0xFFF59E0B),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '#${currentUserData['rank']}',
+                            style: const TextStyle(
+                              color: Color(0xFF1F2937),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '${currentUserData['points']}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 42,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'pts',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.emoji_events_rounded,
+                        color: Colors.white.withOpacity(0.9),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          l10n.rankOnMychallenge(
+                            currentUserData['rank']?.toString() ?? 'N/A',
+                            leaderboardData.length,
+                          ),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -227,7 +375,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildTopThreeSection(
-      List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
+    List<Map<String, dynamic>> leaderboardData,
+    AppLocalizations l10n,
+  ) {
     if (leaderboardData.isEmpty) return const SizedBox.shrink();
     final topThree = leaderboardData.take(3).toList();
 
@@ -240,7 +390,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       child: Column(
         children: [
           Text(
-            l10n.topPerformers,
+            l10n.nationalPodium,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -263,7 +413,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildPodiumItem(
-      Map<String, dynamic> user, int position, double height) {
+    Map<String, dynamic> user,
+    int position,
+    double height,
+  ) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
     final isCurrentUser = user['userId'] == currentUserId;
@@ -289,8 +442,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           CircleAvatar(
             radius: 25,
             backgroundImage: NetworkImage(
-                authProvider.userProfile?.avatarUrl ??
-                    UserModel.defaultAvatarUrl),
+              authProvider.userProfile?.avatarUrl ?? UserModel.defaultAvatarUrl,
+            ),
           )
         else
           Container(
@@ -308,22 +461,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: Text(
                 _getInitials(user['name']),
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.white),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: medalColor,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.star,
-            color: Colors.white,
-            size: 16,
-          ),
+          decoration: BoxDecoration(color: medalColor, shape: BoxShape.circle),
+          child: Icon(Icons.star, color: Colors.white, size: 16),
         ),
         const SizedBox(height: 8),
         Text(
@@ -337,10 +485,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         const SizedBox(height: 4),
         Text(
           '${user['points']} pts',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
-            fontSize: 10,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10),
         ),
         const SizedBox(height: 8),
         Container(
@@ -348,10 +493,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           height: height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                medalColor.withOpacity(0.8),
-                medalColor,
-              ],
+              colors: [medalColor.withOpacity(0.8), medalColor],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -366,7 +508,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildLeaderboardList(
-      List<Map<String, dynamic>> leaderboardData, AppLocalizations l10n) {
+    List<Map<String, dynamic>> leaderboardData,
+    AppLocalizations l10n,
+  ) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
 
@@ -382,7 +526,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: Row(
               children: [
                 Text(
-                  l10n.allEmployees,
+                  l10n.myNationalPosition,
                   style: const TextStyle(
                     color: LightModeColors.dashboardTextPrimary,
                     fontSize: 12,
@@ -419,8 +563,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 color: isCurrentUser
                     ? LightModeColors.dashboardLightCyan.withOpacity(0.1)
                     : Colors.transparent,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -449,9 +595,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     if (isCurrentUser)
                       CircleAvatar(
                         radius: 20,
-                        backgroundImage: NetworkImage(authProvider
-                                .userProfile?.avatarUrl ??
-                            UserModel.defaultAvatarUrl),
+                        backgroundImage: NetworkImage(
+                          authProvider.userProfile?.avatarUrl ??
+                              UserModel.defaultAvatarUrl,
+                        ),
                       )
                     else
                       Container(
@@ -469,20 +616,24 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           child: Text(
                             _getInitials(user['name']),
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        isCurrentUser ? user['name'] : _getInitials(user['name']),
+                        isCurrentUser
+                            ? user['name']
+                            : _getInitials(user['name']),
                         style: TextStyle(
                           color: LightModeColors.dashboardTextPrimary,
                           fontSize: 14,
-                          fontWeight:
-                              isCurrentUser ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isCurrentUser
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                     ),

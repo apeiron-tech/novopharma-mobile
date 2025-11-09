@@ -225,7 +225,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disconnect => 'Disconnect';
 
   @override
-  String get rewardsAndRedeem => 'Rewards & Redeem';
+  String get rewardsAndRedeem => 'Rewards & Points Exchange';
 
   @override
   String allTimeRewardPoints(Object points) {
@@ -236,7 +236,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewRewardPointsHistory => 'View reward points history';
 
   @override
-  String get redeemYourPoints => 'Redeem your points';
+  String get redeemYourPoints => 'Redeem my points';
 
   @override
   String get noRewardsAvailable => 'No rewards available';
@@ -276,13 +276,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quantity => 'Quantity';
 
   @override
-  String get recommendedPrice => 'Recommended Public Price';
+  String get recommendedPrice => 'Recommended Price';
 
   @override
   String get usageTips => 'Usage Tips';
 
   @override
-  String get protocol => 'Protocol';
+  String get protocol => 'Products to Suggest With';
 
   @override
   String get activeCampaigns => 'Active Campaigns';
@@ -291,7 +291,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get relatedGoals => 'Related Goals';
 
   @override
-  String get recommendedWith => 'Protocol';
+  String get recommendedWith => 'Products to Suggest With';
 
   @override
   String get confirmSale => 'Confirm Sale';
@@ -478,7 +478,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pluxeeCredits => 'Pluxee Credits';
+  String get pluxeeCredits => 'Rewards & Points Exchange';
 
   @override
   String get redeemPluxeeCredits => 'Redeem Pluxee Credits';
@@ -503,7 +503,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get redeemPointsNow => 'Redeem Points Now';
+  String get redeemPointsNow => 'Redeem your points';
 
   @override
   String get pendingRequests => 'Pending Requests';
@@ -583,4 +583,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get goBack => 'Go Back';
+
+  @override
+  String get pointsAccumulatedToDate => 'Points cumulés\nà ce jour en';
+
+  @override
+  String get currentPointsBalance => 'Solde de points\nactuels';
+
+  @override
+  String get rankingOn => 'Classement sur xx inscrits';
+
+  @override
+  String outOf(int count) {
+    return 'out of $count registered';
+  }
+
+  @override
+  String get performanceTracking => 'Suivi des\nperformances';
+
+  @override
+  String get objectives => 'Objectifs';
+
+  @override
+  String get lastBadge => 'Dernier badge';
+
+  @override
+  String get nationalRanking => 'Classement national';
+
+  @override
+  String rankOnMychallenge(String rank, int total) {
+    return '${rank}e sur $total inscrits sur mychallenge';
+  }
+
+  @override
+  String get nationalPodium => 'Le podium national';
+
+  @override
+  String get myNationalPosition => 'Ma position sur le classement national';
 }

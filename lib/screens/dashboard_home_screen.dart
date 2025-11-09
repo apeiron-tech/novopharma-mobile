@@ -4,7 +4,6 @@ import 'package:novopharma/controllers/badge_provider.dart';
 import 'package:novopharma/controllers/goal_provider.dart';
 import 'package:novopharma/controllers/leaderboard_provider.dart';
 import 'package:novopharma/controllers/redeemed_rewards_provider.dart';
-import 'package:novopharma/models/goal.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/screens/badges_screen.dart';
 import 'package:novopharma/screens/goals_screen.dart';
@@ -89,7 +88,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                     onNotificationTap: () {},
                                   ),
                                   const SizedBox(height: 20),
-                                  _buildSalesCard(user, l10n),
+                                  _buildPointsCard(user, l10n, redeemedRewards),
+                                  const SizedBox(height: 16),
+                                  _buildRedeemButton(context, l10n),
                                   const SizedBox(height: 20),
                                   _AnimatedDateSelector(
                                     key: UniqueKey(),
@@ -135,204 +136,224 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 
-  Widget _buildSalesCard(UserModel? user, AppLocalizations l10n) {
+  Widget _buildPointsCard(
+    UserModel? user,
+    AppLocalizations l10n,
+    RedeemedRewardsProvider redeemedRewards,
+  ) {
     final currentPoints = user?.points ?? 0;
     final pendingPoints = user?.pendingPluxeePoints ?? 0;
-    final availablePoints = user?.availablePoints ?? 0;
+    final allTimePoints = currentPoints + redeemedRewards.totalPointsSpent;
 
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1F9BD1).withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // All-time points section (left side)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      l10n.pointsAccumulatedToDate,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      allTimePoints.toString().replaceAllMapped(
+                        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                        (Match m) => '${m[1]} ',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Vertical divider
+              Container(
+                width: 1,
+                height: 80,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0),
+                      Colors.white.withOpacity(0.3),
+                      Colors.white.withOpacity(0),
+                    ],
+                  ),
+                ),
+              ),
+              // Current balance section (right side)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      l10n.currentPointsBalance,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      currentPoints.toString().replaceAllMapped(
+                        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                        (Match m) => '${m[1]} ',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (pendingPoints > 0) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.hourglass_empty_rounded,
+                    color: Color(0xFFD97706),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Points en attente',
+                        style: TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$pendingPoints points',
+                        style: const TextStyle(
+                          color: Color(0xFF1F2937),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRedeemButton(BuildContext context, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      height: 56,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF074F75), Color(0xFF1F9BD1)],
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFFEF4444),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1F9BD1).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: const Color(0xFFEF4444).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () {
+            Navigator.pushNamed(context, '/rewards');
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  l10n.totalPoints.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
-                  ),
-                ),
+              const Icon(
+                Icons.card_giftcard_rounded,
+                color: Colors.white,
+                size: 22,
               ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.stars_rounded,
+              const SizedBox(width: 12),
+              Text(
+                l10n.redeemYourPoints,
+                style: const TextStyle(
                   color: Colors.white,
-                  size: 24,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    currentPoints.toString().replaceAllMapped(
-                      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                      (Match m) => '${m[1]},',
-                    ),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 42,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      'pts',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Material(
-                color: const Color(0xFFEF4444),
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/rewards');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.card_giftcard,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.redeemYourPoints,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.currentBalance,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (pendingPoints > 0) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.availablePoints(availablePoints),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          l10n.pendingPoints(pendingPoints),
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -354,55 +375,11 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
       mainAxisSpacing: 16,
       childAspectRatio: 1.0,
       children: [
-        _buildTotalPointsCard(l10n, user, redeemedRewards),
         _buildYearlyRankCard(context, l10n, user, leaderboard),
-        _buildTopGoalCard(context, l10n, goal),
-        _buildRecentBadgeCard(context, l10n, badge),
+        _buildLeaderboardCard(context, l10n),
+        _buildGoalsCard(context, l10n),
+        _buildBadgesCard(context, l10n),
       ],
-    );
-  }
-
-  Widget _buildTotalPointsCard(
-    AppLocalizations l10n,
-    UserModel user,
-    RedeemedRewardsProvider redeemedRewards,
-  ) {
-    final allTimePoints = user.points + redeemedRewards.totalPointsSpent;
-    return _buildDashboardCard(
-      title: l10n.totalPoints,
-      icon: Icons.stars_rounded,
-      backgroundColor: const Color(0xFF10B981),
-      contentColor: Colors.white,
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF10B981), Color(0xFF059669)],
-      ),
-      mainContent: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Text(
-            '$allTimePoints',
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'pts',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.85),
-            ),
-          ),
-        ],
-      ),
-      secondaryInfo: l10n.allTime,
     );
   }
 
@@ -412,283 +389,221 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     UserModel user,
     LeaderboardProvider leaderboard,
   ) {
-    final currentUserData = leaderboard.leaderboardData.firstWhere(
-      (u) => u['userId'] == user.uid,
-      orElse: () => {'rank': 'N/A'},
-    );
-    final rank = currentUserData['rank'];
+    final totalUsers = leaderboard.leaderboardData.length;
 
-    return _buildDashboardCard(
-      title: l10n.yearlyRank,
-      icon: Icons.emoji_events_rounded,
-      backgroundColor: const Color(0xFFF59E0B),
-      contentColor: Colors.white,
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-      ),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
-      ),
-      mainContent: Text(
-        '#$rank',
-        style: const TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-        ),
-      ),
-      secondaryInfo: l10n.outOfEmployees(leaderboard.leaderboardData.length),
-    );
-  }
-
-  Widget _buildTopGoalCard(
-    BuildContext context,
-    AppLocalizations l10n,
-    GoalProvider goalProvider,
-  ) {
-    Goal? topGoal;
-    double maxProgress = -1;
-
-    for (var goal in goalProvider.goals) {
-      if (goal.userProgress != null && goal.targetValue > 0) {
-        final progress = (goal.userProgress!.progressValue / goal.targetValue);
-        if (progress > maxProgress) {
-          maxProgress = progress;
-          topGoal = goal;
-        }
-      }
-    }
-
-    return _buildDashboardCard(
-      title: l10n.activeGoal,
-      icon: Icons.track_changes_rounded,
-      backgroundColor: const Color(0xFF6366F1),
-      contentColor: Colors.white,
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-      ),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const GoalsScreen()),
-      ),
-      mainContent: topGoal != null
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  topGoal.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: maxProgress.clamp(0.0, 1.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.white.withOpacity(0.5),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          : Text(
-              l10n.noActiveGoals,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-      secondaryInfo: topGoal != null
-          ? '${(maxProgress * 100).toStringAsFixed(0)}% ${l10n.complete}'
-          : '',
-    );
-  }
-
-  Widget _buildRecentBadgeCard(
-    BuildContext context,
-    AppLocalizations l10n,
-    BadgeProvider badgeProvider,
-  ) {
-    final awardedBadges = badgeProvider.badges
-        .where((b) => b.isAwarded)
-        .toList();
-    awardedBadges.sort(
-      (a, b) => b.userBadge!.awardedAt.compareTo(a.userBadge!.awardedAt),
-    );
-    final mostRecentBadge = awardedBadges.isNotEmpty
-        ? awardedBadges.first
-        : null;
-
-    return _buildDashboardCard(
-      title: l10n.latestBadge,
-      icon: Icons.workspace_premium_rounded,
-      backgroundColor: const Color(0xFFEF4444),
-      contentColor: Colors.white,
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
-      ),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const BadgesScreen()),
-      ),
-      mainContent: mostRecentBadge != null
-          ? Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.3),
-                    blurRadius: 16,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Image.network(
-                mostRecentBadge.badge.imageUrl,
-                height: 48,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.workspace_premium,
-                  size: 48,
-                  color: Colors.white,
-                ),
-              ),
-            )
-          : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.2),
-              ),
-              child: const Icon(
-                Icons.lock_outline,
-                size: 32,
-                color: Colors.white,
-              ),
-            ),
-      secondaryInfo: mostRecentBadge?.badge.name ?? l10n.noBadgesEarned,
-    );
-  }
-
-  Widget _buildDashboardCard({
-    required String title,
-    required Widget mainContent,
-    required String secondaryInfo,
-    required IconData icon,
-    required Color backgroundColor,
-    required Color contentColor,
-    Gradient? gradient,
-    VoidCallback? onTap,
-  }) {
     return Container(
       decoration: BoxDecoration(
-        gradient: gradient,
-        color: gradient == null ? backgroundColor : null,
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: backgroundColor.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: backgroundColor.withOpacity(0.15),
-            blurRadius: 40,
-            offset: const Offset(0, 16),
-            spreadRadius: 0,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          splashColor: Colors.white.withOpacity(0.1),
-          highlightColor: Colors.white.withOpacity(0.05),
-          child: Container(
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: contentColor.withOpacity(0.85),
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.1,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icon, color: contentColor, size: 20),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF3B82F6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.star, color: Colors.white, size: 40),
                 ),
-                const Spacer(),
-                Center(
-                  child: DefaultTextStyle(
-                    style: TextStyle(
-                      color: contentColor,
-                      fontFamily: 'Poppins',
-                    ),
-                    child: mainContent,
+                const SizedBox(height: 16),
+                Text(
+                  'Classement sur $totalUsers inscrits',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
                   ),
                 ),
-                const Spacer(),
-                Center(
-                  child: Text(
-                    secondaryInfo,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: contentColor.withOpacity(0.8),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                    ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardCard(BuildContext context, AppLocalizations l10n) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+          ),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.performanceTracking,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalsCard(BuildContext context, AppLocalizations l10n) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const GoalsScreen()),
+          ),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1E293B),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.flag_circle,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.objectives,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBadgesCard(BuildContext context, AppLocalizations l10n) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BadgesScreen()),
+          ),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF3B82F6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.military_tech,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.lastBadge,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
                   ),
                 ),
               ],

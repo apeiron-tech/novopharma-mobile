@@ -69,10 +69,10 @@
     "phone": "Téléphone",
     "updateProfile": "Mettre à jour le profil",
     "disconnect": "Se déconnecter",
-    "rewardsAndRedeem": "Récompenses et échange",
+    "rewardsAndRedeem": "Récompenses & échanges de points",
     "allTimeRewardPoints": "Total des points de récompense gagnés : {points}",
     "viewRewardPointsHistory": "Voir l'historique des points de récompense",
-    "redeemYourPoints": "Échangez vos points",
+    "redeemYourPoints": "Échanger mes points",
     "noRewardsAvailable": "Aucune récompense disponible",
     "cancel": "Annuler",
     "redeem": "Échanger",
@@ -85,12 +85,12 @@
     "saleDetails": "Détails de la vente",
     "availableStock": "Stock disponible",
     "quantity": "Quantité",
-    "recommendedPrice": "Prix public conseillé",
+    "recommendedPrice": "Prix recommandé",
     "usageTips": "Conseil d'utilisation",
-    "protocol": "Protocole",
+    "protocol": "Produits à proposer avec",
     "activeCampaigns": "Campagnes actives",
     "relatedGoals": "Objectifs associés",
-    "recommendedWith": "Protocole",
+    "recommendedWith": "Produits à proposer avec",
     "confirmSale": "Confirmer la vente",
     "updateSale": "Mettre à jour la vente",
     "outOfStock": "En rupture de stock",
@@ -181,7 +181,7 @@
             }
         }
     },
-    "pluxeeCredits": "Crédits Pluxee",
+    "pluxeeCredits": "Récompenses & échanges de points",
     "redeemPluxeeCredits": "Échanger des crédits Pluxee",
     "howItWorks": "Comment ça marche",
     "choosePointsToConvert": "Choisissez combien de points vous voulez convertir",
@@ -195,7 +195,7 @@
             }
         }
     },
-    "redeemPointsNow": "Échanger des points maintenant",
+    "redeemPointsNow": "Échanger vos points",
     "pendingRequests": "Demandes en attente",
     "redemptionHistory": "Historique des échanges",
     "viewRedemptionHistory": "Voir l'historique des échanges",
@@ -233,5 +233,33 @@
     },
     "productNotAvailable": "Produit non disponible",
     "productNotAvailableMessage": "Ce produit n'est pas disponible pour le moment. Veuillez réessayer plus tard.",
-    "goBack": "Retour"
+    "goBack": "Retour",
+    "pointsAccumulatedToDate": "Points cumulés\nà ce jour en",
+    "currentPointsBalance": "Solde de points\nactuels",
+    "rankingOn": "Classement sur xx inscrits",
+    "outOf": "sur {count} inscrits",
+    "@outOf": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "performanceTracking": "Suivi des\nperformances",
+    "objectives": "Objectifs",
+    "lastBadge": "Dernier badge",
+    "nationalRanking": "Classement national",
+    "rankOnMychallenge": "{rank}e sur {total} inscrits sur mychallenge",
+    "@rankOnMychallenge": {
+        "placeholders": {
+            "rank": {
+                "type": "String"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "nationalPodium": "Le podium national",
+    "myNationalPosition": "Ma position sur le classement national"
 }
