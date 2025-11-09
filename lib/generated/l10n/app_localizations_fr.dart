@@ -229,7 +229,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get disconnect => 'Se déconnecter';
 
   @override
-  String get rewardsAndRedeem => 'Récompenses et échange';
+  String get rewardsAndRedeem => 'Récompenses & échanges de points';
 
   @override
   String allTimeRewardPoints(Object points) {
@@ -241,7 +241,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Voir l\'historique des points de récompense';
 
   @override
-  String get redeemYourPoints => 'Échangez vos points';
+  String get redeemYourPoints => 'Échanger mes points';
 
   @override
   String get noRewardsAvailable => 'Aucune récompense disponible';
@@ -282,13 +282,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get quantity => 'Quantité';
 
   @override
-  String get recommendedPrice => 'Prix public conseillé';
+  String get recommendedPrice => 'Prix recommandé';
 
   @override
   String get usageTips => 'Conseil d\'utilisation';
 
   @override
-  String get protocol => 'Protocole';
+  String get protocol => 'Produits à proposer avec';
 
   @override
   String get activeCampaigns => 'Campagnes actives';
@@ -297,7 +297,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get relatedGoals => 'Objectifs associés';
 
   @override
-  String get recommendedWith => 'Protocole';
+  String get recommendedWith => 'Produits à proposer avec';
 
   @override
   String get confirmSale => 'Confirmer la vente';
@@ -485,7 +485,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get pluxeeCredits => 'Crédits Pluxee';
+  String get pluxeeCredits => 'Récompenses & échanges de points';
 
   @override
   String get redeemPluxeeCredits => 'Échanger des crédits Pluxee';
@@ -511,7 +511,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get redeemPointsNow => 'Échanger des points maintenant';
+  String get redeemPointsNow => 'Échanger vos points';
 
   @override
   String get pendingRequests => 'Demandes en attente';
@@ -591,4 +591,41 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get goBack => 'Retour';
+
+  @override
+  String get pointsAccumulatedToDate => 'Points cumulés\nà ce jour en';
+
+  @override
+  String get currentPointsBalance => 'Solde de points\nactuels';
+
+  @override
+  String get rankingOn => 'Classement sur xx inscrits';
+
+  @override
+  String outOf(int count) {
+    return 'sur $count inscrits';
+  }
+
+  @override
+  String get performanceTracking => 'Suivi des\nperformances';
+
+  @override
+  String get objectives => 'Objectifs';
+
+  @override
+  String get lastBadge => 'Dernier badge';
+
+  @override
+  String get nationalRanking => 'Classement national';
+
+  @override
+  String rankOnMychallenge(String rank, int total) {
+    return '${rank}e sur $total inscrits sur mychallenge';
+  }
+
+  @override
+  String get nationalPodium => 'Le podium national';
+
+  @override
+  String get myNationalPosition => 'Ma position sur le classement national';
 }
