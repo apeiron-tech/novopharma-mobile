@@ -289,35 +289,14 @@ class _PluxeeRedemptionScreenState extends State<PluxeeRedemptionScreen> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
-                ),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.card_giftcard_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              l10n.pluxeeCredits,
-              style: const TextStyle(
-                color: Color(0xFF102132),
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
+        title: Text(
+          l10n.pluxeeCredits,
+          style: const TextStyle(
+            color: Color(0xFF102132),
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
         ),
       ),
       body: Consumer2<AuthProvider, PluxeeRedemptionProvider>(

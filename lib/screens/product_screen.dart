@@ -864,7 +864,7 @@ class _ProductScreenState extends State<ProductScreen> {
               child: ElevatedButton(
                 onPressed: () => _submitSale(product, user),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1F9BD1),
+                  backgroundColor: const Color(0xFFEF4444),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(

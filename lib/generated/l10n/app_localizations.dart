@@ -521,7 +521,7 @@ abstract class AppLocalizations {
   /// No description provided for @rewardsAndRedeem.
   ///
   /// In en, this message translates to:
-  /// **'Rewards & Redeem'**
+  /// **'Rewards & Points Exchange'**
   String get rewardsAndRedeem;
 
   /// No description provided for @allTimeRewardPoints.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @redeemYourPoints.
   ///
   /// In en, this message translates to:
-  /// **'Redeem your points'**
+  /// **'Redeem my points'**
   String get redeemYourPoints;
 
   /// No description provided for @noRewardsAvailable.
@@ -617,7 +617,7 @@ abstract class AppLocalizations {
   /// No description provided for @recommendedPrice.
   ///
   /// In en, this message translates to:
-  /// **'Recommended Public Price'**
+  /// **'Recommended Price'**
   String get recommendedPrice;
 
   /// No description provided for @usageTips.
@@ -629,7 +629,7 @@ abstract class AppLocalizations {
   /// No description provided for @protocol.
   ///
   /// In en, this message translates to:
-  /// **'Protocol'**
+  /// **'Products to Suggest With'**
   String get protocol;
 
   /// No description provided for @activeCampaigns.
@@ -647,7 +647,7 @@ abstract class AppLocalizations {
   /// No description provided for @recommendedWith.
   ///
   /// In en, this message translates to:
-  /// **'Protocol'**
+  /// **'Products to Suggest With'**
   String get recommendedWith;
 
   /// No description provided for @confirmSale.
@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @pluxeeCredits.
   ///
   /// In en, this message translates to:
-  /// **'Pluxee Credits'**
+  /// **'Rewards & Points Exchange'**
   String get pluxeeCredits;
 
   /// No description provided for @redeemPluxeeCredits.
@@ -1019,7 +1019,7 @@ abstract class AppLocalizations {
   /// No description provided for @redeemPointsNow.
   ///
   /// In en, this message translates to:
-  /// **'Redeem Points Now'**
+  /// **'Redeem your points'**
   String get redeemPointsNow;
 
   /// No description provided for @pendingRequests.
@@ -1165,6 +1165,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go Back'**
   String get goBack;
+
+  /// No description provided for @pointsAccumulatedToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Points cumulés\nà ce jour en'**
+  String get pointsAccumulatedToDate;
+
+  /// No description provided for @currentPointsBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Solde de points\nactuels'**
+  String get currentPointsBalance;
+
+  /// No description provided for @rankingOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Classement sur xx inscrits'**
+  String get rankingOn;
+
+  /// No description provided for @outOf.
+  ///
+  /// In en, this message translates to:
+  /// **'out of {count} registered'**
+  String outOf(int count);
+
+  /// No description provided for @performanceTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Suivi des\nperformances'**
+  String get performanceTracking;
+
+  /// No description provided for @objectives.
+  ///
+  /// In en, this message translates to:
+  /// **'Objectifs'**
+  String get objectives;
+
+  /// No description provided for @lastBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Dernier badge'**
+  String get lastBadge;
+
+  /// No description provided for @nationalRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Classement national'**
+  String get nationalRanking;
+
+  /// No description provided for @rankOnMychallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'{rank}e sur {total} inscrits sur mychallenge'**
+  String rankOnMychallenge(String rank, int total);
+
+  /// No description provided for @nationalPodium.
+  ///
+  /// In en, this message translates to:
+  /// **'Le podium national'**
+  String get nationalPodium;
+
+  /// No description provided for @myNationalPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Ma position sur le classement national'**
+  String get myNationalPosition;
 }
 
 class _AppLocalizationsDelegate
