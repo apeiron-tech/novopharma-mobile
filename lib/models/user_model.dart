@@ -14,6 +14,7 @@ class UserModel {
   final int pendingPluxeePoints;
   final String? avatarUrl;
   final String? phone;
+  final String? position;
 
   static const String defaultAvatarUrl =
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
@@ -33,6 +34,7 @@ class UserModel {
     this.pendingPluxeePoints = 0,
     this.avatarUrl,
     this.phone,
+    this.position,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -51,6 +53,7 @@ class UserModel {
       pendingPluxeePoints: data['pendingPluxeePoints'] ?? 0,
       avatarUrl: data['avatarUrl'],
       phone: data['phone'],
+      position: data['position'],
     );
   }
 

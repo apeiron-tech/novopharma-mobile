@@ -263,6 +263,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get delete => 'Supprimer';
 
   @override
+  String get yourPosition => 'Votre position';
+
+  @override
+  String get selectPosition => 'Sélectionnez votre position';
+
+  @override
+  String get pleaseSelectPosition => 'Veuillez sélectionner votre position';
+
+  @override
+  String get pharmacienTitulaire => 'Pharmacien titulaire';
+
+  @override
+  String get pharmacienAssistant => 'Pharmacien assistant';
+
+  @override
+  String get preparateur => 'Préparateur';
+
+  @override
+  String get responsableParapharmacie => 'Responsable parapharmacie';
+
+  @override
   String get scanBarcodeHere => 'Scannez le code-barres ici';
 
   @override
