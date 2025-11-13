@@ -7,7 +7,7 @@ import 'package:novopharma/screens/forgot_password_screen.dart';
 import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:novopharma/widgets/terms_conditions_modal.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -426,16 +426,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 decoration: TextDecoration.underline,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () async {
-                                  final url = Uri.parse(
-                                    'https://docs.google.com/document/d/1DJkotuIfIlnSE7QFdmW8ExhcnPqaHBYUAcbMTRah3sQ/edit?usp=sharing',
-                                  );
-                                  if (await canLaunchUrl(url)) {
-                                    await launchUrl(
-                                      url,
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                  }
+                                ..onTap = () {
+                                  TermsConditionsModal.show(context);
                                 },
                             ),
                           ],

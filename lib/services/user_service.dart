@@ -8,7 +8,9 @@ class UserService {
 
   Stream<UserModel?> getUserProfile(String uid) {
     try {
-      return _firestore.collection(_collection).doc(uid).snapshots().map((docSnapshot) {
+      return _firestore.collection(_collection).doc(uid).snapshots().map((
+        docSnapshot,
+      ) {
         if (docSnapshot.exists) {
           return UserModel.fromFirestore(docSnapshot);
         }
@@ -28,6 +30,7 @@ class UserService {
     required String pharmacyName,
     required String phone,
     required String avatarUrl,
+    required String position,
   }) async {
     try {
       await _firestore.collection(_collection).doc(user.uid).set({
@@ -39,6 +42,7 @@ class UserService {
         'role': 'user',
         'pharmacy': pharmacyName,
         'pharmacyId': pharmacyId,
+        'position': position,
         'points': 0,
         'status': 'pending', // Set initial status to pending
         'createdAt': FieldValue.serverTimestamp(),
@@ -62,7 +66,10 @@ class UserService {
 
   Future<UserModel?> getUser(String uid) async {
     try {
-      final docSnapshot = await _firestore.collection(_collection).doc(uid).get();
+      final docSnapshot = await _firestore
+          .collection(_collection)
+          .doc(uid)
+          .get();
       if (docSnapshot.exists) {
         return UserModel.fromFirestore(docSnapshot);
       }

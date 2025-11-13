@@ -10,7 +10,7 @@ import 'package:novopharma/services/pharmacy_service.dart';
 import 'package:novopharma/services/storage_service.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:novopharma/widgets/terms_conditions_modal.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -37,9 +37,17 @@ class _SignupScreenState extends State<SignupScreen> {
 
   DateTime? _selectedDate;
   Pharmacy? _selectedPharmacy;
+  String? _selectedPosition;
   late Future<List<Pharmacy>> _pharmaciesFuture;
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+
+  final List<Map<String, String>> _positions = [
+    {'value': 'pharmacien_titulaire', 'key': 'pharmacienTitulaire'},
+    {'value': 'pharmacien_assistant', 'key': 'pharmacienAssistant'},
+    {'value': 'preparateur', 'key': 'preparateur'},
+    {'value': 'responsable_parapharmacie', 'key': 'responsableParapharmacie'},
+  ];
 
   @override
   void initState() {
@@ -84,7 +92,8 @@ class _SignupScreenState extends State<SignupScreen> {
         _phoneController.text.isNotEmpty &&
         _selectedDate != null &&
         _selectedPharmacy != null &&
-        _profileImage != null;
+        _selectedPosition != null;
+    _profileImage != null;
 
     final bool shouldBeEnabled =
         isFormValid && isPasswordMatching && allFieldsFilled && _agreeToTerms;
@@ -147,6 +156,7 @@ class _SignupScreenState extends State<SignupScreen> {
       pharmacyName: _selectedPharmacy!.name,
       phone: _phoneController.text.trim(),
       avatarUrl: downloadUrl ?? '',
+      position: _selectedPosition!,
     );
 
     if (mounted) {
@@ -411,6 +421,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     _buildModernLabel(l10n.yourPharmacy),
                     const SizedBox(height: 8),
                     _buildPharmacyDropdown(),
+                    const SizedBox(height: 16),
+                    _buildModernLabel(l10n.yourPosition),
+                    const SizedBox(height: 8),
+                    _buildPositionDropdown(),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -522,16 +536,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                                 recognizer: TapGestureRecognizer()
-                                  ..onTap = () async {
-                                    final url = Uri.parse(
-                                      'https://docs.google.com/document/d/1DJkotuIfIlnSE7QFdmW8ExhcnPqaHBYUAcbMTRah3sQ/edit?usp=sharing',
-                                    );
-                                    if (await canLaunchUrl(url)) {
-                                      await launchUrl(
-                                        url,
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                    }
+                                  ..onTap = () {
+                                    TermsConditionsModal.show(context);
                                   },
                               ),
                             ],
@@ -900,6 +906,49 @@ class _SignupScreenState extends State<SignupScreen> {
               value == null ? l10n.pleaseSelectPharmacy : null,
         );
       },
+    );
+  }
+
+  Widget _buildPositionDropdown() {
+    final l10n = AppLocalizations.of(context)!;
+    return DropdownButtonFormField<String>(
+      value: _selectedPosition,
+      isExpanded: true,
+      decoration: _buildInputDecoration(
+        hintText: l10n.selectPosition,
+        prefixIcon: Icons.work_outline,
+      ),
+      items: _positions.map((position) {
+        String labelText;
+        switch (position['key']) {
+          case 'pharmacienTitulaire':
+            labelText = l10n.pharmacienTitulaire;
+            break;
+          case 'pharmacienAssistant':
+            labelText = l10n.pharmacienAssistant;
+            break;
+          case 'preparateur':
+            labelText = l10n.preparateur;
+            break;
+          case 'responsableParapharmacie':
+            labelText = l10n.responsableParapharmacie;
+            break;
+          default:
+            labelText = position['key']!;
+        }
+
+        return DropdownMenuItem<String>(
+          value: position['value'],
+          child: Text(labelText, overflow: TextOverflow.ellipsis, maxLines: 1),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedPosition = newValue;
+        });
+        _updateButtonState();
+      },
+      validator: (value) => value == null ? l10n.pleaseSelectPosition : null,
     );
   }
 }
