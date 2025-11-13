@@ -578,6 +578,48 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @yourPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Position'**
+  String get yourPosition;
+
+  /// No description provided for @selectPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your position'**
+  String get selectPosition;
+
+  /// No description provided for @pleaseSelectPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select your position'**
+  String get pleaseSelectPosition;
+
+  /// No description provided for @pharmacienTitulaire.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed Pharmacist'**
+  String get pharmacienTitulaire;
+
+  /// No description provided for @pharmacienAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant Pharmacist'**
+  String get pharmacienAssistant;
+
+  /// No description provided for @preparateur.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacy Technician'**
+  String get preparateur;
+
+  /// No description provided for @responsableParapharmacie.
+  ///
+  /// In en, this message translates to:
+  /// **'Parapharmacy Manager'**
+  String get responsableParapharmacie;
+
   /// No description provided for @scanBarcodeHere.
   ///
   /// In en, this message translates to:

@@ -50,31 +50,35 @@ class AuthProvider with ChangeNotifier {
     } else {
       _firebaseUser = user;
       _appAuthState = AppAuthState.unknown;
-      _userProfileSubscription =
-          _userService.getUserProfile(user.uid).listen((userProfile) {
-        _userProfile = userProfile;
-        if (_userProfile == null) {
-          _appAuthState = AppAuthState.authenticatedDisabled;
-        } else {
-          switch (_userProfile!.status) {
-            case UserStatus.active:
-              _appAuthState = AppAuthState.authenticatedActive;
-              break;
-            case UserStatus.pending:
-              _appAuthState = AppAuthState.authenticatedPending;
-              break;
-            case UserStatus.disabled:
-              _appAuthState = AppAuthState.authenticatedDisabled;
-              break;
-            default:
+      _userProfileSubscription = _userService
+          .getUserProfile(user.uid)
+          .listen(
+            (userProfile) {
+              _userProfile = userProfile;
+              if (_userProfile == null) {
+                _appAuthState = AppAuthState.authenticatedDisabled;
+              } else {
+                switch (_userProfile!.status) {
+                  case UserStatus.active:
+                    _appAuthState = AppAuthState.authenticatedActive;
+                    break;
+                  case UserStatus.pending:
+                    _appAuthState = AppAuthState.authenticatedPending;
+                    break;
+                  case UserStatus.disabled:
+                    _appAuthState = AppAuthState.authenticatedDisabled;
+                    break;
+                  default:
+                    _appAuthState = AppAuthState.unauthenticated;
+                }
+              }
+              notifyListeners();
+            },
+            onError: (error) {
               _appAuthState = AppAuthState.unauthenticated;
-          }
-        }
-        notifyListeners();
-      }, onError: (error) {
-        _appAuthState = AppAuthState.unauthenticated;
-        notifyListeners();
-      });
+              notifyListeners();
+            },
+          );
     }
     notifyListeners();
   }
@@ -97,6 +101,7 @@ class AuthProvider with ChangeNotifier {
     required String pharmacyName,
     required String phone,
     required String avatarUrl,
+    required String position,
   }) async {
     try {
       UserCredential userCredential = await _authService
@@ -111,6 +116,7 @@ class AuthProvider with ChangeNotifier {
         pharmacyName: pharmacyName,
         phone: phone,
         avatarUrl: avatarUrl,
+        position: position,
       );
       return null; // Success
     } on FirebaseAuthException catch (e) {
@@ -153,7 +159,10 @@ class AuthProvider with ChangeNotifier {
     await _authService.signOut();
   }
 
-  Future<String?> changePassword(String currentPassword, String newPassword) async {
+  Future<String?> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     if (_firebaseUser == null) return 'No user logged in.';
     try {
       await _authService.changePassword(
