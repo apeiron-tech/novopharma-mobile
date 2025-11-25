@@ -19,16 +19,12 @@ class AuthWrapper extends StatelessWidget {
       case AppAuthState.authenticatedPending:
         return const PendingApprovalScreen();
       case AppAuthState.unauthenticated:
-      case AppAuthState.authenticatedDisabled: // Kicking disabled users back to login
+      case AppAuthState
+          .authenticatedDisabled: // Kicking disabled users back to login
         return const LoginScreen();
       case AppAuthState.unknown:
       default:
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
   }
 }
-

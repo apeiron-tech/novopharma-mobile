@@ -14,6 +14,8 @@ import 'package:novopharma/controllers/leaderboard_provider.dart';
 import 'package:novopharma/controllers/sales_history_provider.dart';
 import 'package:novopharma/controllers/scan_provider.dart';
 import 'package:novopharma/controllers/locale_provider.dart';
+import 'package:novopharma/controllers/formation_provider.dart';
+import 'package:novopharma/controllers/actualite_provider.dart';
 import 'package:novopharma/firebase_options.dart';
 import 'package:novopharma/navigation.dart';
 import 'package:novopharma/navigation_observer.dart';
@@ -62,6 +64,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SalesHistoryProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => RewardsController()),
+        ChangeNotifierProvider(create: (_) => FormationProvider()),
+        ChangeNotifierProvider(create: (_) => ActualiteProvider()),
       ],
       child: const NovoPharmaApp(),
     ),

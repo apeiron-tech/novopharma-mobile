@@ -34,7 +34,8 @@ class ScanProvider with ChangeNotifier {
   int _quantity = 1;
   int get quantity => _quantity;
 
-  bool get isStockAvailable => _scannedProduct != null && _scannedProduct!.stock > 0;
+  bool get isStockAvailable =>
+      _scannedProduct != null && _scannedProduct!.stock > 0;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
@@ -70,16 +71,21 @@ class ScanProvider with ChangeNotifier {
         final recommendedIds = _scannedProduct!.recommendedWith;
 
         // Fetch campaigns, goals, and recommended products in parallel
-        final campaignsFuture = _campaignService.findMatchingCampaigns(_scannedProduct!);
-        final goalsFuture = _goalService.getUserGoals().then((allGoals) => _goalService.findMatchingGoals(_scannedProduct!, allGoals));
+        final campaignsFuture = _campaignService.findMatchingCampaigns(
+          _scannedProduct!,
+        );
+        final goalsFuture = _goalService.getUserGoals().then(
+          (allGoals) =>
+              _goalService.findMatchingGoals(_scannedProduct!, allGoals),
+        );
         final recommendedProductsFuture = (recommendedIds.isNotEmpty)
             ? _productService.getProductsByIds(recommendedIds)
             : Future.value(<Product>[]);
 
         final results = await Future.wait([
-            campaignsFuture,
-            goalsFuture,
-            recommendedProductsFuture,
+          campaignsFuture,
+          goalsFuture,
+          recommendedProductsFuture,
         ]);
 
         _matchingCampaigns = results[0] as List<Campaign>;
@@ -110,7 +116,7 @@ class ScanProvider with ChangeNotifier {
       // Calculate total points and total price based on quantity
       final int totalPoints = _scannedProduct!.points * _quantity;
       final double totalPrice = _scannedProduct!.price * _quantity;
-      
+
       final newSale = Sale(
         id: '', // Firestore will generate this
         userId: userId,
@@ -124,14 +130,14 @@ class ScanProvider with ChangeNotifier {
       );
 
       await _saleService.createSale(newSale);
-      
+
       // Clear the state after a successful sale
       _scannedProduct = null;
       _matchingCampaigns = [];
       _matchingGoals = [];
       _recommendedProducts = [];
       _quantity = 1;
-      
+
       return true;
     } catch (e) {
       _errorMessage = 'Failed to confirm sale. Please try again.';

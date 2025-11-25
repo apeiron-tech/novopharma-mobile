@@ -46,7 +46,9 @@ class RedeemedRewardService {
         'redeemedAt': FieldValue.serverTimestamp(),
       });
 
-      transaction.update(userRef, {'points': FieldValue.increment(-pointsSpent)});
+      transaction.update(userRef, {
+        'points': FieldValue.increment(-pointsSpent),
+      });
       transaction.update(rewardRef, {'stock': FieldValue.increment(-1)});
     });
   }
@@ -60,15 +62,16 @@ class RedeemedRewardService {
           .orderBy('redeemedAt', descending: true)
           .snapshots()
           .map((querySnapshot) {
-        print('Received ${querySnapshot.docs.length} redeemed rewards update.');
-        return querySnapshot.docs
-            .map((doc) => RedeemedReward.fromFirestore(doc))
-            .toList();
-      });
+            print(
+              'Received ${querySnapshot.docs.length} redeemed rewards update.',
+            );
+            return querySnapshot.docs
+                .map((doc) => RedeemedReward.fromFirestore(doc))
+                .toList();
+          });
     } catch (e) {
       print('Error setting up redeemed rewards stream: $e');
       return Stream.value([]);
     }
   }
 }
-

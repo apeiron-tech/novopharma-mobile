@@ -33,16 +33,20 @@ class DashboardHeader extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: titleWidget ?? Text( 
-            user == null
-                ? AppLocalizations.of(context)!.welcomeMessage
-                : AppLocalizations.of(context)!.welcomeUser(user!.name.split(' ').first),
-            style: const TextStyle(
-              color: LightModeColors.dashboardTextPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          child:
+              titleWidget ??
+              Text(
+                user == null
+                    ? AppLocalizations.of(context)!.welcomeMessage
+                    : AppLocalizations.of(
+                        context,
+                      )!.welcomeUser(user!.name.split(' ').first),
+                style: const TextStyle(
+                  color: LightModeColors.dashboardTextPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
         ),
         GestureDetector(
           onTap: onNotificationTap,

@@ -22,7 +22,7 @@ class LightModeColors {
   static const novoPharmaBlue = Color(0xFF1F9BD1);
   static const novoPharmaLightBlue = Color(0xFFF6F8FB);
   static const novoPharmaGray = Color(0xFF64748B);
-  
+
   // Dashboard specific colors
   static const dashboardTextPrimary = Color(0xFF102132);
   static const dashboardTextSecondary = Color(0xFF4A5568);

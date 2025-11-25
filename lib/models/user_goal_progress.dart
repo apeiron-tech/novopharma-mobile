@@ -24,10 +24,6 @@ class UserGoalProgress {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'goalId': goalId,
-      'progressValue': progressValue,
-      'status': status,
-    };
+    return {'goalId': goalId, 'progressValue': progressValue, 'status': status};
   }
 }

@@ -37,13 +37,9 @@ class _ProgressRingState extends State<ProgressRing>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: widget.progress,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _animation = Tween<double>(begin: 0.0, end: widget.progress).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
     _animationController.forward();
   }
 
@@ -51,13 +47,13 @@ class _ProgressRingState extends State<ProgressRing>
   void didUpdateWidget(ProgressRing oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.progress != widget.progress) {
-      _animation = Tween<double>(
-        begin: _animation.value,
-        end: widget.progress,
-      ).animate(CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ));
+      _animation = Tween<double>(begin: _animation.value, end: widget.progress)
+          .animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeOutCubic,
+            ),
+          );
       _animationController.reset();
       _animationController.forward();
     }
@@ -98,7 +94,8 @@ class _ProgressRingState extends State<ProgressRing>
                 final percentage = (_animation.value * 100).round();
                 return Text(
                   '$percentage%',
-                  style: widget.textStyle ??
+                  style:
+                      widget.textStyle ??
                       TextStyle(
                         fontSize: widget.size * 0.2,
                         fontWeight: FontWeight.w600,

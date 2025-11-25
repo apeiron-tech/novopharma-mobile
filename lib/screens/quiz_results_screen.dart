@@ -21,7 +21,9 @@ class QuizResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double scorePercentage = totalQuestions > 0 ? correctAnswers / totalQuestions : 0;
+    final double scorePercentage = totalQuestions > 0
+        ? correctAnswers / totalQuestions
+        : 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FB),
@@ -39,12 +41,14 @@ class QuizResultsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Text(
               'Review Your Answers',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
+              ),
             ),
           ),
-          Expanded(
-            child: _buildAnswerReviewList(),
-          ),
+          Expanded(child: _buildAnswerReviewList()),
         ],
       ),
       bottomNavigationBar: Padding(
@@ -58,9 +62,14 @@ class QuizResultsScreen extends StatelessWidget {
             backgroundColor: LightModeColors.novoPharmaBlue,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: const Text(
+            'Done',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );
@@ -74,7 +83,11 @@ class QuizResultsScreen extends StatelessWidget {
         children: [
           Text(
             scorePercentage > 0.7 ? 'Congratulations!' : 'Good Effort!',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextPrimary),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: LightModeColors.dashboardTextPrimary,
+            ),
           ),
           const SizedBox(height: 16),
           Stack(
@@ -87,12 +100,17 @@ class QuizResultsScreen extends StatelessWidget {
                   value: scorePercentage,
                   strokeWidth: 8,
                   backgroundColor: Colors.grey.shade200,
-                  valueColor: AlwaysStoppedAnimation<Color>(scorePercentage > 0.7 ? Colors.green : Colors.orange),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    scorePercentage > 0.7 ? Colors.green : Colors.orange,
+                  ),
                 ),
               ),
               Text(
                 '$correctAnswers/$totalQuestions',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -114,11 +132,14 @@ class QuizResultsScreen extends StatelessWidget {
         final question = quiz.questions[index];
         final userAnswers = selectedAnswers[index] ?? [];
         final correctAnswers = question.correctAnswers;
-        
+
         userAnswers.sort();
         correctAnswers.sort();
 
-        final bool isCorrect = const ListEquality().equals(userAnswers, correctAnswers);
+        final bool isCorrect = const ListEquality().equals(
+          userAnswers,
+          correctAnswers,
+        );
 
         return _AnswerReviewCard(
           questionNumber: index + 1,
@@ -173,7 +194,7 @@ class _AnswerReviewCard extends StatelessWidget {
             if (question.explanation.isNotEmpty) ...[
               const SizedBox(height: 16),
               _buildExplanationBox(),
-            ]
+            ],
           ],
         ),
       ),
@@ -210,10 +231,7 @@ class _AnswerReviewCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontWeight: fontWeight,
-                color: color,
-              ),
+              style: TextStyle(fontWeight: fontWeight, color: color),
             ),
           ),
         ],

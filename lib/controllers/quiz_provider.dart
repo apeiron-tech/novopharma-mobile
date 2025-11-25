@@ -42,8 +42,10 @@ class QuizProvider extends ChangeNotifier {
       _quizzes = await _quizService.getAllQuizzes();
       _userAttempts = {}; // Reset attempts
       for (final quiz in _quizzes) {
-        final attemptCount =
-            await _quizService.getUserAttemptCount(userId, quiz.id);
+        final attemptCount = await _quizService.getUserAttemptCount(
+          userId,
+          quiz.id,
+        );
         _userAttempts[quiz.id] = attemptCount;
       }
     } catch (e) {
@@ -63,8 +65,9 @@ class QuizProvider extends ChangeNotifier {
           : 0,
     );
 
-    _activeQuizState!.quizTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) {
+    _activeQuizState!.quizTimer = Timer.periodic(const Duration(seconds: 1), (
+      timer,
+    ) {
       if (_activeQuizState!.quizTimeLeft > 0) {
         _activeQuizState!.quizTimeLeft--;
         notifyListeners();
@@ -86,19 +89,22 @@ class QuizProvider extends ChangeNotifier {
     }
 
     final question = _activeQuizState!
-        .quiz.questions[_activeQuizState!.currentQuestionIndex];
+        .quiz
+        .questions[_activeQuizState!.currentQuestionIndex];
     _activeQuizState!.questionTimeLeft = question.timeLimitSeconds;
     notifyListeners();
 
-    _activeQuizState!.questionTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_activeQuizState!.questionTimeLeft > 0) {
-        _activeQuizState!.questionTimeLeft--;
-        notifyListeners();
-      } else {
-        nextQuestion();
-      }
-    });
+    _activeQuizState!.questionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (_activeQuizState!.questionTimeLeft > 0) {
+          _activeQuizState!.questionTimeLeft--;
+          notifyListeners();
+        } else {
+          nextQuestion();
+        }
+      },
+    );
   }
 
   void nextQuestion() {
@@ -122,4 +128,3 @@ class QuizProvider extends ChangeNotifier {
     _activeQuizState = null;
   }
 }
-

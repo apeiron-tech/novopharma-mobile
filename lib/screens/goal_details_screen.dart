@@ -104,46 +104,58 @@ class _GoalDetailsScreenState extends State<GoalDetailsScreen> {
     final List<Widget> criteriaWidgets = [];
 
     if (criteria.products.isNotEmpty) {
-      criteriaWidgets.add(_buildFutureCriteriaCard(
-        icon: Icons.inventory_2_outlined,
-        title: l10n.eligibleProducts,
-        future: _productNamesFuture,
-      ));
+      criteriaWidgets.add(
+        _buildFutureCriteriaCard(
+          icon: Icons.inventory_2_outlined,
+          title: l10n.eligibleProducts,
+          future: _productNamesFuture,
+        ),
+      );
     }
-     if (criteria.pharmacyIds.isNotEmpty) {
-      criteriaWidgets.add(_buildFutureCriteriaCard(
-        icon: Icons.local_pharmacy_outlined,
-        title: l10n.eligiblePharmacies,
-        future: _pharmacyNamesFuture,
-      ));
+    if (criteria.pharmacyIds.isNotEmpty) {
+      criteriaWidgets.add(
+        _buildFutureCriteriaCard(
+          icon: Icons.local_pharmacy_outlined,
+          title: l10n.eligiblePharmacies,
+          future: _pharmacyNamesFuture,
+        ),
+      );
     }
     if (criteria.brands.isNotEmpty) {
-      criteriaWidgets.add(_buildCriteriaCard(
-        icon: Icons.stars_outlined,
-        title: l10n.eligibleBrands,
-        items: criteria.brands,
-      ));
+      criteriaWidgets.add(
+        _buildCriteriaCard(
+          icon: Icons.stars_outlined,
+          title: l10n.eligibleBrands,
+          items: criteria.brands,
+        ),
+      );
     }
     if (criteria.categories.isNotEmpty) {
-      criteriaWidgets.add(_buildCriteriaCard(
-        icon: Icons.category_outlined,
-        title: l10n.eligibleCategories,
-        items: criteria.categories,
-      ));
+      criteriaWidgets.add(
+        _buildCriteriaCard(
+          icon: Icons.category_outlined,
+          title: l10n.eligibleCategories,
+          items: criteria.categories,
+        ),
+      );
     }
     if (criteria.zones.isNotEmpty) {
-      criteriaWidgets.add(_buildCriteriaCard(
-        icon: Icons.public_outlined,
-        title: l10n.eligibleZones,
-        items: criteria.zones,
-      ));
+      criteriaWidgets.add(
+        _buildCriteriaCard(
+          icon: Icons.public_outlined,
+          title: l10n.eligibleZones,
+          items: criteria.zones,
+        ),
+      );
     }
     if (criteria.clientCategories.isNotEmpty) {
-      criteriaWidgets.add(_buildCriteriaCard(
-        icon: Icons.groups_outlined,
-        title: l10n.eligibleClientCategories,
-        items: criteria.clientCategories,
-      ));
+      criteriaWidgets.add(
+        _buildCriteriaCard(
+          icon: Icons.groups_outlined,
+          title: l10n.eligibleClientCategories,
+          items: criteria.clientCategories,
+        ),
+      );
     }
 
     if (criteriaWidgets.isEmpty) {
@@ -231,16 +243,17 @@ class _GoalDetailsScreenState extends State<GoalDetailsScreen> {
               spacing: 8.0,
               runSpacing: 8.0,
               children: items
-                  .map((item) => Chip(
-                        label: Text(item),
-                        backgroundColor:
-                            const Color(0xFF1F9BD1).withOpacity(0.1),
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF1F9BD1),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        side: BorderSide.none,
-                      ))
+                  .map(
+                    (item) => Chip(
+                      label: Text(item),
+                      backgroundColor: const Color(0xFF1F9BD1).withOpacity(0.1),
+                      labelStyle: const TextStyle(
+                        color: Color(0xFF1F9BD1),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      side: BorderSide.none,
+                    ),
+                  )
                   .toList(),
             ),
         ],
