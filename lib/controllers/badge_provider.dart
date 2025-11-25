@@ -13,11 +13,7 @@ class BadgeDisplayInfo {
   final UserBadge? userBadge; // Null if not awarded
   final double progress; // 0.0 to 1.0
 
-  BadgeDisplayInfo({
-    required this.badge,
-    this.userBadge,
-    this.progress = 0.0,
-  });
+  BadgeDisplayInfo({required this.badge, this.userBadge, this.progress = 0.0});
 
   bool get isAwarded => userBadge != null;
 }
@@ -74,7 +70,9 @@ class BadgeProvider with ChangeNotifier {
 
       final List<BadgeDisplayInfo> badgeInfos = [];
       for (final badge in allBadges) {
-        final userBadge = userBadges.firstWhereOrNull((ub) => ub.badgeId == badge.id);
+        final userBadge = userBadges.firstWhereOrNull(
+          (ub) => ub.badgeId == badge.id,
+        );
 
         double progress = 0.0;
         if (userBadge != null) {
@@ -83,14 +81,15 @@ class BadgeProvider with ChangeNotifier {
           progress = await _calculateProgress(badge, userId);
         }
 
-        badgeInfos.add(BadgeDisplayInfo(
-          badge: badge,
-          userBadge: userBadge,
-          progress: progress,
-        ));
+        badgeInfos.add(
+          BadgeDisplayInfo(
+            badge: badge,
+            userBadge: userBadge,
+            progress: progress,
+          ),
+        );
       }
       _badges = badgeInfos;
-
     } catch (e) {
       print('Error fetching and merging badges: $e');
       _badges = [];
@@ -128,10 +127,17 @@ class BadgeProvider with ChangeNotifier {
         endDate: now,
       );
 
-      final double prevMonthTotal = prevMonthSales.fold(0, (sum, sale) => sum + (sale.totalPrice ?? 0.0));
-      final double thisMonthTotal = thisMonthSales.fold(0, (sum, sale) => sum + (sale.totalPrice ?? 0.0));
+      final double prevMonthTotal = prevMonthSales.fold(
+        0,
+        (sum, sale) => sum + (sale.totalPrice ?? 0.0),
+      );
+      final double thisMonthTotal = thisMonthSales.fold(
+        0,
+        (sum, sale) => sum + (sale.totalPrice ?? 0.0),
+      );
 
-      if (prevMonthTotal == 0) return 1.0; // If no sales last month, any sale this month is an infinite improvement.
+      if (prevMonthTotal == 0)
+        return 1.0; // If no sales last month, any sale this month is an infinite improvement.
 
       final target = prevMonthTotal * 1.2;
       if (target == 0) return 1.0;

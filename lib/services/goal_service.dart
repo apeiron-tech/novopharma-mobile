@@ -30,9 +30,13 @@ class GoalService {
         return [];
       }
 
-      final pharmacy = await _pharmacyService.getPharmacy(userProfile.pharmacyId);
+      final pharmacy = await _pharmacyService.getPharmacy(
+        userProfile.pharmacyId,
+      );
       if (pharmacy == null) {
-        log('Pharmacy details not found for pharmacyId: ${userProfile.pharmacyId}');
+        log(
+          'Pharmacy details not found for pharmacyId: ${userProfile.pharmacyId}',
+        );
         return [];
       }
 
@@ -51,18 +55,34 @@ class GoalService {
         // Goals targeting the user's specific zone
         baseQuery.where('criteria.zones', arrayContains: pharmacy.zone).get(),
         // Goals targeting the user's specific client category
-        baseQuery.where('criteria.clientCategories', arrayContains: pharmacy.clientCategory).get(),
+        baseQuery
+            .where(
+              'criteria.clientCategories',
+              arrayContains: pharmacy.clientCategory,
+            )
+            .get(),
         // Goals targeting the user's specific pharmacy ID
-        baseQuery.where('criteria.pharmacyIds', arrayContains: userProfile.pharmacyId).get(),
+        baseQuery
+            .where(
+              'criteria.pharmacyIds',
+              arrayContains: userProfile.pharmacyId,
+            )
+            .get(),
       ];
 
       final querySnapshots = await Future.wait(queries);
 
       // Log the results of each query
       log('Query 1 (Global) returned ${querySnapshots[0].docs.length} goals.');
-      log('Query 2 (Zone: ${pharmacy.zone}) returned ${querySnapshots[1].docs.length} goals.');
-      log('Query 3 (Client Category: ${pharmacy.clientCategory}) returned ${querySnapshots[2].docs.length} goals.');
-      log('Query 4 (Pharmacy ID: ${userProfile.pharmacyId}) returned ${querySnapshots[3].docs.length} goals.');
+      log(
+        'Query 2 (Zone: ${pharmacy.zone}) returned ${querySnapshots[1].docs.length} goals.',
+      );
+      log(
+        'Query 3 (Client Category: ${pharmacy.clientCategory}) returned ${querySnapshots[2].docs.length} goals.',
+      );
+      log(
+        'Query 4 (Pharmacy ID: ${userProfile.pharmacyId}) returned ${querySnapshots[3].docs.length} goals.',
+      );
 
       // Step 3: Merge and de-duplicate results
       final Map<String, Goal> relevantGoals = {};
@@ -113,31 +133,42 @@ class GoalService {
       final matchesCategory = criteria.categories.contains(product.category);
       bool productOk = criteria.products.isNotEmpty ? matchesProduct : false;
       bool brandOk = criteria.brands.isNotEmpty ? matchesBrand : false;
-      bool categoryOk = criteria.categories.isNotEmpty ? matchesCategory : false;
+      bool categoryOk = criteria.categories.isNotEmpty
+          ? matchesCategory
+          : false;
       return productOk || brandOk || categoryOk;
     }).toList();
   }
 
   Future<bool> isUserEligibleForGoal(
-      Goal goal, Product product, UserModel user, Pharmacy pharmacy) async {
+    Goal goal,
+    Product product,
+    UserModel user,
+    Pharmacy pharmacy,
+  ) async {
     final criteria = goal.criteria;
 
-    if (criteria.categories.isNotEmpty && !criteria.categories.contains(product.category)) {
+    if (criteria.categories.isNotEmpty &&
+        !criteria.categories.contains(product.category)) {
       return false;
     }
-    if (criteria.brands.isNotEmpty && !criteria.brands.contains(product.marque)) {
+    if (criteria.brands.isNotEmpty &&
+        !criteria.brands.contains(product.marque)) {
       return false;
     }
-    if (criteria.products.isNotEmpty && !criteria.products.contains(product.id)) {
+    if (criteria.products.isNotEmpty &&
+        !criteria.products.contains(product.id)) {
       return false;
     }
-    if (criteria.pharmacyIds.isNotEmpty && !criteria.pharmacyIds.contains(user.pharmacyId)) {
+    if (criteria.pharmacyIds.isNotEmpty &&
+        !criteria.pharmacyIds.contains(user.pharmacyId)) {
       return false;
     }
     if (criteria.zones.isNotEmpty && !criteria.zones.contains(pharmacy.zone)) {
       return false;
     }
-    if (criteria.clientCategories.isNotEmpty && !criteria.clientCategories.contains(pharmacy.clientCategory)) {
+    if (criteria.clientCategories.isNotEmpty &&
+        !criteria.clientCategories.contains(pharmacy.clientCategory)) {
       return false;
     }
     return true;

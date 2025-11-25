@@ -10,7 +10,10 @@ class AuthService {
   User? get currentUser => _firebaseAuth.currentUser;
 
   // Sign in with email and password
-  Future<UserCredential> signInWithEmailAndPassword(String email, String password) async {
+  Future<UserCredential> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
     try {
       return await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
@@ -23,7 +26,10 @@ class AuthService {
   }
 
   // Sign up with email and password
-  Future<UserCredential> createUserWithEmailAndPassword(String email, String password) async {
+  Future<UserCredential> createUserWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
     try {
       return await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,

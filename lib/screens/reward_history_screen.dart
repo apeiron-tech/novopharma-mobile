@@ -41,7 +41,11 @@ class RewardHistoryScreen extends StatelessWidget {
                   SizedBox(height: 16),
                   Text(
                     'No Reward History',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF4A5568)),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4A5568),
+                    ),
                   ),
                   SizedBox(height: 8),
                   Text(
@@ -60,7 +64,9 @@ class RewardHistoryScreen extends StatelessWidget {
               final redeemed = provider.redeemedRewards[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 2,
                 shadowColor: Colors.black.withOpacity(0.05),
                 child: ListTile(
@@ -72,11 +78,17 @@ class RewardHistoryScreen extends StatelessWidget {
                       color: LightModeColors.novoPharmaBlue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.card_giftcard, color: LightModeColors.novoPharmaBlue),
+                    child: const Icon(
+                      Icons.card_giftcard,
+                      color: LightModeColors.novoPharmaBlue,
+                    ),
                   ),
                   title: Text(
                     redeemed.rewardNameSnapshot,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF102132)),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF102132),
+                    ),
                   ),
                   subtitle: Text(
                     DateFormat.yMMMd().add_jm().format(redeemed.redeemedAt),

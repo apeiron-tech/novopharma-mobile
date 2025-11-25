@@ -60,7 +60,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              
+
               if (!_emailSent) ...[
                 // Reset Password Header
                 Text(
@@ -78,9 +78,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     height: 1.5,
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Reset Form
                 Form(
                   key: _formKey,
@@ -89,10 +89,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     children: [
                       Text(
                         l10n.emailAddress,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -100,7 +101,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           hintText: 'Enter your email',
-                          prefixIcon: const Icon(Icons.email_outlined, color: LightModeColors.novoPharmaGray),
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: LightModeColors.novoPharmaGray,
+                          ),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                           border: OutlineInputBorder(
@@ -113,15 +117,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue, width: 2),
+                            borderSide: const BorderSide(
+                              color: LightModeColors.novoPharmaBlue,
+                              width: 2,
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
                             return 'Email is required';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!)) {
+                          if (!RegExp(
+                            r'^[^@]+@[^@]+\.[^@]+',
+                          ).hasMatch(value!)) {
                             return 'Enter a valid email';
                           }
                           return null;
@@ -130,9 +142,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Send Reset Link Button
                 SizedBox(
                   width: double.infinity,
@@ -159,7 +171,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ] else ...[
                 // Email Sent Success State
                 const SizedBox(height: 40),
-                
+
                 Center(
                   child: Column(
                     children: [
@@ -167,7 +179,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaBlue.withOpacity(0.1),
+                          color: LightModeColors.novoPharmaBlue.withOpacity(
+                            0.1,
+                          ),
                           borderRadius: BorderRadius.circular(60),
                         ),
                         child: const Icon(
@@ -176,28 +190,29 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           color: LightModeColors.novoPharmaBlue,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       Text(
                         l10n.checkYourEmail,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       Text(
                         l10n.passwordResetLinkSent,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: LightModeColors.novoPharmaGray,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       Text(
                         _emailController.text,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -205,9 +220,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           color: Colors.black87,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       Text(
                         l10n.passwordResetExpiration,
                         textAlign: TextAlign.center,
@@ -216,9 +231,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           height: 1.5,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 40),
-                      
+
                       // Resend Button
                       SizedBox(
                         width: double.infinity,
@@ -230,41 +245,45 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             });
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: LightModeColors.novoPharmaBlue),
+                            side: const BorderSide(
+                              color: LightModeColors.novoPharmaBlue,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: Text(
                             l10n.sendAgain,
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: LightModeColors.novoPharmaBlue,
+                                ),
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Back to Login
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
                           l10n.backToSignIn,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: LightModeColors.novoPharmaBlue,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: LightModeColors.novoPharmaBlue,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-              
+
               const Spacer(),
-              
+
               // Help text
               if (!_emailSent)
                 Center(
@@ -283,16 +302,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         },
                         child: Text(
                           'contact support',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: LightModeColors.novoPharmaBlue,
-                            decoration: TextDecoration.underline,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: LightModeColors.novoPharmaBlue,
+                                decoration: TextDecoration.underline,
+                              ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              
+
               const SizedBox(height: 32),
             ],
           ),

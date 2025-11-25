@@ -360,10 +360,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navHome => 'Accueil';
 
   @override
-  String get navChallenges => 'Défis';
+  String get navChallenges => 'Formations';
 
   @override
-  String get navLeaderboard => 'Classement';
+  String get navLeaderboard => 'Actualités';
 
   @override
   String get navHistory => 'Historique';

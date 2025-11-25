@@ -33,12 +33,31 @@ class BadgeCard extends StatelessWidget {
           children: [
             ColorFiltered(
               colorFilter: isAwarded
-                  ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply)
+                  ? const ColorFilter.mode(
+                      Colors.transparent,
+                      BlendMode.multiply,
+                    )
                   : const ColorFilter.matrix(<double>[
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0,      0,      0,      1, 0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
                     ]),
               child: Image.network(
                 badgeInfo.badge.imageUrl,
@@ -46,7 +65,11 @@ class BadgeCard extends StatelessWidget {
                 width: 60,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.shield_outlined, size: 60, color: Color(0xFFD1D5DB));
+                  return const Icon(
+                    Icons.shield_outlined,
+                    size: 60,
+                    color: Color(0xFFD1D5DB),
+                  );
                 },
               ),
             ),
@@ -61,7 +84,9 @@ class BadgeCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isAwarded ? const Color(0xFF111827) : const Color(0xFF6B7280),
+                    color: isAwarded
+                        ? const Color(0xFF111827)
+                        : const Color(0xFF6B7280),
                   ),
                 ),
               ),
@@ -71,16 +96,22 @@ class BadgeCard extends StatelessWidget {
               height: 18, // Fixed height for the bottom widget area
               child: !isAwarded
                   ? (badgeInfo.progress > 0 && badgeInfo.progress < 1
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: LinearProgressIndicator(
-                            value: badgeInfo.progress,
-                            backgroundColor: const Color(0xFFE5E7EB),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
-                            minHeight: 6,
-                          ),
-                        )
-                      : const Icon(Icons.lock_outline, size: 18, color: Color(0xFF9CA3AF)))
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: badgeInfo.progress,
+                              backgroundColor: const Color(0xFFE5E7EB),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFF3B82F6),
+                              ),
+                              minHeight: 6,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.lock_outline,
+                            size: 18,
+                            color: Color(0xFF9CA3AF),
+                          ))
                   : null, // No widget when awarded
             ),
           ],

@@ -59,8 +59,10 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
     if (!mounted) return;
     _quizProvider.stopQuiz();
 
-    final userId =
-        Provider.of<AuthProvider>(context, listen: false).firebaseUser!.uid;
+    final userId = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).firebaseUser!.uid;
     int correctAnswers = 0;
     for (int i = 0; i < widget.quiz.questions.length; i++) {
       final question = widget.quiz.questions[i];
@@ -77,8 +79,12 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
     final pointsEarned =
         (correctAnswers / widget.quiz.questions.length * widget.quiz.points)
             .round();
-    await QuizService()
-        .submitQuiz(userId, widget.quiz.id, correctAnswers, pointsEarned);
+    await QuizService().submitQuiz(
+      userId,
+      widget.quiz.id,
+      correctAnswers,
+      pointsEarned,
+    );
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -123,7 +129,9 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
             title: Text(
               'Question ${state.currentQuestionIndex + 1}/${widget.quiz.questions.length}',
               style: const TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.bold),
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             actions: [
               Center(
@@ -132,9 +140,10 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
                   child: Text(
                     '${(state.quizTimeLeft ~/ 60).toString().padLeft(2, '0')}:${(state.quizTimeLeft % 60).toString().padLeft(2, '0')}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.black),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
@@ -147,7 +156,11 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
             itemBuilder: (context, index) {
               final question = widget.quiz.questions[index];
               return _buildQuestionPage(
-                  question, index, questionTimeLeft, totalQuestionTime);
+                question,
+                index,
+                questionTimeLeft,
+                totalQuestionTime,
+              );
             },
           ),
           floatingActionButton: FloatingActionButton(
@@ -161,7 +174,11 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
   }
 
   Widget _buildQuestionPage(
-      QuizQuestion question, int pageIndex, int timeLeft, int totalTime) {
+    QuizQuestion question,
+    int pageIndex,
+    int timeLeft,
+    int totalTime,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -170,9 +187,10 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
           Text(
             question.text,
             style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF102132)),
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF102132),
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -193,7 +211,7 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
                     itemBuilder: (context, optionIndex) {
                       final isSelected =
                           _selectedAnswers[pageIndex]?.contains(optionIndex) ??
-                              false;
+                          false;
                       return _AnswerCard(
                         text: question.options[optionIndex],
                         isSelected: isSelected,
@@ -240,9 +258,10 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
                         Text(
                           '$timeLeft',
                           style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF102132)),
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF102132),
+                          ),
                         ),
                       ],
                     ),
@@ -262,8 +281,11 @@ class _AnswerCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _AnswerCard(
-      {required this.text, required this.isSelected, required this.onTap});
+  const _AnswerCard({
+    required this.text,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -293,15 +315,19 @@ class _AnswerCard extends StatelessWidget {
                 child: Text(
                   text,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w500),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               AnimatedOpacity(
                 opacity: isSelected ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
-                child: const Icon(Icons.check_circle,
-                    color: LightModeColors.novoPharmaBlue),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: LightModeColors.novoPharmaBlue,
+                ),
               ),
             ],
           ),
@@ -310,5 +336,3 @@ class _AnswerCard extends StatelessWidget {
     );
   }
 }
-
-

@@ -45,13 +45,16 @@ class RedeemedRewardsProvider with ChangeNotifier {
 
     _redeemedRewardsSubscription = _redeemedRewardService
         .getRedeemedRewards(_authProvider.userProfile!.uid)
-        .listen((rewards) {
-      _redeemedRewards = rewards;
-      _updateLoadingState();
-    }, onError: (error) {
-      print('Error in redeemed rewards stream: $error');
-      _updateLoadingState();
-    });
+        .listen(
+          (rewards) {
+            _redeemedRewards = rewards;
+            _updateLoadingState();
+          },
+          onError: (error) {
+            print('Error in redeemed rewards stream: $error');
+            _updateLoadingState();
+          },
+        );
   }
 
   void _subscribeToPluxeeRedemptions() {
@@ -67,23 +70,29 @@ class RedeemedRewardsProvider with ChangeNotifier {
         .where('userId', isEqualTo: _authProvider.userProfile!.uid)
         .where('status', isEqualTo: 'approved')
         .snapshots()
-        .listen((snapshot) {
-      int totalPluxeePoints = 0;
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final pointsToRedeem = data['pointsToRedeem'] as int? ?? 0;
-        totalPluxeePoints += pointsToRedeem;
-      }
-      
-      // Calculate total points spent from both regular rewards and Pluxee redemptions
-      final regularRewardsPoints = _redeemedRewards.fold(0, (sum, reward) => sum + reward.pointsSpent);
-      _totalPointsSpent = regularRewardsPoints + totalPluxeePoints;
-      
-      _updateLoadingState();
-    }, onError: (error) {
-      print('Error in Pluxee redemption stream: $error');
-      _updateLoadingState();
-    });
+        .listen(
+          (snapshot) {
+            int totalPluxeePoints = 0;
+            for (var doc in snapshot.docs) {
+              final data = doc.data();
+              final pointsToRedeem = data['pointsToRedeem'] as int? ?? 0;
+              totalPluxeePoints += pointsToRedeem;
+            }
+
+            // Calculate total points spent from both regular rewards and Pluxee redemptions
+            final regularRewardsPoints = _redeemedRewards.fold(
+              0,
+              (sum, reward) => sum + reward.pointsSpent,
+            );
+            _totalPointsSpent = regularRewardsPoints + totalPluxeePoints;
+
+            _updateLoadingState();
+          },
+          onError: (error) {
+            print('Error in Pluxee redemption stream: $error');
+            _updateLoadingState();
+          },
+        );
   }
 
   void _updateLoadingState() {

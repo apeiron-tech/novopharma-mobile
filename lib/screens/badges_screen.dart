@@ -32,13 +32,20 @@ class BadgesScreen extends StatelessWidget {
               Image.network(
                 badgeInfo.badge.imageUrl,
                 height: 90,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.shield_outlined, size: 90, color: Color(0xFFD1D5DB)),
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.shield_outlined,
+                  size: 90,
+                  color: Color(0xFFD1D5DB),
+                ),
               ),
               const SizedBox(height: 16),
               Text(
                 badgeInfo.badge.name,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -50,7 +57,8 @@ class BadgesScreen extends StatelessWidget {
               if (badgeInfo.isAwarded)
                 _buildInfoChip(
                   icon: Icons.check_circle_outline,
-                  label: 'Awarded on ${DateFormat.yMMMd().format(badgeInfo.userBadge!.awardedAt)}',
+                  label:
+                      'Awarded on ${DateFormat.yMMMd().format(badgeInfo.userBadge!.awardedAt)}',
                   color: Colors.green,
                 )
               else
@@ -63,7 +71,11 @@ class BadgesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoChip({required IconData icon, required String label, required Color color}) {
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -75,7 +87,10 @@ class BadgesScreen extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 8),
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -86,7 +101,11 @@ class BadgesScreen extends StatelessWidget {
       children: [
         Text(
           'Your Progress',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[600],
+          ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -98,14 +117,20 @@ class BadgesScreen extends StatelessWidget {
                   value: progress,
                   minHeight: 12,
                   backgroundColor: const Color(0xFFE5E7EB),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF3B82F6),
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Text(
               '${(progress * 100).toStringAsFixed(0)}%',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3B82F6)),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF3B82F6),
+              ),
             ),
           ],
         ),
@@ -117,7 +142,10 @@ class BadgesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Badges', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'My Badges',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: const Color(0xFFF9FAFB),
@@ -134,8 +162,12 @@ class BadgesScreen extends StatelessWidget {
             return const Center(child: Text('No badges available.'));
           }
 
-          final awardedBadges = provider.badges.where((b) => b.isAwarded).toList();
-          final lockedBadges = provider.badges.where((b) => !b.isAwarded).toList();
+          final awardedBadges = provider.badges
+              .where((b) => b.isAwarded)
+              .toList();
+          final lockedBadges = provider.badges
+              .where((b) => !b.isAwarded)
+              .toList();
 
           return CustomScrollView(
             slivers: [
@@ -157,7 +189,11 @@ class BadgesScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
         child: Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF374151),
+          ),
         ),
       ),
     );
@@ -168,7 +204,10 @@ class BadgesScreen extends StatelessWidget {
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text('No badges in this category yet.', style: TextStyle(color: Colors.grey)),
+          child: Text(
+            'No badges in this category yet.',
+            style: TextStyle(color: Colors.grey),
+          ),
         ),
       );
     }
@@ -181,16 +220,13 @@ class BadgesScreen extends StatelessWidget {
           mainAxisSpacing: 12.0,
           childAspectRatio: 0.85,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final badgeInfo = badges[index];
-            return GestureDetector(
-              onTap: () => _showBadgeDetails(context, badgeInfo),
-              child: BadgeCard(badgeInfo: badgeInfo),
-            );
-          },
-          childCount: badges.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final badgeInfo = badges[index];
+          return GestureDetector(
+            onTap: () => _showBadgeDetails(context, badgeInfo),
+            child: BadgeCard(badgeInfo: badgeInfo),
+          );
+        }, childCount: badges.length),
       ),
     );
   }
