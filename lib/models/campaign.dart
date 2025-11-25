@@ -37,10 +37,12 @@ class Campaign {
       description: data['description'] ?? '',
       coverImageUrl: data['coverImageUrl'] ?? '',
       videoUrl: data['videoUrl'],
-      productCriteria:
-          CampaignProductCriteria.fromMap(data['productCriteria'] ?? {}),
-      tradeOfferProductIds:
-          List<String>.from(data['tradeOfferProductIds'] ?? []),
+      productCriteria: CampaignProductCriteria.fromMap(
+        data['productCriteria'] ?? {},
+      ),
+      tradeOfferProductIds: List<String>.from(
+        data['tradeOfferProductIds'] ?? [],
+      ),
       linkedGoalId: data['linkedGoalId'] ?? '',
       startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       endDate: (data['endDate'] as Timestamp?)?.toDate() ?? DateTime.now(),

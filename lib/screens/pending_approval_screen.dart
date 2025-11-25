@@ -30,18 +30,18 @@ class PendingApprovalScreen extends StatelessWidget {
                   l10n.accountPendingApproval,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: LightModeColors.dashboardTextPrimary,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: LightModeColors.dashboardTextPrimary,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   l10n.accountPendingApprovalMessage,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: LightModeColors.dashboardTextSecondary,
-                        height: 1.5,
-                      ),
+                    color: LightModeColors.dashboardTextSecondary,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 40),
                 SizedBox(

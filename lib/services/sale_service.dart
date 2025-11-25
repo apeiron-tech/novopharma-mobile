@@ -13,19 +13,21 @@ class SaleService {
     final saleData = sale.toFirestore();
     log('Attempting to create sale with data: $saleData');
 
-    await _firestore.runTransaction((transaction) async {
-      // 1. Create the new sale document
-      transaction.set(saleRef, saleData);
+    await _firestore
+        .runTransaction((transaction) async {
+          // 1. Create the new sale document
+          transaction.set(saleRef, saleData);
 
-      // 2. Atomically update the user's points
-      transaction.update(userRef, {
-        'points': FieldValue.increment(sale.pointsEarned),
-      });
-    }).catchError((error) {
-      log('Error in createSale transaction: $error');
-      // Rethrow the error to be caught by the provider
-      throw error;
-    });
+          // 2. Atomically update the user's points
+          transaction.update(userRef, {
+            'points': FieldValue.increment(sale.pointsEarned),
+          });
+        })
+        .catchError((error) {
+          log('Error in createSale transaction: $error');
+          // Rethrow the error to be caught by the provider
+          throw error;
+        });
   }
 
   Future<void> updateSale(Sale oldSale, Sale newSale) async {
@@ -34,16 +36,19 @@ class SaleService {
 
     log('Attempting to update sale ${newSale.id}');
 
-    await _firestore.runTransaction((transaction) async {
-      transaction.update(saleRef, newSale.toFirestore());
+    await _firestore
+        .runTransaction((transaction) async {
+          transaction.update(saleRef, newSale.toFirestore());
 
-      final pointsDifference = newSale.pointsEarned - oldSale.pointsEarned;
-      transaction
-          .update(userRef, {'points': FieldValue.increment(pointsDifference)});
-    }).catchError((error) {
-      log('Error in updateSale transaction: $error');
-      throw error;
-    });
+          final pointsDifference = newSale.pointsEarned - oldSale.pointsEarned;
+          transaction.update(userRef, {
+            'points': FieldValue.increment(pointsDifference),
+          });
+        })
+        .catchError((error) {
+          log('Error in updateSale transaction: $error');
+          throw error;
+        });
   }
 
   Future<void> deleteSale(Sale sale) async {
@@ -52,18 +57,24 @@ class SaleService {
 
     log('Attempting to delete sale ${sale.id}');
 
-    await _firestore.runTransaction((transaction) async {
-      transaction.delete(saleRef);
-      transaction
-          .update(userRef, {'points': FieldValue.increment(-sale.pointsEarned)});
-    }).catchError((error) {
-      log('Error in deleteSale transaction: $error');
-      throw error;
-    });
+    await _firestore
+        .runTransaction((transaction) async {
+          transaction.delete(saleRef);
+          transaction.update(userRef, {
+            'points': FieldValue.increment(-sale.pointsEarned),
+          });
+        })
+        .catchError((error) {
+          log('Error in deleteSale transaction: $error');
+          throw error;
+        });
   }
 
-  Future<List<Sale>> getSalesHistory(String userId,
-      {DateTime? startDate, DateTime? endDate}) async {
+  Future<List<Sale>> getSalesHistory(
+    String userId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
       Query query = _firestore
           .collection(_collection)
@@ -71,20 +82,31 @@ class SaleService {
           .orderBy('saleDate', descending: true);
 
       if (startDate != null) {
-        query = query.where('saleDate',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+        query = query.where(
+          'saleDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        );
       }
       if (endDate != null) {
         // To include the whole end day, we set the time to the end of the day.
-        final endOfDay =
-            DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
-        query = query.where('saleDate',
-            isLessThanOrEqualTo: Timestamp.fromDate(endOfDay));
+        final endOfDay = DateTime(
+          endDate.year,
+          endDate.month,
+          endDate.day,
+          23,
+          59,
+          59,
+        );
+        query = query.where(
+          'saleDate',
+          isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
+        );
       }
 
       final querySnapshot = await query.get();
-      final List<Sale> sales =
-          querySnapshot.docs.map((doc) => Sale.fromFirestore(doc)).toList();
+      final List<Sale> sales = querySnapshot.docs
+          .map((doc) => Sale.fromFirestore(doc))
+          .toList();
       return sales;
     } catch (e) {
       print('Error fetching sales history: $e');

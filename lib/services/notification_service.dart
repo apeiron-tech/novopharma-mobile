@@ -12,9 +12,11 @@ class NotificationService {
         .collection(_collection)
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => NotificationItem.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => NotificationItem.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   Future<void> markAsRead(String userId, String notificationId) async {

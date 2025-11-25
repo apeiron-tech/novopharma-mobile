@@ -7,11 +7,10 @@ class QuizService {
 
   Future<List<Quiz>> getAllQuizzes() async {
     try {
-      final querySnapshot = await _firestore
-          .collection(_collection)
-          .get();
-      final List<Quiz> quizzes =
-          querySnapshot.docs.map((doc) => Quiz.fromFirestore(doc)).toList();
+      final querySnapshot = await _firestore.collection(_collection).get();
+      final List<Quiz> quizzes = querySnapshot.docs
+          .map((doc) => Quiz.fromFirestore(doc))
+          .toList();
       return quizzes;
     } catch (e) {
       print('Error fetching quizzes: $e');
@@ -38,18 +37,22 @@ class QuizService {
   }
 
   Future<void> submitQuiz(
-      String userId, String quizId, int score, int pointsEarned) async {
+    String userId,
+    String quizId,
+    int score,
+    int pointsEarned,
+  ) async {
     try {
       await _firestore
           .collection('users')
           .doc(userId)
           .collection('quizAttempts')
           .add({
-        'quizId': quizId,
-        'score': score,
-        'pointsEarned': pointsEarned,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+            'quizId': quizId,
+            'score': score,
+            'pointsEarned': pointsEarned,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
 
       await _firestore.collection('users').doc(userId).update({
         'points': FieldValue.increment(pointsEarned),

@@ -37,27 +37,35 @@ class CampaignService {
           .where('endDate', isGreaterThanOrEqualTo: now)
           .get();
 
-      final List<Campaign> campaigns = querySnapshot.docs
-          .map((doc) => Campaign.fromFirestore(doc))
-          .where((campaign) {
-            final criteria = campaign.productCriteria;
-            if (criteria == null) return false;
+      final List<Campaign>
+      campaigns = querySnapshot.docs.map((doc) => Campaign.fromFirestore(doc)).where((
+        campaign,
+      ) {
+        final criteria = campaign.productCriteria;
+        if (criteria == null) return false;
 
-            final matchesProduct = criteria.products?.contains(product.id) ?? false;
-            final matchesBrand = criteria.marques?.contains(product.marque) ?? false;
-            final matchesCategory = criteria.categories?.contains(product.category) ?? false;
+        final matchesProduct = criteria.products?.contains(product.id) ?? false;
+        final matchesBrand =
+            criteria.marques?.contains(product.marque) ?? false;
+        final matchesCategory =
+            criteria.categories?.contains(product.category) ?? false;
 
-            // If any list is empty, it's considered a non-match for that criteria.
-            // The logic is: match if the product is in the specific list OR if the list is null/empty (wildcard).
-            // However, the prompt implies filtering, so we assume non-empty lists are the target.
-            bool productOk = criteria.products?.isNotEmpty == true ? matchesProduct : false;
-            bool brandOk = criteria.marques?.isNotEmpty == true ? matchesBrand : false;
-            bool categoryOk = criteria.categories?.isNotEmpty == true ? matchesCategory : false;
+        // If any list is empty, it's considered a non-match for that criteria.
+        // The logic is: match if the product is in the specific list OR if the list is null/empty (wildcard).
+        // However, the prompt implies filtering, so we assume non-empty lists are the target.
+        bool productOk = criteria.products?.isNotEmpty == true
+            ? matchesProduct
+            : false;
+        bool brandOk = criteria.marques?.isNotEmpty == true
+            ? matchesBrand
+            : false;
+        bool categoryOk = criteria.categories?.isNotEmpty == true
+            ? matchesCategory
+            : false;
 
-            return productOk || brandOk || categoryOk;
-          })
-          .toList();
-          
+        return productOk || brandOk || categoryOk;
+      }).toList();
+
       return campaigns;
     } catch (e) {
       print('Error finding matching campaigns: $e');

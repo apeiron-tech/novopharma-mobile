@@ -29,7 +29,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   void _showRedeemDialog(BuildContext context, Reward reward) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final rewardsController = Provider.of<RewardsController>(context, listen: false);
+    final rewardsController = Provider.of<RewardsController>(
+      context,
+      listen: false,
+    );
     final currentUser = authProvider.userProfile;
     final l10n = AppLocalizations.of(context)!;
 
@@ -45,14 +48,20 @@ class _RewardsScreenState extends State<RewardsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(reward.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            Text(
+              reward.name,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             Text(reward.description, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             Chip(
               label: Text('${reward.pointsCost} pts'),
               backgroundColor: LightModeColors.novoPharmaBlue,
-              labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              labelStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 24),
             Row(
@@ -66,7 +75,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: (currentUser.points >= reward.pointsCost && reward.stock > 0)
+                    onPressed:
+                        (currentUser.points >= reward.pointsCost &&
+                            reward.stock > 0)
                         ? () async {
                             final error = await rewardsController.redeemReward(
                               rewardId: reward.id,
@@ -78,7 +89,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
                               if (error == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Successfully redeemed ${reward.name}!'),
+                                    content: Text(
+                                      'Successfully redeemed ${reward.name}!',
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -155,34 +168,56 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     children: [
                       Text(
                         l10n.totalPoints,
-                        style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '$currentPoints',
-                        style: GoogleFonts.inter(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         l10n.allTimeRewardPoints(allTimePoints),
-                        style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       OutlinedButton(
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const RewardHistoryScreen()),
+                            MaterialPageRoute(
+                              builder: (context) => const RewardHistoryScreen(),
+                            ),
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           side: const BorderSide(color: Colors.white, width: 1),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
                           l10n.viewRewardPointsHistory,
-                          style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -198,7 +233,12 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (controller.error != null) {
-                  return Center(child: Text(controller.error!, style: const TextStyle(color: Colors.red)));
+                  return Center(
+                    child: Text(
+                      controller.error!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
                 }
                 if (controller.rewards.isEmpty) {
                   return Center(child: Text(l10n.noRewardsAvailable));
@@ -220,12 +260,13 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.85,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.85,
+                            ),
                         itemCount: controller.rewards.length,
                         itemBuilder: (context, index) {
                           final reward = controller.rewards[index];
@@ -252,9 +293,17 @@ class _RewardsScreenState extends State<RewardsScreen> {
                                         height: 120,
                                         width: double.infinity,
                                         decoration: BoxDecoration(
-                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                                top: Radius.circular(16),
+                                              ),
                                           image: reward.imageUrl.isNotEmpty
-                                              ? DecorationImage(image: NetworkImage(reward.imageUrl), fit: BoxFit.cover)
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                    reward.imageUrl,
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                )
                                               : null,
                                         ),
                                       ),
@@ -262,9 +311,16 @@ class _RewardsScreenState extends State<RewardsScreen> {
                                         top: 8,
                                         right: 8,
                                         child: Chip(
-                                          label: Text('${reward.pointsCost} pts'),
-                                          backgroundColor: LightModeColors.novoPharmaBlue,
-                                          labelStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                                          label: Text(
+                                            '${reward.pointsCost} pts',
+                                          ),
+                                          backgroundColor:
+                                              LightModeColors.novoPharmaBlue,
+                                          labelStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -272,16 +328,27 @@ class _RewardsScreenState extends State<RewardsScreen> {
                                   Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(reward.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                        Text(
+                                          reward.name,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                         const SizedBox(height: 4),
-                                        Text(reward.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                        Text(
+                                          reward.description,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                         const SizedBox(height: 4),
                                         Text(
                                           'Stock: ${reward.stock}',
                                           style: TextStyle(
-                                            color: reward.stock > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                                            color: reward.stock > 0
+                                                ? Colors.green.shade700
+                                                : Colors.red.shade700,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w500,
                                           ),

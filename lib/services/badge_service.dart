@@ -7,7 +7,10 @@ class BadgeService {
 
   Future<List<Badge>> getAllBadges() async {
     try {
-      final querySnapshot = await _firestore.collection(_collection).orderBy('name').get();
+      final querySnapshot = await _firestore
+          .collection(_collection)
+          .orderBy('name')
+          .get();
       return querySnapshot.docs.map((doc) => Badge.fromFirestore(doc)).toList();
     } catch (e) {
       print('Error fetching all badges: $e');
