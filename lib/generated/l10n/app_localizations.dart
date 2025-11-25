@@ -773,13 +773,13 @@ abstract class AppLocalizations {
   /// No description provided for @navChallenges.
   ///
   /// In en, this message translates to:
-  /// **'Challenges'**
+  /// **'Formations'**
   String get navChallenges;
 
   /// No description provided for @navLeaderboard.
   ///
   /// In en, this message translates to:
-  /// **'Leaderboard'**
+  /// **'Actualités'**
   String get navLeaderboard;
 
   /// No description provided for @navHistory.

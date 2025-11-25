@@ -45,10 +45,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           Navigator.pop(context);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         }
         setState(() => _isLoading = false);
@@ -60,9 +57,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Change Password'),
-      ),
+      appBar: AppBar(title: Text('Change Password')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -72,10 +67,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               TextFormField(
                 controller: _currentPasswordController,
-                decoration: const InputDecoration(labelText: 'Current Password'),
+                decoration: const InputDecoration(
+                  labelText: 'Current Password',
+                ),
                 obscureText: true,
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter your current password' : null,
+                validator: (value) => value!.isEmpty
+                    ? 'Please enter your current password'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -95,7 +93,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
-                decoration: const InputDecoration(labelText: 'Confirm New Password'),
+                decoration: const InputDecoration(
+                  labelText: 'Confirm New Password',
+                ),
                 obscureText: true,
                 validator: (value) {
                   if (value != _newPasswordController.text) {

@@ -20,7 +20,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = Provider.of<AuthProvider>(context, listen: false).firebaseUser!.uid;
+    _userId = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).firebaseUser!.uid;
     _notificationsStream = _notificationService.getNotifications(_userId);
   }
 
@@ -35,7 +38,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m ago';
     } else if (difference.inHours < 24) {
@@ -91,10 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             return const Center(
               child: Text(
                 'No notifications',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
             );
           }
@@ -102,11 +102,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
-            separatorBuilder: (context, index) => const Divider(
-              color: Colors.grey,
-              thickness: 0.5,
-              height: 1,
-            ),
+            separatorBuilder: (context, index) =>
+                const Divider(color: Colors.grey, thickness: 0.5, height: 1),
             itemBuilder: (context, index) {
               final notification = notifications[index];
               return ListTile(

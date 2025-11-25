@@ -37,7 +37,10 @@ class ProductService {
 
   Future<Product?> getProductById(String id) async {
     try {
-      final docSnapshot = await _firestore.collection(_collection).doc(id).get();
+      final docSnapshot = await _firestore
+          .collection(_collection)
+          .doc(id)
+          .get();
       if (docSnapshot.exists) {
         return Product.fromFirestore(docSnapshot);
       }

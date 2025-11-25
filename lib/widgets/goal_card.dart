@@ -9,12 +9,7 @@ class GoalCard extends StatelessWidget {
   final UserGoalProgress? progress;
   final VoidCallback? onTap;
 
-  const GoalCard({
-    super.key,
-    required this.goal,
-    this.progress,
-    this.onTap,
-  });
+  const GoalCard({super.key, required this.goal, this.progress, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +20,9 @@ class GoalCard extends StatelessWidget {
         ? (currentProgress / goal.targetValue).clamp(0.0, 1.0)
         : 0.0;
 
-    final Color progressColor =
-        isCompleted ? const Color(0xFF22C55E) : const Color(0xFF1F9BD1);
+    final Color progressColor = isCompleted
+        ? const Color(0xFF22C55E)
+        : const Color(0xFF1F9BD1);
 
     return GestureDetector(
       onTap: onTap,
@@ -44,7 +40,9 @@ class GoalCard extends StatelessWidget {
             ),
           ],
           border: Border.all(
-            color: isCompleted ? progressColor.withOpacity(0.5) : Colors.transparent,
+            color: isCompleted
+                ? progressColor.withOpacity(0.5)
+                : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -127,7 +125,11 @@ class GoalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChip({required IconData icon, required String text, required Color color}) {
+  Widget _buildChip({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

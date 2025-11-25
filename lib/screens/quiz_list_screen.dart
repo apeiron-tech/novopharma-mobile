@@ -19,9 +19,15 @@ class _QuizListScreenState extends State<QuizListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = Provider.of<AuthProvider>(context, listen: false).firebaseUser?.uid;
+      final userId = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).firebaseUser?.uid;
       if (userId != null) {
-        Provider.of<QuizProvider>(context, listen: false).fetchAllQuizzes(userId);
+        Provider.of<QuizProvider>(
+          context,
+          listen: false,
+        ).fetchAllQuizzes(userId);
       }
     });
   }
@@ -29,14 +35,18 @@ class _QuizListScreenState extends State<QuizListScreen> {
   void _startQuiz(Quiz quiz) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => QuizQuestionScreen(quiz: quiz),
-      ),
+      MaterialPageRoute(builder: (context) => QuizQuestionScreen(quiz: quiz)),
     ).then((_) {
       // Refetch quiz attempts when returning from a quiz
-      final userId = Provider.of<AuthProvider>(context, listen: false).firebaseUser?.uid;
+      final userId = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).firebaseUser?.uid;
       if (userId != null) {
-        Provider.of<QuizProvider>(context, listen: false).fetchAllQuizzes(userId);
+        Provider.of<QuizProvider>(
+          context,
+          listen: false,
+        ).fetchAllQuizzes(userId);
       }
     });
   }
@@ -57,7 +67,9 @@ class _QuizListScreenState extends State<QuizListScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         shadowColor: Colors.black.withOpacity(0.1),
-        iconTheme: const IconThemeData(color: LightModeColors.dashboardTextPrimary),
+        iconTheme: const IconThemeData(
+          color: LightModeColors.dashboardTextPrimary,
+        ),
       ),
       body: Consumer<QuizProvider>(
         builder: (context, provider, child) {
@@ -73,10 +85,16 @@ class _QuizListScreenState extends State<QuizListScreen> {
 
           return RefreshIndicator(
             onRefresh: () async {
-               final userId = Provider.of<AuthProvider>(context, listen: false).firebaseUser?.uid;
-               if (userId != null) {
-                 await Provider.of<QuizProvider>(context, listen: false).fetchAllQuizzes(userId);
-               }
+              final userId = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              ).firebaseUser?.uid;
+              if (userId != null) {
+                await Provider.of<QuizProvider>(
+                  context,
+                  listen: false,
+                ).fetchAllQuizzes(userId);
+              }
             },
             child: ListView.builder(
               padding: const EdgeInsets.all(16.0),
@@ -162,7 +180,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                   'Attempts: $attempts/${quiz.attemptLimit}',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -170,7 +188,11 @@ class _QuizListScreenState extends State<QuizListScreen> {
     );
   }
 
-  Widget _buildInfoChip({required IconData icon, required String text, required Color color}) {
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -184,10 +206,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
           const SizedBox(width: 6),
           Text(
             text,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
           ),
         ],
       ),

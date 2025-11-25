@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:novopharma/screens/dashboard_home_screen.dart';
-import 'package:novopharma/screens/goals_screen.dart';
-import 'package:novopharma/screens/leaderboard_screen.dart';
+import 'package:novopharma/screens/formations_screen.dart';
+import 'package:novopharma/screens/actualites_screen.dart';
 import 'package:novopharma/screens/sales_history_screen.dart';
 import 'package:novopharma/screens/barcode_scanner_screen.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
@@ -26,8 +26,8 @@ class SharedBottomNavigationBar extends StatelessWidget {
     // Icon list for the bottom navigation (excluding the center scan button)
     final iconList = <IconData>[
       Icons.home,
-      Icons.card_giftcard,
-      Icons.bar_chart,
+      Icons.school, // Formations icon
+      Icons.article, // Actualités/News icon
       Icons.receipt_long, // Changed from person
     ];
 
@@ -47,11 +47,7 @@ class SharedBottomNavigationBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              iconList[index],
-              size: 24,
-              color: color,
-            ),
+            Icon(iconList[index], size: 24, color: color),
             const SizedBox(height: 4),
             Text(
               labelList[index],
@@ -60,12 +56,14 @@ class SharedBottomNavigationBar extends StatelessWidget {
                 color: color,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
-            )
+            ),
           ],
         );
       },
       backgroundColor: Colors.white,
-      activeIndex: currentIndex >= 2 ? currentIndex - 1 : currentIndex, // Adjust index for missing center button
+      activeIndex: currentIndex >= 2
+          ? currentIndex - 1
+          : currentIndex, // Adjust index for missing center button
       gapLocation: GapLocation.center,
       notchSmoothness: NotchSmoothness.softEdge,
       leftCornerRadius: 20,
@@ -73,39 +71,43 @@ class SharedBottomNavigationBar extends StatelessWidget {
       onTap: (index) {
         // Adjust index back to account for center button
         int adjustedIndex = index >= 2 ? index + 1 : index;
-        
+
         // Handle navigation based on the adjusted index
         switch (adjustedIndex) {
           case 0: // Home
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const DashboardHomeScreen()),
+              MaterialPageRoute(
+                builder: (context) => const DashboardHomeScreen(),
+              ),
               (route) => false,
             );
             break;
-          case 1: // Challenges
+          case 1: // Formations
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const GoalsScreen()),
+              MaterialPageRoute(builder: (context) => const FormationsScreen()),
               (route) => false,
             );
             break;
-          case 3: // Leaderboard
+          case 3: // Actualités
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+              MaterialPageRoute(builder: (context) => const ActualitesScreen()),
               (route) => false,
             );
             break;
           case 4: // History
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const SalesHistoryScreen()),
+              MaterialPageRoute(
+                builder: (context) => const SalesHistoryScreen(),
+              ),
               (route) => false,
             );
             break;
         }
-        
+
         onTap(adjustedIndex);
       },
       hideAnimationController: null,
@@ -132,11 +134,12 @@ class BottomNavigationScaffoldWrapper extends StatefulWidget {
   });
 
   @override
-  State<BottomNavigationScaffoldWrapper> createState() => _BottomNavigationScaffoldWrapperState();
+  State<BottomNavigationScaffoldWrapper> createState() =>
+      _BottomNavigationScaffoldWrapperState();
 }
 
-class _BottomNavigationScaffoldWrapperState extends State<BottomNavigationScaffoldWrapper> {
-
+class _BottomNavigationScaffoldWrapperState
+    extends State<BottomNavigationScaffoldWrapper> {
   void _openScanner(BuildContext context) {
     Navigator.push(
       context,
@@ -157,11 +160,7 @@ class _BottomNavigationScaffoldWrapperState extends State<BottomNavigationScaffo
         backgroundColor: Colors.cyan,
         elevation: 10,
         shape: const CircleBorder(),
-        child: const Icon(
-          Icons.qr_code_scanner,
-          color: Colors.white,
-          size: 30,
-        ),
+        child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: SharedBottomNavigationBar(
@@ -185,10 +184,6 @@ class BottomNavigationWithFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SharedBottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-    );
+    return SharedBottomNavigationBar(currentIndex: currentIndex, onTap: onTap);
   }
 }
-

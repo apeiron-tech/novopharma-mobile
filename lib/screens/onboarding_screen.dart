@@ -17,19 +17,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingData(
       icon: Icons.emoji_events,
       title: 'Compete & Win',
-      description: 'Join over 10,000 pharmacies worldwide in exciting competitions and win amazing rewards',
+      description:
+          'Join over 10,000 pharmacies worldwide in exciting competitions and win amazing rewards',
       gradient: [LightModeColors.novoPharmaBlue, const Color(0xFF1E40AF)],
     ),
     OnboardingData(
       icon: Icons.card_giftcard,
       title: 'Exclusive Rewards',
-      description: 'Unlock exclusive discounts, special offers, and premium benefits for your pharmacy',
+      description:
+          'Unlock exclusive discounts, special offers, and premium benefits for your pharmacy',
       gradient: [const Color(0xFF10B981), const Color(0xFF059669)],
     ),
     OnboardingData(
       icon: Icons.leaderboard,
       title: 'Track Progress',
-      description: 'Monitor your performance, climb the leaderboards, and see how you stack up globally',
+      description:
+          'Monitor your performance, climb the leaderboards, and see how you stack up globally',
       gradient: [const Color(0xFFF59E0B), const Color(0xFFD97706)],
     ),
   ];
@@ -41,7 +44,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < (_pages.length ?? 0) - 1) { // FIX: added null check to prevent crash
+    if (_currentPage < (_pages.length ?? 0) - 1) {
+      // FIX: added null check to prevent crash
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -85,14 +89,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     // Page indicators
                     Row(
                       children: List.generate(
-                        _pages.length ?? 0, // FIX: added null check to prevent crash
+                        _pages.length ??
+                            0, // FIX: added null check to prevent crash
                         (index) => Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           width: _currentPage == index ? 24 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: _currentPage == index 
-                                ? Colors.white 
+                            color: _currentPage == index
+                                ? Colors.white
                                 : Colors.white.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -112,7 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ],
                 ),
               ),
-              
+
               // PageView
               Expanded(
                 child: PageView.builder(
@@ -122,7 +127,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _currentPage = index;
                     });
                   },
-                  itemCount: _pages.length ?? 0, // FIX: added null check to prevent crash
+                  itemCount:
+                      _pages.length ??
+                      0, // FIX: added null check to prevent crash
                   itemBuilder: (context, index) {
                     final page = _pages[index];
                     return Padding(
@@ -144,28 +151,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               color: Colors.white,
                             ),
                           ),
-                          
+
                           const SizedBox(height: 48),
-                          
+
                           // Title
                           Text(
                             page.title,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                             textAlign: TextAlign.center,
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Description
                           Text(
                             page.description,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              height: 1.6,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  height: 1.6,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -174,7 +183,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   },
                 ),
               ),
-              
+
               // Bottom navigation
               Padding(
                 padding: const EdgeInsets.all(32),
@@ -203,24 +212,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     'Back',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                   ),
                                 ],
                               ),
                             )
                           : const SizedBox(),
                     ),
-                    
+
                     // Next/Get Started button
                     ElevatedButton(
                       onPressed: _nextPage,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: _pages[_currentPage].gradient[0],
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
                         ),
@@ -230,16 +245,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _currentPage == (_pages.length ?? 0) - 1 ? 'Get Started' : 'Next', // FIX: added null check to prevent crash
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: _pages[_currentPage].gradient[0],
-                            ),
+                            _currentPage == (_pages.length ?? 0) - 1
+                                ? 'Get Started'
+                                : 'Next', // FIX: added null check to prevent crash
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: _pages[_currentPage].gradient[0],
+                                ),
                           ),
                           const SizedBox(width: 8),
                           Icon(
-                            _currentPage == (_pages.length ?? 0) - 1 // FIX: added null check to prevent crash
-                                ? Icons.check 
+                            _currentPage ==
+                                    (_pages.length ?? 0) -
+                                        1 // FIX: added null check to prevent crash
+                                ? Icons.check
                                 : Icons.arrow_forward_ios,
                             size: 16,
                             color: _pages[_currentPage].gradient[0],

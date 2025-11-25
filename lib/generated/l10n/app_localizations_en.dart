@@ -354,10 +354,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navHome => 'Home';
 
   @override
-  String get navChallenges => 'Challenges';
+  String get navChallenges => 'Formations';
 
   @override
-  String get navLeaderboard => 'Leaderboard';
+  String get navLeaderboard => 'Actualités';
 
   @override
   String get navHistory => 'History';

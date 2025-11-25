@@ -27,7 +27,7 @@ class LeaderboardProvider with ChangeNotifier {
     });
 
     _leaderboardData = await _leaderboardService.getLeaderboard(period);
-    
+
     _isLoading = false;
     notifyListeners();
   }

@@ -6,7 +6,10 @@ class PharmacyService {
 
   Future<List<Pharmacy>> getPharmacies() async {
     try {
-      final snapshot = await _firestore.collection('pharmacies').orderBy('name').get();
+      final snapshot = await _firestore
+          .collection('pharmacies')
+          .orderBy('name')
+          .get();
       if (snapshot.docs.isEmpty) {
         return [];
       }

@@ -54,11 +54,11 @@ class RewardsController extends ChangeNotifier {
         rewardNameSnapshot: reward.name,
         pointsSpent: reward.pointsCost,
       );
-      
+
       // The user's points and redeemed rewards list will update automatically via streams.
       // We just need to reload the available rewards to get the new stock count.
       await loadRewards();
-      
+
       return null; // Success
     } catch (e) {
       debugPrint('Error redeeming reward: $e');

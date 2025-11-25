@@ -74,7 +74,7 @@ class Goal {
   String getTimeRemaining(AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = endDate.difference(now);
-    
+
     if (difference.inDays > 0) {
       return l10n.endsInDays(difference.inDays);
     } else if (difference.inHours > 0) {
@@ -88,9 +88,7 @@ class Goal {
 
   String get rewardText => '$rewardPoints points';
 
-  Goal copyWith({
-    UserGoalProgress? userProgress,
-  }) {
+  Goal copyWith({UserGoalProgress? userProgress}) {
     return Goal(
       id: id,
       title: title,

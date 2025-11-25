@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:novopharma/screens/rewards_screen.dart';
 
-/// Standalone animated circular Rewards FAB button (56x56) with red background, 
+/// Standalone animated circular Rewards FAB button (56x56) with red background,
 /// white gift icon, soft shadow, and tiny press scale animation
 class RewardsFABCore extends StatefulWidget {
   const RewardsFABCore({super.key});
@@ -22,13 +22,9 @@ class _RewardsFABCoreState extends State<RewardsFABCore>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
