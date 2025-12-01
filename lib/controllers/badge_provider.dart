@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:novopharma/models/badge.dart';
 import 'package:novopharma/models/user_badge.dart';
@@ -25,11 +26,13 @@ class BadgeProvider with ChangeNotifier {
   AuthProvider _authProvider;
 
   List<BadgeDisplayInfo> _badges = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
+  StreamSubscription? _badgesSubscription;
+  StreamSubscription? _userBadgesSubscription;
 
   BadgeProvider(this._authProvider) {
     if (_authProvider.userProfile != null) {
-      fetchBadges();
+      _listenToBadges();
     }
   }
 
@@ -37,11 +40,13 @@ class BadgeProvider with ChangeNotifier {
     // Check if the user has changed (e.g., logged in or out)
     if (authProvider.userProfile?.uid != _authProvider.userProfile?.uid) {
       _authProvider = authProvider;
+      _cancelSubscriptions(); // Cancel old subscriptions
       if (_authProvider.userProfile != null) {
-        fetchBadges();
+        _listenToBadges();
       } else {
         // User logged out, clear the badges
         _badges = [];
+        _isLoading = false;
         notifyListeners();
       }
     }
@@ -50,63 +55,100 @@ class BadgeProvider with ChangeNotifier {
   List<BadgeDisplayInfo> get badges => _badges;
   bool get isLoading => _isLoading;
 
-  Future<void> fetchBadges() async {
+  void _listenToBadges() {
     if (_authProvider.userProfile == null) return;
 
-    Future.microtask(() {
-      _isLoading = true;
-      notifyListeners();
+    _isLoading = true;
+    notifyListeners();
+
+    final userId = _authProvider.userProfile!.uid;
+
+    // Combine streams of all badges and user-specific badges
+    _badgesSubscription = _badgeService.streamAllBadges().listen((allBadges) {
+      // When all badges update, re-fetch user badges and recalculate everything
+      _userBadgesSubscription?.cancel();
+      _userBadgesSubscription =
+          _userBadgeService.streamUserBadges(userId).listen((userBadges) async {
+        await _processBadgeData(allBadges, userBadges, userId);
+      });
     });
+  }
 
-    try {
-      final userId = _authProvider.userProfile!.uid;
-      final results = await Future.wait([
-        _badgeService.getAllBadges(),
-        _userBadgeService.getUserBadges(userId),
-      ]);
+  Future<void> _processBadgeData(
+      List<Badge> allBadges, List<UserBadge> userBadges, String userId) async {
+    final List<BadgeDisplayInfo> badgeInfos = [];
+    for (final badge in allBadges) {
+      final userBadge =
+          userBadges.firstWhereOrNull((ub) => ub.badgeId == badge.id);
 
-      final allBadges = results[0] as List<Badge>;
-      final userBadges = results[1] as List<UserBadge>;
-
-      final List<BadgeDisplayInfo> badgeInfos = [];
-      for (final badge in allBadges) {
-        final userBadge = userBadges.firstWhereOrNull(
-          (ub) => ub.badgeId == badge.id,
-        );
-
-        double progress = 0.0;
-        if (userBadge != null) {
-          progress = 1.0;
-        } else {
-          progress = await _calculateProgress(badge, userId);
-        }
-
-        badgeInfos.add(
-          BadgeDisplayInfo(
-            badge: badge,
-            userBadge: userBadge,
-            progress: progress,
-          ),
-        );
+      double progress = 0.0;
+      if (userBadge != null) {
+        progress = 1.0;
+      } else {
+        progress = await _calculateProgress(badge, userId);
       }
-      _badges = badgeInfos;
-    } catch (e) {
-      print('Error fetching and merging badges: $e');
-      _badges = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+
+      badgeInfos.add(
+        BadgeDisplayInfo(
+          badge: badge,
+          userBadge: userBadge,
+          progress: progress,
+        ),
+      );
     }
+    _badges = badgeInfos;
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<double> _calculateProgress(Badge badge, String userId) async {
-    switch (badge.progressMetric) {
-      case 'sales_booster':
-        return await _calculateSalesBoosterProgress(userId);
-      // TODO: Implement other progress metrics like 'brand_champion', 'top_seller'
-      default:
-        return 0.0;
+    // Handle old structure
+    if (badge.progressMetric != null) {
+      switch (badge.progressMetric) {
+        case 'sales_booster':
+          return await _calculateSalesBoosterProgress(userId);
+        default:
+          return 0.0;
+      }
     }
+
+    // Handle new structure
+    if (badge.acquisitionRules != null) {
+      final rules = badge.acquisitionRules!;
+      final sales = await _saleService.getSalesHistory(
+        userId,
+        startDate: rules.timeframe.startDate,
+        endDate: rules.timeframe.endDate,
+      );
+
+      double total = 0.0;
+      // Filter sales based on scope
+      final filteredSales = sales.where((sale) {
+        // TODO: This filtering logic needs the product details for each sale
+        // For now, we assume sales match if any criteria is empty (matches all)
+        bool brandMatch = rules.scope.brands.isEmpty ||
+            rules.scope.brands.contains(sale.productBrandSnapshot);
+        bool categoryMatch = rules.scope.categories.isEmpty ||
+            rules.scope.categories.contains(sale.productCategorySnapshot);
+        bool productMatch = rules.scope.productIds.isEmpty ||
+            rules.scope.productIds.contains(sale.productId);
+        return brandMatch && categoryMatch && productMatch;
+      }).toList();
+
+      if (rules.metric == 'revenue') {
+        total = filteredSales.fold(
+            0, (sum, sale) => sum + (sale.totalPrice ?? 0.0));
+      } else if (rules.metric == 'quantity') {
+        total =
+            filteredSales.fold(0, (sum, sale) => sum + sale.quantity).toDouble();
+      }
+
+      if (rules.targetValue == 0) return 1.0;
+      final progress = total / rules.targetValue;
+      return progress.clamp(0.0, 1.0);
+    }
+
+    return 0.0;
   }
 
   Future<double> _calculateSalesBoosterProgress(String userId) async {
@@ -136,10 +178,9 @@ class BadgeProvider with ChangeNotifier {
         (sum, sale) => sum + (sale.totalPrice ?? 0.0),
       );
 
-      if (prevMonthTotal == 0)
-        return 1.0; // If no sales last month, any sale this month is an infinite improvement.
+      if (prevMonthTotal == 0) return thisMonthTotal > 0 ? 1.0 : 0.0;
 
-      final target = prevMonthTotal * 1.2;
+      final target = prevMonthTotal * 1.2; // 20% increase target
       if (target == 0) return 1.0;
 
       final progress = thisMonthTotal / target;
@@ -148,5 +189,16 @@ class BadgeProvider with ChangeNotifier {
       print('Error calculating sales booster progress: $e');
       return 0.0;
     }
+  }
+
+  void _cancelSubscriptions() {
+    _badgesSubscription?.cancel();
+    _userBadgesSubscription?.cancel();
+  }
+
+  @override
+  void dispose() {
+    _cancelSubscriptions();
+    super.dispose();
   }
 }
