@@ -577,7 +577,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                                   ),
                                 ),
                                 Text(
-                                  formation.admin,
+                                  formation.author ?? 'N/A',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -1109,7 +1109,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Par ${formation.admin}',
+                    'Par ${formation.author ?? 'N/A'}',
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
                 ],
