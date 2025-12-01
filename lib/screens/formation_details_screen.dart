@@ -343,7 +343,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Par ${widget.formation.admin}',
+                        'Par ${widget.formation.author ?? 'N/A'}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -1587,9 +1587,11 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         if (stepIndex == _currentStep && _currentStep < _steps.length - 1) {
           _currentStep++;
         }
-    });
+      });
+    }
   }
-}  void _showSnackBar(String message) {
+
+  void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

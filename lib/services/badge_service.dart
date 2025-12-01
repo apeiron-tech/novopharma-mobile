@@ -5,16 +5,20 @@ class BadgeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _collection = 'badges';
 
-  Future<List<Badge>> getAllBadges() async {
+  Stream<List<Badge>> streamAllBadges() {
     try {
-      final querySnapshot = await _firestore
+      return _firestore
           .collection(_collection)
           .orderBy('name')
-          .get();
-      return querySnapshot.docs.map((doc) => Badge.fromFirestore(doc)).toList();
+          .snapshots()
+          .map((querySnapshot) {
+        return querySnapshot.docs
+            .map((doc) => Badge.fromFirestore(doc))
+            .toList();
+      });
     } catch (e) {
-      print('Error fetching all badges: $e');
-      return [];
+      print('Error streaming all badges: $e');
+      return Stream.value([]);
     }
   }
 }

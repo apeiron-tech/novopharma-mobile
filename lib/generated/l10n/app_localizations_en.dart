@@ -606,7 +606,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goBack => 'Go Back';
 
   @override
-  String get pointsAccumulatedToDate => 'Points cumulés\nà ce jour en';
+  String get pointsAccumulatedToDate => 'Points accumulated\nto date';
 
   @override
   String get currentPointsBalance => 'Solde de points\nactuels';

@@ -1211,7 +1211,7 @@ abstract class AppLocalizations {
   /// No description provided for @pointsAccumulatedToDate.
   ///
   /// In en, this message translates to:
-  /// **'Points cumulés\nà ce jour en'**
+  /// **'Points accumulated\nto date'**
   String get pointsAccumulatedToDate;
 
   /// No description provided for @currentPointsBalance.

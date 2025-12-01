@@ -241,7 +241,7 @@
     "productNotAvailable": "Product Not Available",
     "productNotAvailableMessage": "This product is not available at the moment. Please try again later.",
     "goBack": "Go Back",
-    "pointsAccumulatedToDate": "Points cumulés\nà ce jour en",
+    "pointsAccumulatedToDate": "Points accumulated\nto date",
     "currentPointsBalance": "Solde de points\nactuels",
     "rankingOn": "Classement sur xx inscrits",
     "outOf": "out of {count} registered",

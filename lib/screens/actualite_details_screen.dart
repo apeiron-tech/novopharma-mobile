@@ -585,20 +585,14 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
           children: [
             PhotoView(
               imageProvider: CachedNetworkImageProvider(imageUrl),
-              backgroundDecoration: const BoxDecoration(
-                color: Colors.black,
-              ),
+              backgroundDecoration: const BoxDecoration(color: Colors.black),
               minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2.0,
               loadingBuilder: (context, event) => const Center(
                 child: CircularProgressIndicator(color: Colors.white),
               ),
               errorBuilder: (context, error, stackTrace) => const Center(
-                child: Icon(
-                  Icons.error,
-                  color: Colors.white,
-                  size: 64,
-                ),
+                child: Icon(Icons.error, color: Colors.white, size: 64),
               ),
             ),
             Positioned(
@@ -606,11 +600,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
               right: 20,
               child: IconButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
-                icon: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 30,
-                ),
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
               ),
             ),
             Positioned(
@@ -640,7 +630,11 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     );
   }
 
-  Future<void> _handleDocumentFile(String url, String fileName, bool isPdf) async {
+  Future<void> _handleDocumentFile(
+    String url,
+    String fileName,
+    bool isPdf,
+  ) async {
     try {
       // Show dialog with options
       await showDialog(
@@ -701,7 +695,9 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       } else {
         await _copyUrlToClipboard(url);
-        _showSnackBar('Impossible d\'ouvrir automatiquement. Lien copié dans le presse-papiers.');
+        _showSnackBar(
+          'Impossible d\'ouvrir automatiquement. Lien copié dans le presse-papiers.',
+        );
       }
     } catch (e) {
       await _copyUrlToClipboard(url);
