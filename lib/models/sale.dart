@@ -10,6 +10,8 @@ class Sale {
   final int pointsEarned;
   final DateTime saleDate;
   final double totalPrice;
+  final String? productBrandSnapshot;
+  final String? productCategorySnapshot;
 
   Sale({
     required this.id,
@@ -21,6 +23,8 @@ class Sale {
     required this.pointsEarned,
     required this.saleDate,
     required this.totalPrice,
+    this.productBrandSnapshot,
+    this.productCategorySnapshot,
   });
 
   factory Sale.fromFirestore(DocumentSnapshot doc) {
@@ -35,6 +39,8 @@ class Sale {
       pointsEarned: data['pointsEarned'] ?? 0,
       saleDate: (data['saleDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       totalPrice: (data['totalPrice'] as num?)?.toDouble() ?? 0.0,
+      productBrandSnapshot: data['productBrandSnapshot'],
+      productCategorySnapshot: data['productCategorySnapshot'],
     );
   }
 
@@ -48,6 +54,8 @@ class Sale {
       'pointsEarned': pointsEarned,
       'saleDate': Timestamp.fromDate(saleDate),
       'totalPrice': totalPrice,
+      'productBrandSnapshot': productBrandSnapshot,
+      'productCategorySnapshot': productCategorySnapshot,
     };
   }
 }

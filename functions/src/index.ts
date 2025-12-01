@@ -9,6 +9,152 @@ admin.initializeApp();
 const db = admin.firestore();
 
 /**
+ * NEW: Cloud Function to process sales for badge awards.
+ * Triggers when a new sale is created.
+ */
+export const processSaleForBadgeAwards = onDocumentCreated("sales/{saleId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) {
+    logger.error("No data associated with the event for badge processing.");
+    return;
+  }
+
+  const sale = snapshot.data();
+  const {userId, productId, quantity, totalPrice} = sale;
+
+  if (!userId || !productId) {
+    logger.error(`Sale document ${event.params.saleId} is missing userId or productId.`);
+    return;
+  }
+
+  try {
+    // 1. Fetch all active, new-structure badges
+    const activeBadgesSnapshot = await db.collection("badges")
+      .where("isActive", "==", true)
+      .get();
+
+    if (activeBadgesSnapshot.empty) {
+      logger.info("No active badges found. Exiting badge processing.");
+      return;
+    }
+
+    // 2. Get product details for the sale
+    const productDoc = await db.collection("products").doc(productId).get();
+    if (!productDoc.exists) {
+      logger.error(`Product ${productId} not found for badge processing.`);
+      return;
+    }
+    const product = productDoc.data();
+
+    // 3. Process each badge
+    for (const badgeDoc of activeBadgesSnapshot.docs) {
+      const badge = badgeDoc.data();
+      const badgeId = badgeDoc.id;
+
+      // Ensure it's a new-structure badge
+      if (!badge.acquisitionRules) {
+        continue;
+      }
+
+      // 4. Check if the user already has this badge
+      const userBadgeQuery = await db.collection("user_badges")
+        .where("userId", "==", userId)
+        .where("badgeId", "==", badgeId)
+        .limit(1)
+        .get();
+
+      if (!userBadgeQuery.empty) {
+        logger.info(`User ${userId} already has badge ${badgeId}. Skipping.`);
+        continue;
+      }
+
+      // 5. Check if the sale meets the badge's acquisition criteria
+      const isEligible = isSaleEligibleForBadge(sale, product, badge.acquisitionRules);
+
+      if (isEligible) {
+        logger.info(`Sale ${event.params.saleId} is eligible for badge ${badgeId} for user ${userId}.`);
+
+        // Use a transaction to award the badge safely
+        await db.runTransaction(async (transaction) => {
+          const badgeRef = db.collection("badges").doc(badgeId);
+          const freshBadgeDoc = await transaction.get(badgeRef);
+          const freshBadge = freshBadgeDoc.data();
+
+          if (!freshBadge) {
+            throw new Error(`Badge ${badgeId} not found during transaction.`);
+          }
+
+          // **This is the key logic for the user's request**
+          // Check maxWinners only if it is a positive number.
+          // If maxWinners is null, undefined, 0, or negative, the check is skipped.
+          const maxWinners = freshBadge.maxWinners;
+          if (maxWinners && maxWinners > 0) {
+            const winnerCount = freshBadge.winnerCount || 0;
+            if (winnerCount >= maxWinners) {
+              logger.info(`Badge ${badgeId} has reached its max winners limit of ${maxWinners}. Cannot award to user ${userId}.`);
+              return; // Stop the transaction
+            }
+          }
+
+          // Award the badge
+          const newUserBadgeRef = db.collection("user_badges").doc();
+          transaction.set(newUserBadgeRef, {
+            userId: userId,
+            badgeId: badgeId,
+            awardedAt: admin.firestore.FieldValue.serverTimestamp(),
+            badgeName: freshBadge.name,
+            badgeDescription: freshBadge.description,
+            badgeImageUrl: freshBadge.imageUrl,
+            context: `Awarded via sale ${event.params.saleId}`,
+          });
+
+          // Increment the winner count
+          transaction.update(badgeRef, {
+            winnerCount: admin.firestore.FieldValue.increment(1),
+          });
+
+          logger.info(`Successfully awarded badge ${badgeId} to user ${userId} in transaction.`);
+        });
+      }
+    }
+  } catch (error) {
+    logger.error(`Failed to process sale ${event.params.saleId} for badge awards.`, {error});
+  }
+});
+
+/**
+ * Checks if a sale is eligible for a badge based on its acquisition rules.
+ * @param {any} sale The sale document data.
+ * @param {any} product The product document data.
+ * @param {any} rules The acquisitionRules map from the badge.
+ * @return {boolean} True if the sale is eligible, false otherwise.
+ */
+function isSaleEligibleForBadge(sale: any, product: any, rules: any): boolean {
+  if (!rules || !rules.scope || !rules.timeframe) return false;
+
+  const now = new Date();
+  const startDate = rules.timeframe.startDate.toDate();
+  const endDate = rules.timeframe.endDate.toDate();
+
+  // Check timeframe
+  if (now < startDate || now > endDate) return false;
+
+  // Check scope criteria
+  const {scope, metric, targetValue} = rules;
+  if (scope.brands?.length > 0 && !scope.brands.includes(product?.marque)) return false;
+  if (scope.categories?.length > 0 && !scope.categories.includes(product?.category)) return false;
+  if (scope.productIds?.length > 0 && !scope.productIds.includes(sale.productId)) return false;
+
+  // Check metric value
+  const saleValue = metric === "revenue" ? sale.totalPrice : sale.quantity;
+  if (saleValue < targetValue) return false;
+
+
+  return true;
+}
+
+
+/**
  * This Cloud Function is the heart of the goal-tracking system.
  * It automatically triggers whenever a new document is created in the 'sales' collection.
  *
