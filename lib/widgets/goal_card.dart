@@ -37,10 +37,7 @@ class GoalCard extends StatelessWidget {
                     Colors.white,
                     const Color(0xFF22C55E).withValues(alpha: 0.05),
                   ]
-                : [
-                    Colors.white,
-                    Colors.grey.shade50,
-                  ],
+                : [Colors.white, Colors.grey.shade50],
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
@@ -102,8 +99,12 @@ class GoalCard extends StatelessWidget {
                                       progressColor.withValues(alpha: 0.1),
                                     ]
                                   : [
-                                      const Color(0xFF1F9BD1).withValues(alpha: 0.1),
-                                      const Color(0xFF1F9BD1).withValues(alpha: 0.05),
+                                      const Color(
+                                        0xFF1F9BD1,
+                                      ).withValues(alpha: 0.1),
+                                      const Color(
+                                        0xFF1F9BD1,
+                                      ).withValues(alpha: 0.05),
                                     ],
                             ),
                             borderRadius: BorderRadius.circular(14),
@@ -142,9 +143,7 @@ class GoalCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.grey.shade200,
-                            ),
+                            border: Border.all(color: Colors.grey.shade200),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -216,9 +215,7 @@ class GoalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

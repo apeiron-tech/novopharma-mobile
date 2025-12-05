@@ -76,10 +76,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Colors.grey.shade50,
-                            Colors.white,
-                          ],
+                          colors: [Colors.grey.shade50, Colors.white],
                         ),
                       ),
                       child: SafeArea(
@@ -104,8 +101,9 @@ class _GoalsScreenState extends State<GoalsScreen>
                                       borderRadius: BorderRadius.circular(18),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Color(0xFF1F9BD1)
-                                              .withValues(alpha: 0.35),
+                                          color: Color(
+                                            0xFF1F9BD1,
+                                          ).withValues(alpha: 0.35),
                                           blurRadius: 16,
                                           offset: const Offset(0, 6),
                                           spreadRadius: 0,
@@ -138,38 +136,42 @@ class _GoalsScreenState extends State<GoalsScreen>
                                         Consumer<GoalProvider>(
                                           builder:
                                               (context, goalProvider, child) {
-                                            final goalCount =
-                                                goalProvider.goals.length;
-                                            return Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF1F9BD1)
-                                                    .withValues(alpha: 0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                border: Border.all(
-                                                  color:
-                                                      const Color(0xFF1F9BD1)
-                                                          .withValues(alpha: 0.2),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                l10n.activeGoalsCount(
-                                                  goalCount,
-                                                ),
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Color(0xFF1F9BD1),
-                                                  fontWeight: FontWeight.w700,
-                                                  letterSpacing: 0.3,
-                                                ),
-                                              ),
-                                            );
-                                          },
+                                                final goalCount =
+                                                    goalProvider.goals.length;
+                                                return Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 6,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFF1F9BD1,
+                                                    ).withValues(alpha: 0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                        0xFF1F9BD1,
+                                                      ).withValues(alpha: 0.2),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    l10n.activeGoalsCount(
+                                                      goalCount,
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Color(0xFF1F9BD1),
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      letterSpacing: 0.3,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
                                         ),
                                       ],
                                     ),
@@ -197,8 +199,9 @@ class _GoalsScreenState extends State<GoalsScreen>
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFF1F9BD1).withValues(alpha: 0.1),
+                                color: const Color(
+                                  0xFF1F9BD1,
+                                ).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
@@ -221,102 +224,101 @@ class _GoalsScreenState extends State<GoalsScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
-                    // Enhanced Goals Slider
-                    if (goalProvider.isLoading)
-                      Container(
-                        height: 260,
-                        margin: const EdgeInsets.symmetric(horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.grey.shade200,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(0xFF1F9BD1),
-                            ),
-                            strokeWidth: 3,
-                          ),
-                        ),
-                      )
-                    else if (goalProvider.goals.isEmpty)
-                      _buildEmptyState(l10n)
-                    else
-                      SizedBox(
-                        height: 260,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: goalProvider.goals.length,
-                          onPageChanged: (page) {
-                            setState(() {
-                              _currentPage = page;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            final goal = goalProvider.goals[index];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
+                      // Enhanced Goals Slider
+                      if (goalProvider.isLoading)
+                        Container(
+                          height: 260,
+                          margin: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
-                              child: GoalCard(
-                                goal: goal,
-                                progress: goal.userProgress,
-                                onTap: () => _onGoalCardTap(goal),
+                            ],
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF1F9BD1),
                               ),
-                            );
-                          },
+                              strokeWidth: 3,
+                            ),
+                          ),
+                        )
+                      else if (goalProvider.goals.isEmpty)
+                        _buildEmptyState(l10n)
+                      else
+                        SizedBox(
+                          height: 260,
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: goalProvider.goals.length,
+                            onPageChanged: (page) {
+                              setState(() {
+                                _currentPage = page;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final goal = goalProvider.goals[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: GoalCard(
+                                  goal: goal,
+                                  progress: goal.userProgress,
+                                  onTap: () => _onGoalCardTap(goal),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    const SizedBox(height: 20),
-                    // Enhanced Page Indicator
-                    if (goalProvider.goals.isNotEmpty)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          goalProvider.goals.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: _currentPage == index ? 24 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              gradient: _currentPage == index
-                                  ? const LinearGradient(
-                                      colors: [
-                                        Color(0xFF1F9BD1),
-                                        Color(0xFF1887B8),
-                                      ],
-                                    )
-                                  : null,
-                              color: _currentPage != index
-                                  ? Colors.grey.shade300
-                                  : null,
-                              borderRadius: BorderRadius.circular(4),
-                              boxShadow: _currentPage == index
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF1F9BD1)
-                                            .withValues(alpha: 0.4),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
+                      const SizedBox(height: 20),
+                      // Enhanced Page Indicator
+                      if (goalProvider.goals.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            goalProvider.goals.length,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: _currentPage == index ? 24 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                gradient: _currentPage == index
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFF1F9BD1),
+                                          Color(0xFF1887B8),
+                                        ],
+                                      )
+                                    : null,
+                                color: _currentPage != index
+                                    ? Colors.grey.shade300
+                                    : null,
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: _currentPage == index
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF1F9BD1,
+                                          ).withValues(alpha: 0.4),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    const SizedBox(height: 100), // Bottom padding for navbar
+                      const SizedBox(height: 100), // Bottom padding for navbar
                     ],
                   ),
                 ),
@@ -336,15 +338,10 @@ class _GoalsScreenState extends State<GoalsScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Colors.grey.shade50,
-          ],
+          colors: [Colors.white, Colors.grey.shade50],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -418,9 +415,7 @@ class GoalBottomSheet extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(32),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),
@@ -487,10 +482,11 @@ class GoalBottomSheet extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: (progressPercent >= 100
-                                          ? const Color(0xFF22C55E)
-                                          : const Color(0xFF1F9BD1))
-                                      .withValues(alpha: 0.3),
+                                  color:
+                                      (progressPercent >= 100
+                                              ? const Color(0xFF22C55E)
+                                              : const Color(0xFF1F9BD1))
+                                          .withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -538,15 +534,10 @@ class GoalBottomSheet extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Colors.grey.shade50,
-                              Colors.white,
-                            ],
+                            colors: [Colors.grey.shade50, Colors.white],
                           ),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.grey.shade200,
-                          ),
+                          border: Border.all(color: Colors.grey.shade200),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.03),
@@ -563,8 +554,9 @@ class GoalBottomSheet extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1F9BD1)
-                                        .withValues(alpha: 0.1),
+                                    color: const Color(
+                                      0xFF1F9BD1,
+                                    ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -607,15 +599,14 @@ class GoalBottomSheet extends StatelessWidget {
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF1F9BD1),
-                              Color(0xFF1887B8),
-                            ],
+                            colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1F9BD1).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFF1F9BD1,
+                              ).withValues(alpha: 0.4),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -677,9 +668,7 @@ class GoalBottomSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -689,11 +678,7 @@ class GoalBottomSheet extends StatelessWidget {
               color: const Color(0xFF1F9BD1).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: const Color(0xFF1F9BD1),
-            ),
+            child: Icon(icon, size: 18, color: const Color(0xFF1F9BD1)),
           ),
           const SizedBox(width: 12),
           Expanded(

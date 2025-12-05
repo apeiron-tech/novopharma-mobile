@@ -657,6 +657,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 }
+
 class _AnimatedDateSelector extends StatefulWidget {
   const _AnimatedDateSelector({super.key});
 
