@@ -27,99 +27,180 @@ class GoalCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 16),
+        width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isCompleted
+                ? [
+                    Colors.white,
+                    const Color(0xFF22C55E).withValues(alpha: 0.05),
+                  ]
+                : [
+                    Colors.white,
+                    Colors.grey.shade50,
+                  ],
+          ),
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF102040).withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
           border: Border.all(
             color: isCompleted
-                ? progressColor.withOpacity(0.5)
-                : Colors.transparent,
+                ? progressColor.withValues(alpha: 0.3)
+                : Colors.grey.shade200,
             width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isCompleted
+                  ? progressColor.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              // Left Column: Title, Icon, Progress Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title and Icon
-                    Row(
+        child: Stack(
+          children: [
+            // Decorative background element
+            if (isCompleted)
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: progressColor.withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+            // Main content
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  // Left Column: Title, Icon, Progress Text
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          goal.metric == 'revenue'
-                              ? Icons.monetization_on_outlined
-                              : Icons.inventory_2_outlined,
-                          color: const Color(0xFF94A3B8),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            goal.title,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF102132),
-                              height: 1.3,
+                        // Icon badge
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isCompleted
+                                  ? [
+                                      progressColor.withValues(alpha: 0.2),
+                                      progressColor.withValues(alpha: 0.1),
+                                    ]
+                                  : [
+                                      const Color(0xFF1F9BD1).withValues(alpha: 0.1),
+                                      const Color(0xFF1F9BD1).withValues(alpha: 0.05),
+                                    ],
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            borderRadius: BorderRadius.circular(14),
                           ),
+                          child: Icon(
+                            goal.metric == 'revenue'
+                                ? Icons.monetization_on_rounded
+                                : Icons.inventory_2_rounded,
+                            color: isCompleted
+                                ? progressColor
+                                : const Color(0xFF1F9BD1),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Title
+                        Text(
+                          goal.title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1F2937),
+                            height: 1.3,
+                            letterSpacing: -0.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const Spacer(),
+                        // Progress Text
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                goal.metric == 'revenue'
+                                    ? Icons.payments_rounded
+                                    : Icons.inventory_rounded,
+                                size: 16,
+                                color: Colors.grey.shade700,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                goal.metric == 'revenue'
+                                    ? '$currentProgress / ${goal.targetValue.toInt()} TND'
+                                    : '$currentProgress / ${goal.targetValue.toInt()}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Time Remaining
+                        _buildChip(
+                          icon: Icons.schedule_rounded,
+                          text: goal.getTimeRemaining(l10n),
+                          color: isCompleted
+                              ? progressColor
+                              : const Color(0xFF1F9BD1),
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    // Progress Text
-                    Text(
-                      goal.metric == 'revenue'
-                          ? '$currentProgress / ${goal.targetValue.toInt()} TND'
-                          : '$currentProgress / ${goal.targetValue.toInt()} unités',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF4A5568),
-                      ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Right Column: Progress Ring
+                  ProgressRing(
+                    progress: progressPercent,
+                    size: 90,
+                    strokeWidth: 9,
+                    progressColor: progressColor,
+                    trackColor: Colors.grey.shade200,
+                    textStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: progressColor,
+                      letterSpacing: -0.5,
                     ),
-                    const SizedBox(height: 4),
-                    // Time Remaining
-                    _buildChip(
-                      icon: Icons.access_time_filled,
-                      text: goal.getTimeRemaining(l10n),
-                      color: const Color(0xFF4A5568),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              // Right Column: Progress Ring
-              ProgressRing(
-                progress: progressPercent,
-                size: 80,
-                strokeWidth: 8,
-                progressColor: progressColor,
-                trackColor: const Color(0xFFF0F4F8),
-                textStyle: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: progressColor,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -131,24 +212,30 @@ class GoalCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+                letterSpacing: 0.2,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

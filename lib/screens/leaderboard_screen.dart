@@ -83,10 +83,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           const SizedBox(height: 20),
                           _buildTabSelector(leaderboardProvider, tabs, periods),
                           const SizedBox(height: 20),
-                           _AnimatedDateSelector(
-                                    key: UniqueKey(),
-                                  ), 
-                          const SizedBox(height: 20),
                           _buildTopThreeSection(
                             leaderboardProvider.leaderboardData,
                             l10n,

@@ -22,7 +22,7 @@ class _FormationsScreenState extends State<FormationsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -63,7 +63,6 @@ class _FormationsScreenState extends State<FormationsScreen>
                         children: [
                           _buildMesFormationsTab(formationProvider),
                           _buildVideosTab(formationProvider),
-                          _buildResourcesTab(formationProvider),
                         ],
                       ),
                     ),
@@ -278,7 +277,6 @@ class _FormationsScreenState extends State<FormationsScreen>
           tabs: const [
             Tab(text: 'Mes Formations'),
             Tab(text: 'Vidéos'),
-            Tab(text: 'Ressources'),
           ],
         ),
       ),
@@ -637,86 +635,6 @@ class _FormationsScreenState extends State<FormationsScreen>
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 20),
-
-                // Enhanced tags section
-                if (formation.tags.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Compétences développées',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: formation.tags.take(3).map((tag) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  LightModeColors.novoPharmaBlue.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  LightModeColors.novoPharmaBlue.withValues(
-                                    alpha: 0.05,
-                                  ),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: LightModeColors.novoPharmaBlue
-                                    .withValues(alpha: 0.2),
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: LightModeColors.novoPharmaBlue
-                                      .withValues(alpha: 0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: LightModeColors.novoPharmaBlue,
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  tag,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: LightModeColors.novoPharmaBlue,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
 
                 const SizedBox(height: 16),
 

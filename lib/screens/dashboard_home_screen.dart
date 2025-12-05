@@ -110,24 +110,6 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                       },
                 ),
           ),
-          Positioned(
-            right: 20,
-            bottom: 90,
-            child: FloatingActionButton(
-              heroTag: 'scan_product',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const ProductScreen(sku: '3760007337888'),
-                  ),
-                );
-              },
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.qr_code_scanner, color: Colors.white),
-            ),
-          ),
         ],
       ),
     );
