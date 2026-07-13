@@ -713,6 +713,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             ),
           ),
         ],
+        const SizedBox(height: 16),
+        _buildRedeemButton(context, l10n),
       ],
     );
   }

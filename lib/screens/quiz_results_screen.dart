@@ -31,7 +31,9 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.correctAnswers == widget.totalQuestions && widget.totalQuestions > 0) {
+      final bool hasWon =
+          widget.correctAnswers >= widget.quiz.effectiveMinCorrectAnswers;
+      if (hasWon && widget.totalQuestions > 0) {
         showDialog(
           context: context,
           barrierDismissible: true,
@@ -104,13 +106,17 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
   }
 
   Widget _buildHeader(BuildContext context, double scorePercentage) {
+    final bool hasWon =
+        widget.correctAnswers >= widget.quiz.effectiveMinCorrectAnswers;
     return Container(
       padding: const EdgeInsets.all(24),
       color: Colors.white,
       child: Column(
         children: [
           Text(
-            scorePercentage > 0.7 ? AppLocalizations.of(context)!.congratulations : AppLocalizations.of(context)!.goodEffort,
+            hasWon
+                ? AppLocalizations.of(context)!.congratulations
+                : AppLocalizations.of(context)!.goodEffort,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -129,7 +135,7 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
                   strokeWidth: 8,
                   backgroundColor: Colors.grey.shade200,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    scorePercentage > 0.7 ? Colors.green : Colors.orange,
+                    hasWon ? Colors.green : Colors.orange,
                   ),
                 ),
               ),
@@ -187,7 +193,8 @@ class _CongratulationDialog extends StatefulWidget {
   State<_CongratulationDialog> createState() => _CongratulationDialogState();
 }
 
-class _CongratulationDialogState extends State<_CongratulationDialog> with TickerProviderStateMixin {
+class _CongratulationDialogState extends State<_CongratulationDialog>
+    with TickerProviderStateMixin {
   late AnimationController _entranceController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -227,11 +234,23 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
       duration: const Duration(seconds: 4),
     )..repeat();
 
-    _rotationAnimation = Tween<double>(begin: 0, end: 2 * math.pi).animate(_loopController);
-    _pulseAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.15), weight: 50),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.15, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _loopController, curve: Curves.easeInOut));
+    _rotationAnimation = Tween<double>(
+      begin: 0,
+      end: 2 * math.pi,
+    ).animate(_loopController);
+    _pulseAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.0, end: 1.15),
+            weight: 50,
+          ),
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.15, end: 1.0),
+            weight: 50,
+          ),
+        ]).animate(
+          CurvedAnimation(parent: _loopController, curve: Curves.easeInOut),
+        );
 
     // Initialize confetti particles
     final random = math.Random();
@@ -239,7 +258,8 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
       return _ConfettiParticle(
         x: random.nextDouble() * 300,
         y: random.nextDouble() * -200,
-        color: Colors.primaries[random.nextInt(Colors.primaries.length)].withValues(alpha: 0.8),
+        color: Colors.primaries[random.nextInt(Colors.primaries.length)]
+            .withValues(alpha: 0.8),
         size: random.nextDouble() * 8 + 4,
         speedY: random.nextDouble() * 1.5 + 1.0,
         swaySpeed: random.nextDouble() * 2 + 1.0,
@@ -277,7 +297,9 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
           clipBehavior: Clip.antiAlias,
           elevation: 12,
           backgroundColor: Colors.white,
@@ -299,7 +321,10 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
               ),
 
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 32.0,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -347,7 +372,7 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
                                     color: Colors.amber.withValues(alpha: 0.3),
                                     blurRadius: 15,
                                     spreadRadius: 2,
-                                  )
+                                  ),
                                 ],
                               ),
                               padding: const EdgeInsets.all(20),
@@ -375,7 +400,7 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Félicitations pour votre sans-faute !",
+                      "Bravo pour votre sans-faute !",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -385,7 +410,10 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
                     const SizedBox(height: 28),
                     // Countdown timer badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(20),
@@ -393,7 +421,11 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.timer_outlined, size: 16, color: Colors.grey),
+                          const Icon(
+                            Icons.timer_outlined,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
@@ -457,7 +489,9 @@ class _CongratulationDialogState extends State<_CongratulationDialog> with Ticke
                   child: LinearProgressIndicator(
                     value: _secondsLeft / _totalSeconds,
                     backgroundColor: Colors.grey.shade100,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.amber,
+                    ),
                   ),
                 ),
               ),
@@ -514,13 +548,17 @@ class _ConfettiPainter extends CustomPainter {
       paint.color = p.color;
       canvas.save();
       // Sway left/right based on Y coordinate to look organic
-      final double swayX = p.x + math.sin(p.y * 0.05 * p.swaySpeed) * p.swayWidth;
+      final double swayX =
+          p.x + math.sin(p.y * 0.05 * p.swaySpeed) * p.swayWidth;
       canvas.translate(swayX % size.width, p.y);
       canvas.rotate(p.angle);
-      
+
       // Draw rectangular or circular confetti alternately
       if (p.size.toInt() % 2 == 0) {
-        canvas.drawRect(Rect.fromLTWH(-p.size / 2, -p.size / 2, p.size, p.size * 1.5), paint);
+        canvas.drawRect(
+          Rect.fromLTWH(-p.size / 2, -p.size / 2, p.size, p.size * 1.5),
+          paint,
+        );
       } else {
         canvas.drawCircle(Offset.zero, p.size / 2, paint);
       }
@@ -569,7 +607,8 @@ class _SorryDialog extends StatefulWidget {
   State<_SorryDialog> createState() => _SorryDialogState();
 }
 
-class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixin {
+class _SorryDialogState extends State<_SorryDialog>
+    with TickerProviderStateMixin {
   late AnimationController _entranceController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -606,10 +645,19 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
       duration: const Duration(seconds: 4),
     )..repeat();
 
-    _pulseAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.1), weight: 50),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.1, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _loopController, curve: Curves.easeInOut));
+    _pulseAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.0, end: 1.1),
+            weight: 50,
+          ),
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.1, end: 1.0),
+            weight: 50,
+          ),
+        ]).animate(
+          CurvedAnimation(parent: _loopController, curve: Curves.easeInOut),
+        );
 
     // Countdown and dismiss timer
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -640,12 +688,17 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
           clipBehavior: Clip.antiAlias,
           elevation: 12,
           backgroundColor: Colors.white,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -668,7 +721,7 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
                                   color: Colors.red.withValues(alpha: 0.15),
                                   blurRadius: 15,
                                   spreadRadius: 2,
-                                )
+                                ),
                               ],
                             ),
                             padding: const EdgeInsets.all(20),
@@ -684,7 +737,7 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
                     const SizedBox(height: 16),
                     // Congrats message
                     const Text(
-                      "Désolé !",
+                      "Dommage",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
@@ -695,7 +748,7 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Vous n'avez pas gagné le quiz.",
+                      "Vous n'avez pas gagné cette fois-ci",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -705,7 +758,10 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
                     const SizedBox(height: 28),
                     // Countdown timer badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(20),
@@ -713,7 +769,11 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.timer_outlined, size: 16, color: Colors.grey),
+                          const Icon(
+                            Icons.timer_outlined,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
@@ -765,7 +825,9 @@ class _SorryDialogState extends State<_SorryDialog> with TickerProviderStateMixi
                     child: LinearProgressIndicator(
                       value: _secondsLeft / _totalSeconds,
                       backgroundColor: Colors.grey.shade100,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.red,
+                      ),
                     ),
                   ),
                 ),
@@ -804,7 +866,9 @@ class _AnswerReviewCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context)!.questionNumber(questionNumber, question.text),
+              AppLocalizations.of(
+                context,
+              )!.questionNumber(questionNumber, question.text),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             if (userAnswers.isEmpty) ...[
