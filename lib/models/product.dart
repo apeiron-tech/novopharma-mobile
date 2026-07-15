@@ -73,7 +73,7 @@ class Product {
     return Product(
       id: doc.id,
       name: data['name'] ?? '',
-      marque: data['marque'] ?? '',
+      marque: (data['marque'] ?? '').trim(),
       category: data['category'] ?? '',
       description: data['description'] ?? '',
       price: parseDouble(data['price']),

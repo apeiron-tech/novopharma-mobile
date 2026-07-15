@@ -8,7 +8,7 @@ import 'package:novopharma/theme.dart';
 class ExpirationDialog extends StatefulWidget {
   final Product product;
   final ProductStockItem? initialStockItem;
-  final Function(ProductStockItem) onSave;
+  final Function(ProductStockItem?) onSave;
 
   const ExpirationDialog({
     super.key,
@@ -514,7 +514,14 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () {
-                      final int totalQty = int.tryParse(_globalQuantityController.text) ?? 0;
+                      final String text = _globalQuantityController.text.trim();
+                      if (text.isEmpty && _expirations.isEmpty) {
+                        widget.onSave(null);
+                        Navigator.pop(context);
+                        return;
+                      }
+                      
+                      final int totalQty = int.tryParse(text) ?? 0;
                       
                       if (totalQty < sumOfLots) {
                         ScaffoldMessenger.of(context).showSnackBar(

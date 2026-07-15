@@ -118,7 +118,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
         initialStockItem: item,
         onSave: (updatedItem) {
           setState(() {
-            if (updatedItem.totalQuantity > 0 || updatedItem.expirations.isNotEmpty) {
+            if (updatedItem != null) {
               _draftProducts[item.productId] = updatedItem;
             } else {
               _draftProducts.remove(item.productId);
