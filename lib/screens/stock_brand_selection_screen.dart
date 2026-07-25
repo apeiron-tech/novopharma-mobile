@@ -142,7 +142,7 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
           initialStockItem: initialItem,
           onSave: (updatedItem) {
             setState(() {
-              if (updatedItem.totalQuantity > 0 || updatedItem.expirations.isNotEmpty) {
+              if (updatedItem != null) {
                 _draftProducts[matchedProduct.id] = updatedItem;
               } else {
                 _draftProducts.remove(matchedProduct.id);

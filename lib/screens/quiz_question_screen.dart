@@ -81,7 +81,8 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
       }
     }
     // Only award points if the minimum correct answers threshold is met
-    final pointsEarned = (correctAnswers >= widget.quiz.effectiveMinCorrectAnswers)
+    final pointsEarned =
+        (correctAnswers >= widget.quiz.effectiveMinCorrectAnswers)
         ? widget.quiz.points
         : 0;
     await QuizService().submitQuiz(
@@ -363,9 +364,12 @@ class _AnswerCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: isSelected
+                        ? LightModeColors.novoPharmaBlue
+                        : const Color(0xFF102132),
                   ),
                 ),
               ),

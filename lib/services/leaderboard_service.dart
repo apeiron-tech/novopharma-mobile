@@ -9,12 +9,14 @@ class LeaderboardService {
     print('🏆 [LEADERBOARD] ===== Starting Leaderboard Fetch =====');
 
     String connectedUserCategory = 'Pharmacie';
+    String connectedUserRole = '';
     if (currentUserId != null) {
       final currentUserDoc = await _firestore
           .collection('users')
           .doc(currentUserId)
           .get();
       if (currentUserDoc.exists) {
+        connectedUserRole = currentUserDoc.data()?['role'] ?? '';
         String currPharmacyId = currentUserDoc.data()?['pharmacyId'] ?? '';
         if (currPharmacyId.isNotEmpty) {
           final currPharmacyDoc = await _firestore
@@ -31,31 +33,33 @@ class LeaderboardService {
       }
     }
 
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('users')
+        .where('status', isEqualTo: 'active');
+
+    if (connectedUserRole == 'Dermo-conseiller') {
+      query = query
+          .where('role', isEqualTo: 'Dermo-conseiller')
+          .orderBy('points', descending: true);
+    } else {
+      query = query
+          .where('role', whereNotIn: ['Dermo-conseiller', 'preparateur_manager', 'mystery', 'admin'])
+          .orderBy('role')
+          .orderBy('points', descending: true);
+    }
+
     try {
-      final usersSnapshot = await _firestore
-          .collection('users')
-          .where('status', isEqualTo: 'active')
-          .orderBy('points', descending: true)
-          .get();
+      final usersSnapshot = await query.get();
 
       print(
         '🏆 [LEADERBOARD] ===== Users Snapshot: ${usersSnapshot.docs.length} =====',
       );
       final List<Map<String, dynamic>> leaderboard = [];
-      int rank = 1;
-
-      // Roles to exclude from the leaderboard
-      final excludedRoles = ['preparateur_manager', 'mystery', 'admin'];
 
       // Batch check pharmacy IDs
       Set<String> thisBatchPharmacyIds = {};
       for (var userDoc in usersSnapshot.docs) {
         final data = userDoc.data();
-        final String role = data['role'] as String? ?? '';
-
-        // Skip excluded roles
-        if (excludedRoles.contains(role)) continue;
-
         final String pharmacyId = data['pharmacyId'] as String? ?? '';
         if (pharmacyId.isNotEmpty) {
           thisBatchPharmacyIds.add(pharmacyId);
@@ -80,11 +84,6 @@ class LeaderboardService {
 
       for (var userDoc in usersSnapshot.docs) {
         final data = userDoc.data();
-        final String role = data['role'] as String? ?? '';
-
-        // Skip excluded roles
-        if (excludedRoles.contains(role)) continue;
-
         final uId = userDoc.id;
         final points = data['points'] is num
             ? (data['points'] as num).toDouble()
@@ -99,16 +98,27 @@ class LeaderboardService {
           }
         }
 
-        if (connectedUserCategory == userCategory) {
+        // For non-Dermo-conseiller, we also filter by pharmacy category.
+        // For Dermo-conseiller, we show all Dermo-conseiller users globally.
+        if (connectedUserRole == 'Dermo-conseiller' || connectedUserCategory == userCategory) {
           leaderboard.add({
-            'rank': rank,
             'userId': uId,
             'name': data['name'] ?? 'Unknown',
             'avatarUrl': data['avatarUrl'] ?? '',
             'points': points.toInt(),
           });
-          rank++;
         }
+      }
+
+      // Since Firestore requires ordering by 'role' first when using 'whereNotIn',
+      // we must sort by points descending locally for non-Dermo-conseiller users.
+      if (connectedUserRole != 'Dermo-conseiller') {
+        leaderboard.sort((a, b) => b['points'].compareTo(a['points']));
+      }
+
+      // Assign sequential ranks after sorting
+      for (int i = 0; i < leaderboard.length; i++) {
+        leaderboard[i]['rank'] = i + 1;
       }
 
       return leaderboard;

@@ -83,9 +83,10 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
 
       // Initialize text controllers
       for (var product in _brandProducts) {
+        final hasDraft = _draftProducts.containsKey(product.id);
         final initialQty = _draftProducts[product.id]?.totalQuantity ?? 0;
         _controllers[product.id] = TextEditingController(
-          text: initialQty > 0 ? initialQty.toString() : '',
+          text: hasDraft ? initialQty.toString() : '',
         );
       }
     } catch (e) {
@@ -128,7 +129,7 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
         initialStockItem: currentItem,
         onSave: (updatedItem) {
           setState(() {
-            if (updatedItem.totalQuantity > 0 || updatedItem.expirations.isNotEmpty) {
+            if (updatedItem != null) {
               _draftProducts[product.id] = updatedItem;
               _controllers[product.id]?.text = updatedItem.totalQuantity.toString();
             } else {
@@ -242,11 +243,13 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
                               final draftItem = _draftProducts[product.id];
                               final hasExpirations = draftItem?.expirations.isNotEmpty ?? false;
 
-                              final hasQty = (draftItem?.totalQuantity ?? 0) > 0;
+                              final hasQty = draftItem != null;
 
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.all(16),
+                              return GestureDetector(
+                                onTap: () => _openExpirationDialog(product),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   color: hasQty ? const Color(0xFFF7F8FF) : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
@@ -413,8 +416,9 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
                                   ],
                                 ],
                               ),
-                            );
-                          },
+                            ),
+                          );
+                        },
                         );
                   }(),
                 ),
