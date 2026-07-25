@@ -27,12 +27,20 @@ class ProductStockItem {
   final String productName;
   int totalQuantity;
   List<StockExpiration> expirations;
+  bool respectsPrice;
+  double? sellingPrice;
+  double? priceDifference;
+  double? recommendedPrice;
 
   ProductStockItem({
     required this.productId,
     required this.productName,
     this.totalQuantity = 0,
     required this.expirations,
+    this.respectsPrice = true,
+    this.sellingPrice,
+    this.priceDifference,
+    this.recommendedPrice,
   });
 
   Map<String, dynamic> toJson() {
@@ -41,6 +49,10 @@ class ProductStockItem {
       'productName': productName,
       'totalQuantity': totalQuantity,
       'expirations': expirations.map((e) => e.toJson()).toList(),
+      'respectsPrice': respectsPrice,
+      'sellingPrice': sellingPrice,
+      'priceDifference': priceDifference,
+      'recommendedPrice': recommendedPrice,
     };
   }
 
@@ -51,6 +63,10 @@ class ProductStockItem {
       productName: json['productName'] ?? '',
       totalQuantity: json['totalQuantity'] ?? 0,
       expirations: expList.map((e) => StockExpiration.fromJson(e)).toList(),
+      respectsPrice: json['respectsPrice'] ?? true,
+      sellingPrice: json['sellingPrice'] != null ? (json['sellingPrice'] as num).toDouble() : null,
+      priceDifference: json['priceDifference'] != null ? (json['priceDifference'] as num).toDouble() : null,
+      recommendedPrice: json['recommendedPrice'] != null ? (json['recommendedPrice'] as num).toDouble() : null,
     );
   }
 

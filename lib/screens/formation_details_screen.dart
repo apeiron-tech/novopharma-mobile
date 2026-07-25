@@ -7,6 +7,7 @@ import 'package:novopharma/models/blog_post.dart';
 import 'package:novopharma/controllers/quiz_provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/screens/quiz_question_screen.dart';
+import 'package:novopharma/models/quiz.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:novopharma/services/chottu_link_service.dart';
 import 'package:novopharma/theme.dart';
@@ -1408,53 +1409,12 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
     );
   }
 
-  void _startQuiz() {
+  void _startQuiz() async {
     if (!widget.formation.hasQuiz) {
       _showSnackBar('Aucun quiz disponible pour cette formation');
       return;
     }
 
-    // Navigate to quiz screen with linkedQuizId
-    // For now, show confirmation dialog with proper quiz info
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Quiz de validation'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Formation: ${widget.formation.title}'),
-              const SizedBox(height: 16),
-              const Text(
-                'Êtes-vous prêt(e) à commencer le quiz de validation ?',
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _navigateToQuiz();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LightModeColors.novoPharmaBlue,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Commencer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _navigateToQuiz() async {
     if (widget.formation.linkedQuizId == null ||
         widget.formation.linkedQuizId!.isEmpty) {
       _showSnackBar('Aucun quiz associé à cette formation');
@@ -1469,7 +1429,6 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      // Get quiz provider and auth provider
       final quizProvider = Provider.of<QuizProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.firebaseUser?.uid;
@@ -1480,19 +1439,16 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         return;
       }
 
-      // Fetch all quizzes to find the one with matching ID
       await quizProvider.fetchAllQuizzes(userId);
 
-      // Close loading dialog
-      Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
 
-      // Find the quiz with the matching linkedQuizId
       final quiz = quizProvider.quizzes.firstWhere(
         (q) => q.id == widget.formation.linkedQuizId,
         orElse: () => throw Exception('Quiz non trouvé'),
       );
 
-      // Check attempt limit
       final attempts = quizProvider.userAttempts[quiz.id] ?? 0;
       if (attempts >= quiz.attemptLimit) {
         _showSnackBar(
@@ -1501,6 +1457,59 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         return;
       }
 
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Quiz de validation'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Formation: ${widget.formation.title}'),
+                const SizedBox(height: 8),
+                Text(
+                  'Condition de réussite: minimum ${quiz.effectiveMinCorrectAnswers} bonnes réponses sur ${quiz.questions.length}',
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Êtes-vous prêt(e) à commencer le quiz de validation ?',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _navigateToQuiz(quiz);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: LightModeColors.novoPharmaBlue,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Commencer'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      _showSnackBar('Erreur lors du chargement du quiz: $e');
+    }
+  }
+
+  void _navigateToQuiz(Quiz quiz) async {
+    final quizProvider = Provider.of<QuizProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.firebaseUser?.uid;
+
+    if (userId == null) return;
+
+    try {
       // Navigate to quiz question screen
       final result = await Navigator.push(
         context,
@@ -1515,12 +1524,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         _showSnackBar('Quiz terminé avec succès!');
       }
     } catch (e) {
-      // Close loading dialog if still open
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-
-      _showSnackBar('Quiz non disponible ou introuvable');
+      _showSnackBar('Erreur lors du quiz: $e');
     }
   }
 

@@ -13,6 +13,7 @@ class Quiz {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<QuizQuestion> questions;
+  final int minCorrectAnswersToWin;
 
   Quiz({
     required this.id,
@@ -27,7 +28,11 @@ class Quiz {
     required this.createdAt,
     required this.updatedAt,
     required this.questions,
+    this.minCorrectAnswersToWin = 0,
   });
+
+  int get effectiveMinCorrectAnswers =>
+      (minCorrectAnswersToWin <= 0) ? questions.length : minCorrectAnswersToWin;
 
   factory Quiz.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -45,6 +50,9 @@ class Quiz {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       questions: questionsData.map((q) => QuizQuestion.fromMap(q)).toList(),
+      minCorrectAnswersToWin: data['minCorrectAnswersToWin'] is int
+          ? data['minCorrectAnswersToWin']
+          : (int.tryParse(data['minCorrectAnswersToWin']?.toString() ?? '') ?? 0),
     );
   }
 }

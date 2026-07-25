@@ -25,6 +25,8 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
   late List<StockExpiration> _expirations;
   final _globalQuantityController = TextEditingController();
   final _lotQuantityController = TextEditingController();
+  late bool _respectsPrice;
+  final _sellingPriceController = TextEditingController();
   DateTime? _selectedDate;
 
   @override
@@ -37,12 +39,18 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
     // Set initial global quantity
     final initialQty = widget.initialStockItem?.totalQuantity ?? 0;
     _globalQuantityController.text = initialQty > 0 ? initialQty.toString() : '';
+
+    // Set initial price details
+    _respectsPrice = widget.initialStockItem?.respectsPrice ?? true;
+    final initialSellingPrice = widget.initialStockItem?.sellingPrice;
+    _sellingPriceController.text = initialSellingPrice != null ? initialSellingPrice.toString() : '';
   }
 
   @override
   void dispose() {
     _globalQuantityController.dispose();
     _lotQuantityController.dispose();
+    _sellingPriceController.dispose();
     super.dispose();
   }
 
@@ -247,6 +255,79 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                   style: const TextStyle(color: LightModeColors.novoPharmaGray, fontSize: 11),
                 ),
               ],
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Respecte le prix recommandé",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: LightModeColors.dashboardTextPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Prix recommandé: ${widget.product.price.toStringAsFixed(2)} DT",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: LightModeColors.novoPharmaGray,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch.adaptive(
+                    value: _respectsPrice,
+                    activeThumbColor: LightModeColors.novoPharmaBlue,
+                    onChanged: (val) {
+                      setState(() {
+                        _respectsPrice = val;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              if (!_respectsPrice) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  "Prix de vente réel (DT)",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: LightModeColors.dashboardTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _sellingPriceController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    hintText: "Saisir le prix de vente en pharmacie",
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue, width: 1.5),
+                    ),
+                  ),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
               const Divider(height: 24),
 
               // Add Lot Section (Optional)
@@ -447,11 +528,33 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                         return;
                       }
 
+                      double? sellingPrice;
+                      double? priceDifference;
+                      if (!_respectsPrice) {
+                        sellingPrice = double.tryParse(_sellingPriceController.text);
+                        if (sellingPrice == null || sellingPrice <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Veuillez saisir un prix de vente valide."),
+                              backgroundColor: LightModeColors.lightError,
+                            ),
+                          );
+                          return;
+                        }
+                        priceDifference = sellingPrice - widget.product.price;
+                      } else {
+                        priceDifference = 0.0;
+                      }
+
                       final item = ProductStockItem(
                         productId: widget.product.id,
                         productName: widget.product.name,
                         totalQuantity: totalQty,
                         expirations: _expirations,
+                        respectsPrice: _respectsPrice,
+                        sellingPrice: sellingPrice,
+                        priceDifference: priceDifference,
+                        recommendedPrice: widget.product.price,
                       );
                       
                       widget.onSave(item);

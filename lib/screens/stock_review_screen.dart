@@ -419,6 +419,58 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                       ],
                                     ),
                                   ],
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: item.respectsPrice
+                                              ? LightModeColors.success.withOpacity(0.1)
+                                              : LightModeColors.lightError.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: item.respectsPrice
+                                                ? LightModeColors.success.withOpacity(0.3)
+                                                : LightModeColors.lightError.withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              item.respectsPrice ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
+                                              size: 14,
+                                              color: item.respectsPrice ? LightModeColors.success : LightModeColors.lightError,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              item.respectsPrice ? "Prix respecté" : "Prix non respecté",
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: item.respectsPrice ? LightModeColors.success : LightModeColors.lightError,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (!item.respectsPrice && item.sellingPrice != null) ...[
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            "Vente: ${item.sellingPrice!.toStringAsFixed(2)} DT (Diff: ${item.priceDifference != null ? (item.priceDifference! > 0 ? '+' : '') + item.priceDifference!.toStringAsFixed(2) : '0.00'} DT)",
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: LightModeColors.novoPharmaGray,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                   const Divider(height: 24),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,

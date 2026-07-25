@@ -80,8 +80,8 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
         correctAnswers++;
       }
     }
-    // Only award points if all questions are correct
-    final pointsEarned = (correctAnswers == widget.quiz.questions.length)
+    // Only award points if the minimum correct answers threshold is met
+    final pointsEarned = (correctAnswers >= widget.quiz.effectiveMinCorrectAnswers)
         ? widget.quiz.points
         : 0;
     await QuizService().submitQuiz(
