@@ -8,7 +8,6 @@ import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/screens/pharmacy_profile_screen.dart';
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 
 
@@ -29,9 +28,8 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
   Position? _currentPosition;
   bool _locationPermissionGranted = false;
 
-  // Fallback filter state
-  String? _selectedCityOrZone;
-  List<String> _citiesAndZones = [];
+  // Nearby filter state
+  bool _isNearbyOnly = false;
 
   // Search state
   final TextEditingController _searchController = TextEditingController();
@@ -80,15 +78,6 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
 
       // Fetch pharmacies
       _allPharmacies = await _pharmacyService.getPharmacies();
-
-      // Extract unique locations for fallback
-      final Set<String> uniqueLocations = {};
-      for (var p in _allPharmacies) {
-        if (p.city.isNotEmpty) uniqueLocations.add(p.city.trim());
-        if (p.zone.isNotEmpty) uniqueLocations.add(p.zone.trim());
-      }
-      _citiesAndZones = uniqueLocations.toList()..sort();
-
       _applyFilters();
     } catch (e) {
       setState(() {
@@ -243,12 +232,8 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
   void _applyFilters() {
     List<Pharmacy> temp = [];
 
-    // 1. Filter by location / city
-    if (_selectedCityOrZone != null && _selectedCityOrZone!.isNotEmpty) {
-      temp = _allPharmacies.where((pharmacy) {
-        return pharmacy.city.trim() == _selectedCityOrZone || pharmacy.zone.trim() == _selectedCityOrZone;
-      }).toList();
-    } else {
+    // 1. Filter by location (nearby 1 km vs all)
+    if (_isNearbyOnly) {
       if (_locationPermissionGranted && _currentPosition != null) {
         final double userLat = _currentPosition!.latitude;
         final double userLng = _currentPosition!.longitude;
@@ -265,8 +250,11 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
           return distanceInMeters <= 1000.0;
         }).toList();
       } else {
-        temp = List.from(_allPharmacies);
+        temp = [];
       }
+    } else {
+      // Default: Display ALL pharmacies
+      temp = List.from(_allPharmacies);
     }
 
     // 2. Filter by search query
@@ -282,10 +270,27 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
     });
   }
 
-  void _filterByCityOrZone(String? value) {
-    setState(() {
-      _selectedCityOrZone = value;
-    });
+  Future<void> _toggleNearbyFilter() async {
+    if (!_isNearbyOnly) {
+      if (!_locationPermissionGranted || _currentPosition == null) {
+        bool ok = await _checkLocationPermission();
+        if (ok) {
+          _currentPosition = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+          );
+          _locationPermissionGranted = true;
+        } else {
+          return;
+        }
+      }
+      setState(() {
+        _isNearbyOnly = true;
+      });
+    } else {
+      setState(() {
+        _isNearbyOnly = false;
+      });
+    }
     _applyFilters();
   }
 
@@ -504,115 +509,128 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
                           bottomRight: Radius.circular(24),
                         ),
                       ),
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
                       child: Column(
                         children: [
-                          const SizedBox(height: 8),
-                          // Dropdown selector
-                          DropdownSearch<String>(
-                            items: (filter, loadProps) {
-                              final list = ["Sélectionner à proximité (GPS)", ..._citiesAndZones];
-                              if (filter.isEmpty) return list;
-                              return list.where((item) => item.toLowerCase().contains(filter.toLowerCase())).toList();
-                            },
-                            selectedItem: _selectedCityOrZone ?? "Sélectionner à proximité (GPS)",
-                            decoratorProps: DropDownDecoratorProps(
-                              decoration: InputDecoration(
-                                hintText: "Filtrer par Ville / Zone",
-                                hintStyle: const TextStyle(color: LightModeColors.novoPharmaGray, fontSize: 14),
-                                prefixIcon: const Icon(Icons.filter_alt_outlined, color: LightModeColors.novoPharmaBlue, size: 20),
-                                filled: true,
-                                fillColor: LightModeColors.novoPharmaLightGray,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue, width: 2),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              ),
+                          // Segmented Pill Filter Control
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: LightModeColors.novoPharmaLightGray,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: LightModeColors.lightOutlineVariant),
                             ),
-                            popupProps: PopupProps.menu(
-                              showSearchBox: true,
-                              fit: FlexFit.loose,
-                              searchFieldProps: TextFieldProps(
-                                decoration: InputDecoration(
-                                  hintText: "Rechercher...",
-                                  prefixIcon: const Icon(Icons.search, color: LightModeColors.novoPharmaBlue),
-                                  filled: true,
-                                  fillColor: LightModeColors.novoPharmaLightGray,
-                                  border: OutlineInputBorder(
+                            child: Row(
+                              children: [
+                                // Segment 1: Toutes
+                                Expanded(
+                                  child: InkWell(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                ),
-                              ),
-                              menuProps: MenuProps(
-                                borderRadius: BorderRadius.circular(16),
-                                elevation: 8,
-                              ),
-                              itemBuilder: (context, item, isSelected, isHighlighted) {
-                                final isGps = item == "Sélectionner à proximité (GPS)";
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: isSelected 
-                                        ? LightModeColors.novoPharmaLightBlue 
-                                        : (isHighlighted ? Colors.grey.shade50 : null),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        isGps ? Icons.gps_fixed : Icons.location_city,
-                                        color: isSelected 
-                                            ? LightModeColors.novoPharmaBlue 
-                                            : LightModeColors.novoPharmaGray,
-                                        size: 20,
+                                    onTap: () {
+                                      if (_isNearbyOnly) {
+                                        setState(() => _isNearbyOnly = false);
+                                        _applyFilters();
+                                      }
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: !_isNearbyOnly ? LightModeColors.novoPharmaBlue : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: !_isNearbyOnly
+                                            ? [
+                                                BoxShadow(
+                                                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.25),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : [],
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          item,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                            color: isSelected 
-                                                ? LightModeColors.novoPharmaBlue 
-                                                : LightModeColors.dashboardTextPrimary,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.storefront_rounded,
+                                            size: 16,
+                                            color: !_isNearbyOnly ? Colors.white : LightModeColors.novoPharmaGray,
                                           ),
-                                        ),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                "Toutes",
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: !_isNearbyOnly ? Colors.white : LightModeColors.dashboardTextPrimary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      if (isSelected)
-                                        const Icon(
-                                          Icons.check_circle,
-                                          color: LightModeColors.novoPharmaBlue,
-                                          size: 20,
-                                        ),
-                                    ],
+                                    ),
                                   ),
-                                );
-                              },
+                                ),
+                                const SizedBox(width: 4),
+                                // Segment 2: À proximité (1 km)
+                                Expanded(
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: _toggleNearbyFilter,
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: _isNearbyOnly ? LightModeColors.novoPharmaBlue : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: _isNearbyOnly
+                                            ? [
+                                                BoxShadow(
+                                                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.25),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : [],
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.near_me_rounded,
+                                            size: 16,
+                                            color: _isNearbyOnly ? Colors.white : LightModeColors.novoPharmaGray,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                "À proximité (1 km)",
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: _isNearbyOnly ? Colors.white : LightModeColors.dashboardTextPrimary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            onChanged: (String? value) {
-                              if (value == "Sélectionner à proximité (GPS)") {
-                                _filterByCityOrZone(null);
-                              } else {
-                                _filterByCityOrZone(value);
-                              }
-                            },
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           // Search bar
                           Material(
-                            elevation: 2,
-                            shadowColor: Colors.black.withOpacity(0.1),
+                            elevation: 0,
                             borderRadius: BorderRadius.circular(14),
                             child: TextField(
                               controller: _searchController,
@@ -623,22 +641,22 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
                               ),
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: Colors.white,
-                                hintText: "Rechercher une pharmacie...",
+                                fillColor: LightModeColors.novoPharmaLightGray,
+                                hintText: "Rechercher une pharmacie par nom ou adresse...",
                                 hintStyle: const TextStyle(
                                   color: LightModeColors.novoPharmaGray,
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.normal,
                                 ),
                                 prefixIcon: const Icon(
-                                  Icons.search,
+                                  Icons.search_rounded,
                                   color: LightModeColors.novoPharmaBlue,
                                   size: 20,
                                 ),
                                 suffixIcon: _searchQuery.isNotEmpty
                                     ? IconButton(
                                         icon: const Icon(
-                                          Icons.clear,
+                                          Icons.cancel_rounded,
                                           color: LightModeColors.novoPharmaGray,
                                           size: 18,
                                         ),
@@ -647,7 +665,7 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
                                         },
                                       )
                                     : null,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
@@ -667,25 +685,43 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
                       ),
                     ),
 
-                    // Title section
+                    // Title section with count badge
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(
-                            _selectedCityOrZone != null ? Icons.map : Icons.my_location,
-                            size: 18,
-                            color: LightModeColors.novoPharmaBlue,
+                          Row(
+                            children: [
+                              Icon(
+                                _isNearbyOnly ? Icons.near_me_rounded : Icons.storefront_rounded,
+                                size: 18,
+                                color: LightModeColors.novoPharmaBlue,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isNearbyOnly ? "Pharmacies à moins de 1 km" : "Toutes les pharmacies",
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: LightModeColors.dashboardTextPrimary,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _selectedCityOrZone != null
-                                ? "Pharmacies à $_selectedCityOrZone"
-                                : "Pharmacies à moins de 1 km",
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: LightModeColors.dashboardTextPrimary,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: LightModeColors.novoPharmaLightBlue,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              "${_filteredPharmacies.length}",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: LightModeColors.novoPharmaBlue,
+                              ),
                             ),
                           ),
                         ],
@@ -702,13 +738,15 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
                               ),
                             )
                           : _filteredPharmacies.isEmpty
-                              ? const Center(
+                              ? Center(
                                   child: Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 32),
+                                    padding: const EdgeInsets.symmetric(horizontal: 32),
                                     child: Text(
-                                      "Aucune pharmacie à proximité.\nVeuillez filtrer par Ville/Zone.",
+                                      _isNearbyOnly
+                                          ? "Aucune pharmacie à proximité (moins de 1 km).\nCliquer sur 'Toutes les pharmacies' pour voir la liste complète."
+                                          : "Aucune pharmacie trouvée.",
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(color: LightModeColors.novoPharmaGray, height: 1.4),
+                                      style: const TextStyle(color: LightModeColors.novoPharmaGray, height: 1.4),
                                     ),
                                   ),
                                 )
