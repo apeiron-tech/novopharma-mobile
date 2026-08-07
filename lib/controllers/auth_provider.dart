@@ -93,6 +93,20 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> reloadUserProfile() async {
+    if (_firebaseUser != null) {
+      try {
+        final profile = await _userService.getUserProfileDoc(_firebaseUser!.uid);
+        if (profile != null) {
+          _userProfile = profile;
+          notifyListeners();
+        }
+      } catch (e) {
+        print('Error reloading user profile: $e');
+      }
+    }
+  }
+
   Future<String?> signIn(String email, String password) async {
     try {
       await _authService.signInWithEmailAndPassword(email, password);

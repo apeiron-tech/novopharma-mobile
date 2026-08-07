@@ -1,11 +1,12 @@
 import * as functions from "firebase-functions/v1";
+import { onDocumentCreated, onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import {CloudTasksClient} from "@google-cloud/tasks";
 
 const tasksClient = new CloudTasksClient();
 // Use the actual Firebase project ID and region where functions are deployed
 const PROJECT_ID = process.env.GCLOUD_PROJECT || "pharmadefi-b352b";
-const LOCATION = "us-central1"; // Must match both Cloud Tasks queue region AND function deployment region
+const LOCATION = "europe-west1"; // Must match both Cloud Tasks queue region AND function deployment region
 const QUEUE = "notifications-queue";
 
 /**
@@ -40,11 +41,14 @@ async function createTask(docId: string, scheduledDate: Date) {
 /**
  * Sends a notification to all users when a new training is created
  */
-export const onNewTrainingCreated = functions.firestore
-    .document("blogPosts/{postId}")
-    .onCreate(async (snap, context) => {
-        const post = snap.data();
-        const postId = context.params.postId;
+export const onNewTrainingCreated = onDocumentCreated({
+    region: "europe-west1",
+    document: "blogPosts/{postId}",
+}, async (event) => {
+    const snap = event.data;
+    if (!snap) return {success: false, error: "No data"};
+    const post = snap.data();
+    const postId = event.params.postId;
 
         // Check notification toggle
         if (post?.notification === false) {
@@ -179,12 +183,15 @@ export const onNewTrainingCreated = functions.firestore
 /**
  * Sends a notification to all users when a quiz is added or updated for a formation
  */
-export const onFormationQuizUpdated = functions.firestore
-    .document("blogPosts/{postId}")
-    .onUpdate(async (change, context) => {
-        const before = change.before.data();
-        const after = change.after.data();
-        const postId = context.params.postId;
+export const onFormationQuizUpdated = onDocumentUpdated({
+    region: "europe-west1",
+    document: "blogPosts/{postId}",
+}, async (event) => {
+    const change = event.data;
+    if (!change) return {success: false, error: "No data"};
+    const before = change.before.data();
+    const after = change.after.data();
+    const postId = event.params.postId;
 
         // Check if type is formation
         if (after?.type !== "formation") {
@@ -337,11 +344,14 @@ export const onFormationQuizUpdated = functions.firestore
  *  - "Pharmacie" or "" => only users in Pharmacie pharmacies
  *  - "Para-Pharmacie"  => only users in Para-Pharmacie pharmacies
  */
-export const onNewBadgeCreated = functions.firestore
-    .document("badges/{badgeId}")
-    .onCreate(async (snap, context) => {
-        const badge = snap.data();
-        const badgeId = context.params.badgeId;
+export const onNewBadgeCreated = onDocumentCreated({
+    region: "europe-west1",
+    document: "badges/{badgeId}",
+}, async (event) => {
+    const snap = event.data;
+    if (!snap) return {success: false, error: "No data"};
+    const badge = snap.data();
+    const badgeId = event.params.badgeId;
 
         // Check notification toggle
         if (badge?.notification === false) {
@@ -507,11 +517,14 @@ export const onNewBadgeCreated = functions.firestore
 /**
  * Sends a notification to a user when they earn a badge
  */
-export const onUserBadgeAwarded = functions.firestore
-    .document("users/{userId}/userBadges/{badgeId}")
-    .onCreate(async (snap, context) => {
-        const userId = context.params.userId as string;
-        const badgeId = context.params.badgeId as string;
+export const sendUserBadgeNotification = onDocumentCreated({
+    region: "europe-west1",
+    document: "users/{userId}/userBadges/{badgeId}",
+}, async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    const userId = event.params.userId as string;
+    const badgeId = event.params.badgeId as string;
 
         console.log(`User ${userId} earned badge ${badgeId}`);
 
@@ -694,11 +707,14 @@ export const onUserBadgeAwarded = functions.firestore
  *  - "Pharmacie" or "" => only users in Pharmacie pharmacies
  *  - "Para-Pharmacie"  => only users in Para-Pharmacie pharmacies
  */
-export const onNewGoalCreated = functions.firestore
-    .document("goals/{goalId}")
-    .onCreate(async (snap, context) => {
-        const goal = snap.data();
-        const goalId = context.params.goalId;
+export const onNewGoalCreated = onDocumentCreated({
+    region: "europe-west1",
+    document: "goals/{goalId}",
+}, async (event) => {
+    const snap = event.data;
+    if (!snap) return {success: false, error: "No data"};
+    const goal = snap.data();
+    const goalId = event.params.goalId;
 
         // Check notification toggle
         if (goal?.notification === false) {
@@ -866,14 +882,17 @@ export const onNewGoalCreated = functions.firestore
 /**
  * Sends a notification to a user when they complete a goal
  */
-export const onUserGoalCompleted = functions.firestore
-    .document("users/{userId}/userGoalProgress/{goalId}")
-    .onWrite(async (change, context) => {
-        const userId = context.params.userId as string;
-        const goalId = context.params.goalId as string;
+export const onUserGoalCompleted = onDocumentWritten({
+    region: "europe-west1",
+    document: "users/{userId}/userGoalProgress/{goalId}",
+}, async (event) => {
+    const change = event.data;
+    if (!change) return {success: false, error: "No data"};
+    const userId = event.params.userId as string;
+    const goalId = event.params.goalId as string;
 
-        const beforeDoc = change.before.data();
-        const afterDoc = change.after.data();
+    const beforeDoc = change.before?.data();
+    const afterDoc = change.after?.data();
 
         // Skip if document was deleted
         if (!afterDoc) {
@@ -1069,7 +1088,7 @@ export const onUserGoalCompleted = functions.firestore
  * Scheduled function to send reminder notifications
  * Runs every day at 10:00 AM Europe/Paris
  */
-export const sendReminderNotifications = functions.pubsub
+export const sendReminderNotifications = functions.region("europe-west1").pubsub
     .schedule("0 10 * * *")
     .timeZone("Europe/Paris")
     .onRun(async () => {
@@ -1266,11 +1285,14 @@ export const sendReminderNotifications = functions.pubsub
 /**
  * Sends a custom notification based on criteria.
  */
-export const onNewCustomNotificationCreated = functions.firestore
-    .document("customNotifications/{docId}")
-    .onCreate(async (snap, context) => {
-        const notifMsg = snap.data();
-        const docId = context.params.docId;
+export const onNewCustomNotificationCreated = onDocumentCreated({
+    region: "europe-west1",
+    document: "customNotifications/{docId}",
+}, async (event) => {
+    const snap = event.data;
+    if (!snap) return {success: false, error: "No data"};
+    const notifMsg = snap.data();
+    const docId = event.params.docId;
 
         console.log(`New custom notification created: ${docId}`);
 
@@ -1302,7 +1324,7 @@ export const onNewCustomNotificationCreated = functions.firestore
 /**
  * Target for Cloud Tasks to process scheduled notifications
  */
-export const processScheduledNotification = functions.https
+export const processScheduledNotification = functions.region("europe-west1").https
     .onRequest(async (req, res) => {
         const {docId} = req.body;
 

@@ -12,18 +12,23 @@ class UserModel {
   final DateTime? dateOfBirth;
   final double points;
   final double pendingPluxeePoints;
+  final double totalPointsValidated;
+  final double pointsInvalid;
+  final String pharmacyCategory;
   final String? avatarUrl;
   final String? phone;
   final String? position;
   final String? city;
   final String? pointOfSale;
   final String role;
+  final bool birthdayNotif;
 
   static const String defaultAvatarUrl =
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
 
-  // Calculated property for available points
+  // Calculated properties
   double get availablePoints => points - pendingPluxeePoints;
+  double get totalPointsCumules => totalPointsValidated + pointsInvalid;
 
   UserModel({
     required this.uid,
@@ -32,15 +37,19 @@ class UserModel {
     this.status = UserStatus.unknown,
     required this.pharmacyId,
     this.pharmacy,
+    this.pharmacyCategory = 'Pharmacie',
     this.dateOfBirth,
     this.points = 0,
     this.pendingPluxeePoints = 0,
+    this.totalPointsValidated = 0,
+    this.pointsInvalid = 0,
     this.avatarUrl,
     this.phone,
     this.position,
     this.city,
     this.pointOfSale,
     this.role = '',
+    this.birthdayNotif = true,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -62,6 +71,11 @@ class UserModel {
       positionStr = positionData;
     }
 
+    String pCat = data['pharmacyCategory'] as String? ?? '';
+    if (pCat.trim().isEmpty) {
+      pCat = 'Pharmacie';
+    }
+
     return UserModel(
       uid: doc.id,
       name: data['name'] ?? '',
@@ -69,16 +83,21 @@ class UserModel {
       status: _statusFromString(statusStr),
       pharmacyId: data['pharmacyId'] ?? '',
       pharmacy: data['pharmacy'],
+      pharmacyCategory: pCat,
       dateOfBirth: _parseDate(data['dateOfBirth']),
       points: (data['points'] as num?)?.toDouble() ?? 0.0,
       pendingPluxeePoints:
           (data['pendingPluxeePoints'] as num?)?.toDouble() ?? 0.0,
+      totalPointsValidated:
+          (data['totalPointsValidated'] as num?)?.toDouble() ?? (data['points'] as num?)?.toDouble() ?? 0.0,
+      pointsInvalid: (data['pointsInvalid'] as num?)?.toDouble() ?? 0.0,
       avatarUrl: data['avatarUrl'],
       phone: data['phone'],
       position: positionStr,
       city: data['city'],
       pointOfSale: data['pointOfSale'],
       role: data['role'] ?? '',
+      birthdayNotif: data['birthdayNotif'] as bool? ?? true,
     );
   }
 

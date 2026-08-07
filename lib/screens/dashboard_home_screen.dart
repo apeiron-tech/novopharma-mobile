@@ -19,6 +19,7 @@ import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/services/popup_service.dart';
 import 'package:novopharma/widgets/popup_dialog.dart';
+import 'package:novopharma/widgets/birthday_popup_dialog.dart';
 import 'package:novopharma/screens/challenges_list_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:novopharma/screens/pharmacy_profile_screen.dart';
@@ -38,6 +39,14 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   DateTime? _lastCalculationTime; // Track when we last calculated
   static const Duration _cacheValidity = Duration(minutes: 2);
 
+  String _formatPoints(num value) {
+    final double d = value.toDouble();
+    if (d % 1 == 0) {
+      return d.toInt().toString();
+    }
+    return d.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,17 +61,6 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
       final notificationProvider = Provider.of<NotificationProvider>(
         context,
         listen: false,
-      );
-
-      print('🟢 [DASHBOARD] Fetching leaderboard (yearly)...');
-      final leaderboardStart = DateTime.now();
-      Provider.of<LeaderboardProvider>(
-        context,
-        listen: false,
-      ).fetchLeaderboard('yearly');
-      final leaderboardDuration = DateTime.now().difference(leaderboardStart);
-      print(
-        '✅ [DASHBOARD] Leaderboard fetch initiated in ${leaderboardDuration.inMilliseconds}ms',
       );
 
       // Only calculate if not already done OR cache expired
@@ -299,10 +297,58 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     }
   }
 
+  Future<void> _checkAndShowBirthdayPopup(BuildContext context, UserModel user) async {
+    if (!user.birthdayNotif) return;
+    if (user.dateOfBirth == null) return;
+
+    final now = DateTime.now();
+    final dob = user.dateOfBirth!;
+    final isBirthdayToday = (dob.month == now.month && dob.day == now.day);
+    if (!isBirthdayToday) return;
+
+    // Ensure shown only ONCE per birthday
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'birthday_popup_shown_${user.uid}_${now.year}_${now.month}_${now.day}';
+    final alreadyShown = prefs.getBool(key) ?? false;
+    if (alreadyShown) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('paramsBirthdayNotification')
+          .doc('config')
+          .get();
+
+      if (!doc.exists) return;
+      final data = doc.data() ?? {};
+      final String title = data['title'] ?? 'Joyeux Anniversaire ! 🎉';
+      final String description = data['description'] ??
+          'Toute l\'équipe vous souhaite un très joyeux anniversaire et vous offre des points bonus !';
+      final num? points = data['points'];
+
+      // Mark as shown today BEFORE showing dialog
+      await prefs.setBool(key, true);
+
+      if (context.mounted) {
+        await showBirthdayPopupDialog(
+          context: context,
+          title: title,
+          description: description,
+          points: points,
+        );
+      }
+    } catch (e) {
+      print('⚠️ [DASHBOARD] Error checking birthday popup config: $e');
+    }
+  }
+
   Future<void> _checkAndShowPopup(UserModel? user) async {
+    if (user == null) return;
     final popups = await PopupService().checkAndGetActivePopups(user);
     if (popups.isNotEmpty && mounted) {
-      showPremiumPopup(context, popups);
+      await showPremiumPopup(context, popups);
+    }
+    if (mounted) {
+      await _checkAndShowBirthdayPopup(context, user);
     }
   }
 
@@ -356,13 +402,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                         );
 
                         final user = auth.userProfile;
-                        if (user == null ||
-                            leaderboard.isLoading ||
-                            goal.isLoading ||
-                            badge.isLoading ||
-                            redeemedRewards.isLoading) {
+                        if (user == null) {
                           print(
-                            '⏳ [DASHBOARD] Showing loading indicator - waiting for providers',
+                            '⏳ [DASHBOARD] Showing loading indicator - waiting for user profile',
                           );
                           return const Center(
                             child: CircularProgressIndicator(),
@@ -439,9 +481,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     RedeemedRewardsProvider redeemedRewards,
     PluxeeRedemptionProvider pluxeeRedemption,
   ) {
-    final totalPoints = user?.points ?? 0;
+    final num totalPointsUtilisables = user?.points ?? 0;
+    final num totalPointsCumules = user?.totalPointsCumules ?? 0;
     final pendingPoints = pluxeeRedemption.totalPendingPoints;
-    final allTimePoints = pluxeeRedemption.allTimePoints;
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
@@ -500,7 +542,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 padding: EdgeInsets.all(24 * scaleFactor),
                 child: Row(
                   children: [
-                    // Current year points section (left side)
+                    // Total points cumules section (left side)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -526,47 +568,34 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                             ),
                           ),
                           SizedBox(height: 16 * scaleFactor),
-                          _isCalculatingYearPoints
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      allTimePoints.toString().replaceAllMapped(
-                                        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                                        (Match m) => '${m[1]} ',
-                                      ),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 32 * scaleFactor,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -1,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
-                                      child: Text(
-                                        'pts',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.9),
-                                          fontSize: 16 * scaleFactor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                _formatPoints(totalPointsCumules),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32 * scaleFactor,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -1,
                                 ),
+                              ),
+                              const SizedBox(width: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Text(
+                                  'pts',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 16 * scaleFactor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -619,10 +648,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(
-                                totalPoints.toString().replaceAllMapped(
-                                  RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                                  (Match m) => '${m[1]} ',
-                                ),
+                                _formatPoints(totalPointsUtilisables),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 32 * scaleFactor,
@@ -713,8 +739,10 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             ),
           ),
         ],
-        const SizedBox(height: 16),
-        _buildRedeemButton(context, l10n),
+        if (user?.role != 'Dermo-conseiller') ...[
+          const SizedBox(height: 16),
+          _buildRedeemButton(context, l10n),
+        ],
       ],
     );
   }

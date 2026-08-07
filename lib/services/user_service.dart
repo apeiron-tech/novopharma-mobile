@@ -22,6 +22,20 @@ class UserService {
     }
   }
 
+  Future<UserModel?> getUserProfileDoc(String uid) async {
+    try {
+      final docSnapshot =
+          await _firestore.collection(_collection).doc(uid).get();
+      if (docSnapshot.exists) {
+        return UserModel.fromFirestore(docSnapshot);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching user profile doc: $e');
+      return null;
+    }
+  }
+
   Future<void> createUserProfile({
     required User user,
     required String name,

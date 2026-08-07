@@ -5,7 +5,6 @@ import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:novopharma/controllers/pluxee_redemption_provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
 class LeaderboardScreen extends StatefulWidget {
@@ -16,6 +15,8 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
+  late final ScrollController _scrollController;
+
   final List<List<Color>> _avatarGradients = [
     [Colors.blue.shade300, Colors.blue.shade600],
     [Colors.green.shade300, Colors.green.shade600],
@@ -25,17 +26,46 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     [Colors.pink.shade300, Colors.pink.shade600],
   ];
 
+  String _formatPoints(num value) {
+    final double d = value.toDouble();
+    if (d % 1 == 0) {
+      return d.toInt().toString();
+    }
+    return d.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final leaderboardProvider = Provider.of<LeaderboardProvider>(
         context,
         listen: false,
       );
+      authProvider.reloadUserProfile();
       leaderboardProvider.fetchLeaderboard(authProvider.firebaseUser?.uid);
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final leaderboardProvider = Provider.of<LeaderboardProvider>(
+        context,
+        listen: false,
+      );
+      leaderboardProvider.loadMoreUsers(authProvider.firebaseUser?.uid);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   String _getInitials(String name) {
@@ -69,6 +99,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: leaderboardProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
+                      controller: _scrollController,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 16,
@@ -78,7 +109,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           _buildHeader(l10n),
                           const SizedBox(height: 20),
                           _buildCurrentUserCard(
-                            leaderboardProvider.leaderboardData,
+                            leaderboardProvider,
                             l10n,
                           ),
                           const SizedBox(height: 20),
@@ -88,7 +119,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           ),
                           const SizedBox(height: 20),
                           _buildLeaderboardList(
-                            leaderboardProvider.leaderboardData,
+                            leaderboardProvider,
                             l10n,
                           ),
                         ],
@@ -134,22 +165,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildCurrentUserCard(
-    List<Map<String, dynamic>> leaderboardData,
+    LeaderboardProvider leaderboardProvider,
     AppLocalizations l10n,
   ) {
+    final leaderboardData = leaderboardProvider.leaderboardData;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
-    final currentUserData = leaderboardData.firstWhere(
+    final currentUserInList = leaderboardData.firstWhere(
       (user) => user['userId'] == currentUserId,
-      orElse: () => {'rank': '0', 'points': 0},
+      orElse: () => {},
     );
+    final String currentRankStr = currentUserInList.isNotEmpty
+        ? currentUserInList['rank'].toString()
+        : (leaderboardProvider.currentUserRank > 0
+            ? leaderboardProvider.currentUserRank.toString()
+            : '0');
+
     final leaderboardAuthProvider = Provider.of<AuthProvider>(
       context,
       listen: false,
     );
     final currentUserProfile = leaderboardAuthProvider.userProfile;
     final userAvailablePoints = currentUserProfile?.availablePoints ?? 0;
-    final pluxeeProvider = Provider.of<PluxeeRedemptionProvider>(context);
 
     return Container(
       width: double.infinity,
@@ -226,7 +263,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                       ),
                     ),
-                    if (currentUserData['rank'] != '0')
+                    if (currentRankStr != '0')
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -255,7 +292,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             Text(
                               userAvailablePoints == 0
                                   ? '0'
-                                  : '#${currentUserData['rank']}',
+                                  : '#$currentRankStr',
                               style: const TextStyle(
                                 color: Color(0xFF1F2937),
                                 fontSize: 16,
@@ -273,7 +310,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      '${pluxeeProvider.allTimePoints}',
+                      _formatPoints(currentUserProfile?.totalPointsValidated ?? (currentUserInList['totalPointsValidated'] as num?)?.toDouble() ?? 0.0),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 42,
@@ -296,7 +333,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (currentUserData['rank'] != '0')
+                if (currentRankStr != '0')
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -322,8 +359,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         Flexible(
                           child: Text(
                             l10n.rankOnMychallenge(
-                              currentUserData['rank']?.toString() ?? '0',
-                              leaderboardData.length,
+                              currentRankStr,
+                              leaderboardProvider.totalUsersCount > 0
+                                  ? leaderboardProvider.totalUsersCount
+                                  : leaderboardData.length,
                             ),
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.95),
@@ -389,7 +428,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
     final isCurrentUser = user['userId'] == currentUserId;
-    final pluxeeProvider = Provider.of<PluxeeRedemptionProvider>(context);
 
     Color medalColor;
     switch (position) {
@@ -405,6 +443,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       default:
         medalColor = Colors.grey;
     }
+
+    final num ptsVal = isCurrentUser
+        ? (authProvider.userProfile?.totalPointsValidated ?? (user['totalPointsValidated'] as num?)?.toDouble() ?? 0.0)
+        : ((user['totalPointsValidated'] ?? user['points'] ?? 0) as num);
 
     return Column(
       children: [
@@ -454,7 +496,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          '${isCurrentUser ? pluxeeProvider.allTimePoints : user['points']} pts',
+          '${_formatPoints(ptsVal)} pts',
           style: TextStyle(
             color: LightModeColors.dashboardTextPrimary.withOpacity(0.8),
             fontSize: 10,
@@ -481,12 +523,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildLeaderboardList(
-    List<Map<String, dynamic>> leaderboardData,
+    LeaderboardProvider leaderboardProvider,
     AppLocalizations l10n,
   ) {
+    final leaderboardData = leaderboardProvider.leaderboardData;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
-    final pluxeeProvider = Provider.of<PluxeeRedemptionProvider>(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -612,7 +654,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       ),
                     ),
                     Text(
-                      '${user['points']} pts',
+                      '${user['totalPointsValidated'] ?? user['points']} pts',
                       style: TextStyle(
                         color: isCurrentUser
                             ? LightModeColors.warning
@@ -626,6 +668,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               );
             },
           ),
+          if (leaderboardProvider.isLoadingMore)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: LightModeColors.lightPrimary,
+                ),
+              ),
+            ),
         ],
       ),
     );

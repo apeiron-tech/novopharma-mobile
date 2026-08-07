@@ -361,8 +361,8 @@ class _PopupDialogState extends State<PopupDialog>
   }
 }
 
-void showPremiumPopup(BuildContext context, List<PopupModel> popups) {
-  showDialog(
+Future<void> showPremiumPopup(BuildContext context, List<PopupModel> popups) async {
+  await showDialog(
     context: context,
     barrierDismissible: true,
     builder: (context) => PopupDialog(popups: popups),
