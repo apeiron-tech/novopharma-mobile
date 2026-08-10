@@ -109,7 +109,9 @@ class _FormationsScreenState extends State<FormationsScreen>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
+                      color: LightModeColors.lightOnPrimary.withValues(
+                        alpha: 0.2,
+                      ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: LightModeColors.lightOnPrimary.withOpacity(0.3),
@@ -140,7 +142,9 @@ class _FormationsScreenState extends State<FormationsScreen>
                           'Développez vos compétences',
                           style: TextStyle(
                             fontSize: 14,
-                            color: LightModeColors.lightOnPrimary.withOpacity(0.7), // 70% opacity of white
+                            color: LightModeColors.lightOnPrimary.withOpacity(
+                              0.7,
+                            ), // 70% opacity of white
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -168,7 +172,9 @@ class _FormationsScreenState extends State<FormationsScreen>
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: TextStyle(color: LightModeColors.lightOnPrimaryContainer),
+                  style: TextStyle(
+                    color: LightModeColors.lightOnPrimaryContainer,
+                  ),
                   onChanged: (value) {
                     Provider.of<FormationProvider>(
                       context,
@@ -178,11 +184,13 @@ class _FormationsScreenState extends State<FormationsScreen>
                   decoration: InputDecoration(
                     hintText: 'Rechercher une formation...',
                     hintStyle: TextStyle(
-                      color: LightModeColors.lightOnPrimaryContainer.withOpacity(0.7), // 70% opacity of white
+                      color: LightModeColors.lightOnPrimaryContainer
+                          .withOpacity(0.7), // 70% opacity of white
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
-                      color: LightModeColors.lightOnPrimaryContainer.withOpacity(0.8), // 80% opacity of white
+                      color: LightModeColors.lightOnPrimaryContainer
+                          .withOpacity(0.8), // 80% opacity of white
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -289,7 +297,6 @@ class _FormationsScreenState extends State<FormationsScreen>
     );
   }
 
-
   Widget _buildFormationCard(BlogPost formation) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -342,7 +349,10 @@ class _FormationsScreenState extends State<FormationsScreen>
                       height: 200,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [LightModeColors.lightSurfaceVariant, LightModeColors.lightSurface],
+                          colors: [
+                            LightModeColors.lightSurfaceVariant,
+                            LightModeColors.lightSurface,
+                          ],
                         ),
                       ),
                       child: const Center(
@@ -459,7 +469,10 @@ class _FormationsScreenState extends State<FormationsScreen>
                   decoration: BoxDecoration(
                     color: LightModeColors.lightSurfaceVariant,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: LightModeColors.lightSurfaceVariant, width: 1),
+                    border: Border.all(
+                      color: LightModeColors.lightSurfaceVariant,
+                      width: 1,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -511,7 +524,9 @@ class _FormationsScreenState extends State<FormationsScreen>
                                 color: LightModeColors.success.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: LightModeColors.success.withOpacity(0.2),
+                                  color: LightModeColors.success.withOpacity(
+                                    0.2,
+                                  ),
                                   width: 1,
                                 ),
                               ),
@@ -565,7 +580,6 @@ class _FormationsScreenState extends State<FormationsScreen>
                   decoration: BoxDecoration(
                     color: LightModeColors.success,
                     borderRadius: BorderRadius.circular(16),
-                    
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -580,7 +594,8 @@ class _FormationsScreenState extends State<FormationsScreen>
                             Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: LightModeColors.lightOnPrimary.withOpacity(0.2),
+                                color: LightModeColors.lightOnPrimary
+                                    .withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
@@ -623,7 +638,7 @@ class _FormationsScreenState extends State<FormationsScreen>
       topRowButtons.add(
         Expanded(
           child: _buildActionButton(
-            'Vidéo explicative',
+            'Regarder la vidéo',
             Icons.play_circle_outline,
             () => _showVideoDialog(formation),
           ),
@@ -753,7 +768,10 @@ class _FormationsScreenState extends State<FormationsScreen>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 gradient: LinearGradient(
-                  colors: [LightModeColors.lightSurfaceVariant, LightModeColors.lightSurface],
+                  colors: [
+                    LightModeColors.lightSurfaceVariant,
+                    LightModeColors.lightSurface,
+                  ],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -811,8 +829,12 @@ class _FormationsScreenState extends State<FormationsScreen>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  LightModeColors.novoPharmaBlue.withOpacity(0.1),
-                                  LightModeColors.novoPharmaBlue.withOpacity(0.05),
+                                  LightModeColors.novoPharmaBlue.withOpacity(
+                                    0.1,
+                                  ),
+                                  LightModeColors.novoPharmaBlue.withOpacity(
+                                    0.05,
+                                  ),
                                 ],
                               ),
                             ),
@@ -839,7 +861,9 @@ class _FormationsScreenState extends State<FormationsScreen>
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: LightModeColors.lightOnPrimary.withOpacity(0.9),
+                            color: LightModeColors.lightOnPrimary.withOpacity(
+                              0.9,
+                            ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
@@ -914,7 +938,10 @@ class _FormationsScreenState extends State<FormationsScreen>
                   const SizedBox(height: 4),
                   Text(
                     'Par ${formation.author ?? 'N/A'}',
-                    style: TextStyle(color: LightModeColors.dashboardTextSecondary, fontSize: 14),
+                    style: TextStyle(
+                      color: LightModeColors.dashboardTextSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -925,13 +952,16 @@ class _FormationsScreenState extends State<FormationsScreen>
     );
   }
 
-
   Widget _buildErrorState(FormationProvider provider) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: LightModeColors.dashboardTextSecondary),
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: LightModeColors.dashboardTextSecondary,
+          ),
           const SizedBox(height: 16),
           Text(
             'Erreur de chargement',
@@ -962,7 +992,11 @@ class _FormationsScreenState extends State<FormationsScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.school_outlined, size: 64, color: LightModeColors.dashboardTextSecondary),
+          Icon(
+            Icons.school_outlined,
+            size: 64,
+            color: LightModeColors.dashboardTextSecondary,
+          ),
           const SizedBox(height: 16),
           Text(
             'Aucune formation disponible',
@@ -1046,8 +1080,6 @@ class _FormationsScreenState extends State<FormationsScreen>
       _showSnackBar('Erreur lors de l\'ouverture de la vidéo');
     }
   }
-
-
 
   void _downloadPDF(BlogPost formation) {
     if (!formation.hasPdf) {
