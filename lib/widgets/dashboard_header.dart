@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/screens/profile_screen.dart';
+import 'package:novopharma/screens/marques_list_screen.dart';
 import 'package:novopharma/theme.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
@@ -45,6 +46,20 @@ class DashboardHeader extends StatelessWidget {
                 ),
               ),
         ),
+        IconButton(
+          icon: const Icon(Icons.support_agent, size: 30),
+          color: LightModeColors.dashboardTextPrimary,
+          tooltip: 'Assistance marques',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MarquesListScreen(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: onNotificationTap,
           child: Stack(
