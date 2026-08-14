@@ -1184,10 +1184,115 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   ),
                 );
               }
-            } else {
-              if (context.mounted) {
-                Navigator.pushNamed(context, '/pharmacy_selection');
+              return;
+            }
+
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final user = authProvider.userProfile;
+            if (user != null) {
+              try {
+                final activeVisitsQuery = await FirebaseFirestore.instance
+                    .collection('visits_history')
+                    .where('dermoId', isEqualTo: user.uid)
+                    .where('status', isEqualTo: 'active')
+                    .get();
+
+                final activeDocs = activeVisitsQuery.docs;
+
+                if (activeDocs.length == 1) {
+                  final visitData = activeDocs.first.data();
+                  final visitId = visitData['visitId'] ?? activeDocs.first.id;
+                  final pharmacyId = visitData['pharmacyId'] ?? '';
+                  final pharmacyName = visitData['pharmacyName'] ?? '';
+
+                  await prefs.setString('active_visit_id', visitId.toString());
+                  await prefs.setString('active_pharmacy_id', pharmacyId.toString());
+                  await prefs.setString('active_pharmacy_name', pharmacyName.toString());
+
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PharmacyProfileScreen(
+                          pharmacyId: pharmacyId.toString(),
+                          pharmacyName: pharmacyName.toString(),
+                        ),
+                      ),
+                    );
+                  }
+                  return;
+                } else if (activeDocs.length > 1) {
+                  if (context.mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        backgroundColor: Colors.white,
+                        surfaceTintColor: Colors.white,
+                        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                        title: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: const BoxDecoration(
+                                color: LightModeColors.lightErrorContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.error_outline_rounded,
+                                color: LightModeColors.lightError,
+                                size: 36,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "Visites actives multiples",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: LightModeColors.lightError,
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: const Text(
+                          "Vous avez plusieurs visites actives enregistrées. Veuillez fermer vos anciennes visites ou contacter votre responsable pour les fermer.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: LightModeColors.novoPharmaGray,
+                          ),
+                        ),
+                        actionsPadding: const EdgeInsets.only(right: 16, bottom: 12),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              "OK",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: LightModeColors.lightError,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return;
+                }
+              } catch (e) {
+                debugPrint("Error checking active visits: $e");
               }
+            }
+
+            if (context.mounted) {
+              Navigator.pushNamed(context, '/pharmacy_selection');
             }
           },
           borderRadius: BorderRadius.circular(16),
