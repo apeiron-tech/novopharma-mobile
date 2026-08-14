@@ -835,7 +835,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Vidéo explicative',
+                            'Regarder la vidéo',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

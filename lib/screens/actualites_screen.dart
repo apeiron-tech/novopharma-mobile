@@ -6,7 +6,6 @@ import '../controllers/actualite_provider.dart';
 import '../models/blog_post.dart';
 import '../theme.dart';
 import 'actualite_details_screen.dart';
-import 'dashboard_home_screen.dart';
 import '../widgets/bottom_navigation_bar.dart';
 
 class ActualitesScreen extends StatefulWidget {
@@ -62,9 +61,34 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          _buildActualiteTab('Actualités produits', actualiteProvider),
-                          _buildActualiteTab('Actualités scientifiques', actualiteProvider),
-                          _buildActualiteTab('Vie de l\'entreprise - evenements', actualiteProvider),
+                          _ActualiteCategoryTabView(
+                            category: 'Actualités produits',
+                            cardBuilder: (actualite) =>
+                                _buildActualiteCard(actualite),
+                            errorBuilder: () =>
+                                _buildErrorState(actualiteProvider),
+                            emptyBuilder: () =>
+                                _buildEmptyState('Actualités produits'),
+                          ),
+                          _ActualiteCategoryTabView(
+                            category: 'Actualités scientifiques',
+                            cardBuilder: (actualite) =>
+                                _buildActualiteCard(actualite),
+                            errorBuilder: () =>
+                                _buildErrorState(actualiteProvider),
+                            emptyBuilder: () =>
+                                _buildEmptyState('Actualités scientifiques'),
+                          ),
+                          _ActualiteCategoryTabView(
+                            category: 'Vie de l\'entreprise - evenements',
+                            cardBuilder: (actualite) =>
+                                _buildActualiteCard(actualite),
+                            errorBuilder: () =>
+                                _buildErrorState(actualiteProvider),
+                            emptyBuilder: () => _buildEmptyState(
+                              'Vie de l\'entreprise - evenements',
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -110,7 +134,9 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
+                      color: LightModeColors.lightOnPrimary.withValues(
+                        alpha: 0.2,
+                      ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: LightModeColors.lightOnPrimary.withOpacity(0.3),
@@ -141,7 +167,9 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                           'Restez informé des dernières actualités',
                           style: TextStyle(
                             fontSize: 14,
-                            color: LightModeColors.lightOnPrimary.withOpacity(0.7), // 70% opacity of white
+                            color: LightModeColors.lightOnPrimary.withOpacity(
+                              0.7,
+                            ), // 70% opacity of white
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -169,7 +197,9 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: TextStyle(color: LightModeColors.lightOnPrimaryContainer),
+                  style: TextStyle(
+                    color: LightModeColors.lightOnPrimaryContainer,
+                  ),
                   onChanged: (value) {
                     Provider.of<ActualiteProvider>(
                       context,
@@ -179,11 +209,13 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                   decoration: InputDecoration(
                     hintText: 'Rechercher une actualité...',
                     hintStyle: TextStyle(
-                      color: LightModeColors.lightOnPrimaryContainer.withOpacity(0.7), // 70% opacity of white
+                      color: LightModeColors.lightOnPrimaryContainer
+                          .withOpacity(0.7), // 70% opacity of white
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
-                      color: LightModeColors.lightOnPrimaryContainer.withOpacity(0.8), // 80% opacity of white
+                      color: LightModeColors.lightOnPrimaryContainer
+                          .withOpacity(0.8), // 80% opacity of white
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -270,51 +302,6 @@ class _ActualitesScreenState extends State<ActualitesScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildActualiteTab(String category, ActualiteProvider provider) {
-    print('[ActualitesScreen] Building tab for category: $category');
-    print(
-      '[ActualitesScreen] Provider state - loading: ${provider.isLoading}, hasError: ${provider.hasError}',
-    );
-
-    if (provider.isLoading) {
-      print('[ActualitesScreen] Showing loading indicator');
-      return const Center(
-        child: CircularProgressIndicator(
-          color: LightModeColors.lightPrimary,
-        ),
-      );
-    }
-
-    if (provider.hasError) {
-      print('[ActualitesScreen] Showing error state: ${provider.error}');
-      return _buildErrorState(provider);
-    }
-
-    final actualites = provider.getActualitesByCategory(category);
-    print(
-      '[ActualitesScreen] Got ${actualites.length} actualites for category $category',
-    );
-
-    if (actualites.isEmpty) {
-      print(
-        '[ActualitesScreen] Showing empty state for category $category',
-      );
-      return _buildEmptyState(category);
-    }
-
-    return RefreshIndicator(
-      onRefresh: provider.refresh,
-      color: LightModeColors.lightPrimary,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: actualites.length,
-        itemBuilder: (context, index) {
-          return _buildActualiteCard(actualites[index]);
-        },
       ),
     );
   }
@@ -413,19 +400,13 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            LightModeColors.success.withOpacity(
-                              0.1,
-                            ),
-                            LightModeColors.success.withOpacity(
-                              0.05,
-                            ),
+                            LightModeColors.success.withOpacity(0.1),
+                            LightModeColors.success.withOpacity(0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: LightModeColors.success.withOpacity(
-                            0.2,
-                          ),
+                          color: LightModeColors.success.withOpacity(0.2),
                         ),
                       ),
                       child: Text(
@@ -477,9 +458,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: LightModeColors.warning.withOpacity(
-                              0.1,
-                            ),
+                            color: LightModeColors.warning.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -501,14 +480,15 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+                            color: LightModeColors.lightSurfaceVariant
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
                             Icons.access_time_rounded,
                             size: 14,
                             color: LightModeColors.dashboardTextSecondary,
-                          )
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -709,7 +689,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
       topRowButtons.add(
         Expanded(
           child: _buildActionButton(
-            'Vidéo explicative',
+            'Regarder la vidéo',
             Icons.play_circle_outline,
             () => _showVideoDialog(actualite),
           ),
@@ -785,6 +765,236 @@ class _ActualitesScreenState extends State<ActualitesScreen>
         backgroundColor: LightModeColors.novoPharmaBlue,
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+}
+
+class _ActualiteCategoryTabView extends StatefulWidget {
+  final String category;
+  final Widget Function(BlogPost actualite) cardBuilder;
+  final Widget Function() errorBuilder;
+  final Widget Function() emptyBuilder;
+
+  const _ActualiteCategoryTabView({
+    required this.category,
+    required this.cardBuilder,
+    required this.errorBuilder,
+    required this.emptyBuilder,
+  });
+
+  @override
+  State<_ActualiteCategoryTabView> createState() =>
+      _ActualiteCategoryTabViewState();
+}
+
+class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView>
+    with SingleTickerProviderStateMixin {
+  late ScrollController _scrollController;
+  late AnimationController _bounceController;
+  late Animation<double> _bounceAnimation;
+  bool _showScrollIndicator = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _bounceAnimation = Tween<double>(begin: 0, end: 8).animate(
+      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
+    );
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    final extentAfter = _scrollController.position.extentAfter;
+
+    // Trigger loadMore when scrolling near bottom (within 200px)
+    if (currentScroll >= maxScroll - 200) {
+      final provider = Provider.of<ActualiteProvider>(context, listen: false);
+      provider.loadMoreActualites(widget.category);
+    }
+
+    // Toggle scroll indicator visibility:
+    // Show only when user is near the top and there's scrollable content remaining
+    final shouldShow = currentScroll < 120 && extentAfter > 60;
+    if (shouldShow != _showScrollIndicator) {
+      setState(() {
+        _showScrollIndicator = shouldShow;
+      });
+    }
+  }
+
+  void _scrollToNext() {
+    if (_scrollController.hasClients) {
+      final target = _scrollController.offset + 380;
+      _scrollController.animateTo(
+        target.clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<ActualiteProvider>(context);
+
+    if (provider.isLoadingCategory(widget.category) &&
+        provider.getActualitesByCategory(widget.category).isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: LightModeColors.lightPrimary),
+      );
+    }
+
+    if (provider.hasError) {
+      return widget.errorBuilder();
+    }
+
+    final actualites = provider.getActualitesByCategory(widget.category);
+
+    if (actualites.isEmpty) {
+      return widget.emptyBuilder();
+    }
+
+    final isLoadingMore = provider.isLoadingMoreCategory(widget.category);
+
+    // Display scroll indicator ONLY if there are MORE THAN 1 item
+    // AND the user hasn't scrolled to the bottom of the list
+    final bool isAtEnd =
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 60;
+    final bool canShowIndicator =
+        actualites.length > 1 && _showScrollIndicator && !isAtEnd;
+
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () async {
+            await provider.loadInitialCategory(widget.category);
+          },
+          color: LightModeColors.lightPrimary,
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+            itemCount: actualites.length + (isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index < actualites.length) {
+                return widget.cardBuilder(actualites[index]);
+              } else {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: LightModeColors.lightPrimary,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+
+        // Premium Animated scroll-down indicator
+        Positioned(
+          bottom: 24,
+          left: 0,
+          right: 0,
+          child: AnimatedOpacity(
+            opacity: canShowIndicator ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: IgnorePointer(
+              ignoring: !canShowIndicator,
+              child: Center(
+                child: AnimatedBuilder(
+                  animation: _bounceAnimation,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _bounceAnimation.value),
+                      child: child,
+                    );
+                  },
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _scrollToNext,
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              LightModeColors.novoPharmaBlue,
+                              LightModeColors.lightPrimary,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: LightModeColors.novoPharmaBlue.withValues(
+                                alpha: 0.4,
+                              ),
+                              blurRadius: 16,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Text(
+                              'Défiler vers le bas',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(
+                              Icons.keyboard_double_arrow_down_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
