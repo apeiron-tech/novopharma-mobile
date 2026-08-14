@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/models/popup_model.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:novopharma/models/goal.dart';
 import 'package:novopharma/screens/goal_details_screen.dart';
 import 'package:novopharma/screens/actualite_details_screen.dart';
@@ -17,6 +16,7 @@ import 'package:novopharma/models/blog_post.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:novopharma/services/chottu_link_service.dart';
 import 'package:novopharma/navigation.dart';
+import 'package:novopharma/screens/custom_page_screen.dart';
 
 class PopupService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -179,6 +179,16 @@ class PopupService {
           Navigator.push(
             navContext,
             MaterialPageRoute(builder: (context) => ProductScreen(id: id)),
+          );
+        }
+        break;
+      case 'customPage':
+        if (id != null) {
+          Navigator.push(
+            navContext,
+            MaterialPageRoute(
+              builder: (context) => CustomPageScreen(customPageId: id),
+            ),
           );
         }
         break;
