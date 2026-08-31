@@ -482,7 +482,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     PluxeeRedemptionProvider pluxeeRedemption,
   ) {
     final num totalPointsUtilisables = user?.points ?? 0;
-    final num totalPointsCumules = user?.totalPointsCumules ?? 0;
+    final num totalPointsValidated = user?.totalPointsValidated ?? 0;
     final pendingPoints = pluxeeRedemption.totalPendingPoints;
 
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -574,7 +574,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(
-                                _formatPoints(totalPointsCumules),
+                                _formatPoints(totalPointsValidated),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 32 * scaleFactor,
