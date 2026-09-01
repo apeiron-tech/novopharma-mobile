@@ -47,7 +47,7 @@ class DashboardHeader extends StatelessWidget {
               ),
         ),
         IconButton(
-          icon: const Icon(Icons.support_agent, size: 30),
+          icon: const Icon(Icons.phone, size: 28),
           color: LightModeColors.dashboardTextPrimary,
           tooltip: 'Assistance marques',
           onPressed: () {
