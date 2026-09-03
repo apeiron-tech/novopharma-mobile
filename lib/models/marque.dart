@@ -3,16 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class MarqueContact {
   final String responsibleName;
   final String phoneNumber;
+  final String? secteur;
 
   MarqueContact({
     required this.responsibleName,
     required this.phoneNumber,
+    this.secteur,
   });
 
   factory MarqueContact.fromMap(Map<String, dynamic> map) {
     return MarqueContact(
       responsibleName: map['responsibleName'] as String? ?? '',
       phoneNumber: map['phoneNumber'] as String? ?? '',
+      secteur: map['secteur'] as String?,
     );
   }
 
@@ -20,6 +23,7 @@ class MarqueContact {
     return {
       'responsibleName': responsibleName,
       'phoneNumber': phoneNumber,
+      if (secteur != null) 'secteur': secteur,
     };
   }
 }

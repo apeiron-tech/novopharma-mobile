@@ -59,7 +59,12 @@ class _MarquesListScreenState extends State<MarquesListScreen> {
         _filteredMarques = _allMarques;
       } else {
         _filteredMarques = _allMarques
-            .where((m) => m.marqueName.toLowerCase().contains(query))
+            .where((m) =>
+                m.marqueName.toLowerCase().contains(query) ||
+                m.contactList.any((c) =>
+                    c.responsibleName.toLowerCase().contains(query) ||
+                    (c.secteur != null &&
+                        c.secteur!.toLowerCase().contains(query))))
             .toList();
       }
     });
