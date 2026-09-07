@@ -106,6 +106,8 @@ class ScanProvider with ChangeNotifier {
   Future<bool> confirmSale({
     required String userId,
     required String pharmacyId,
+    String? visitId,
+    String? pointOfSale,
   }) async {
     if (_scannedProduct == null) return false;
 
@@ -128,6 +130,8 @@ class ScanProvider with ChangeNotifier {
         saleDate: DateTime.now(),
         totalPrice: totalPrice,
         status: 'pending',
+        visitId: visitId,
+        pointOfSaleSnapshot: pointOfSale,
       );
 
       await _saleService.createSale(newSale);

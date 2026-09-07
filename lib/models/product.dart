@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product {
   final String id;
@@ -87,7 +87,7 @@ class Product {
       recommendedWith: List<String>.from(data['recommendedWith'] ?? []),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      imageUrl: data['imageUrl'] ?? '',
+      imageUrl: (data['imageUrl'] ?? '').toString().trim(),
       composition: data['composition'] ?? '',
       clientCode: parseInt(data['clientCode']),
       status: data['status'] ?? 'enabled', // Add status field
@@ -107,3 +107,4 @@ class Product {
     return pointsPharmacie;
   }
 }
+

@@ -1,3 +1,5 @@
+﻿import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -48,12 +50,30 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chottu_link/chottu_link.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+
+/// Allows TLS connections to novopharma.tn on devices where modern Sectigo Root R46 is not in the OS trust store.
+class AppHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        if (host == 'novopharma.tn' || host.endsWith('.novopharma.tn')) {
+          return true;
+        }
+        return false;
+      };
+  }
+}
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb) {
+    HttpOverrides.global = AppHttpOverrides();
+  }
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  /// ✅ Initialize the ChottuLink SDK
+  /// âœ… Initialize the ChottuLink SDK
   await ChottuLink.init(apiKey: dotenv.env['CHOTTULINK_API_KEY'] ?? '');
 
   // Initialize ChottuLink handling
@@ -223,3 +243,4 @@ class NovoPharmaApp extends StatelessWidget {
     );
   }
 }
+

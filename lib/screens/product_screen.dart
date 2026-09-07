@@ -1,3 +1,4 @@
+﻿import 'package:novopharma/widgets/app_network_image.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -282,19 +283,19 @@ class _ProductScreenState extends State<ProductScreen> {
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                    leading: p.imageUrl.isNotEmpty
-                                        ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: CachedNetworkImage(
-                                              imageUrl: p.imageUrl,
-                                              width: 48,
-                                              height: 48,
-                                              fit: BoxFit.contain,
-                                              placeholder: (_, __) => const CircularProgressIndicator(),
-                                              errorWidget: (_, __, ___) => const Icon(Icons.image_not_supported_outlined),
-                                            ),
-                                          )
-                                        : const Icon(Icons.image_not_supported_outlined, size: 48),
+                                    leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: AppNetworkImage(
+                                          imageUrl: p.imageUrl,
+                                          width: 48,
+                                          height: 48,
+                                          fit: BoxFit.contain,
+                                          memCacheWidth: 150,
+                                          memCacheHeight: 150,
+                                          errorIcon: Icons.image_not_supported_outlined,
+                                          errorIconSize: 24,
+                                        ),
+                                      ),
                                     title: Text(
                                       p.name,
                                       style: const TextStyle(
@@ -591,11 +592,13 @@ class _ProductScreenState extends State<ProductScreen> {
 
     String? activeVisitId;
     String? activePharmacyId;
+    String? activePointOfSale;
 
     if (user.role == 'Dermo-conseiller') {
       final prefs = await SharedPreferences.getInstance();
       activeVisitId = prefs.getString('active_visit_id');
       activePharmacyId = prefs.getString('active_pharmacy_id');
+      activePointOfSale = prefs.getString('active_point_of_sale');
 
       if (activeVisitId == null || activePharmacyId == null) {
         if (mounted) {
@@ -657,6 +660,10 @@ class _ProductScreenState extends State<ProductScreen> {
         final pUnitPoints = _getEffectivePoints(p, challenges, pharmacyCategory);
         final pTotalPrice = p.price * qty;
 
+        final resolvedPointOfSale = user.role == 'Dermo-conseiller'
+            ? activePointOfSale
+            : user.pointOfSale;
+
         String saleId;
         if (widget.sale != null && p.id == product.id) {
           // Update existing sale for primary product
@@ -674,6 +681,9 @@ class _ProductScreenState extends State<ProductScreen> {
             productCategorySnapshot: p.category,
             status: widget.sale!.status, // Keep original status
             visitId: user.role == 'Dermo-conseiller' ? activeVisitId : widget.sale!.visitId,
+            pointOfSaleSnapshot: user.role == 'Dermo-conseiller'
+                ? activePointOfSale
+                : (widget.sale!.pointOfSaleSnapshot ?? user.pointOfSale),
           );
           Provider.of<SalesHistoryProvider>(
             context,
@@ -696,6 +706,7 @@ class _ProductScreenState extends State<ProductScreen> {
             productCategorySnapshot: p.category,
             status: 'pending',
             visitId: user.role == 'Dermo-conseiller' ? activeVisitId : null,
+            pointOfSaleSnapshot: resolvedPointOfSale,
           );
           saleId = await _saleService.createSale(newSale);
         }
@@ -1156,7 +1167,7 @@ class _ProductScreenState extends State<ProductScreen> {
            savedSaleIds,
            user.role == 'Dermo-conseiller' ? activePharmacyId! : user.pharmacyId,
            user.uid,
-           user.pointOfSale,
+           user.role == 'Dermo-conseiller' ? activePointOfSale : user.pointOfSale,
            giftService,
            finalQuantity,
            finalTotalPrice,
@@ -1686,16 +1697,16 @@ class _ProductScreenState extends State<ProductScreen> {
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),
-                child: CachedNetworkImage(
+                child: AppNetworkImage(
                   imageUrl: product.imageUrl,
+                  height: 280,
+                  width: double.infinity,
                   fit: BoxFit.contain,
-                  placeholder: (context, url) =>
-                      const Center(child: CircularProgressIndicator()),
-                  errorWidget: (context, url, error) => const Icon(
-                    Icons.image_not_supported_outlined,
-                    size: 80,
-                    color: Color(0xFFE0E0E0),
-                  ),
+                  memCacheWidth: 800,
+                  memCacheHeight: 800,
+                  errorIcon: Icons.image_not_supported_outlined,
+                  errorIconSize: 80,
+                  errorIconColor: const Color(0xFFE0E0E0),
                 ),
               ),
             ),
@@ -2100,16 +2111,16 @@ class _ProductScreenState extends State<ProductScreen> {
                       height: 140,
                       width: double.infinity,
                       color: LightModeColors.lightBackground,
-                      child: CachedNetworkImage(
+                      child: AppNetworkImage(
                         imageUrl: product.imageUrl,
+                        height: 140,
+                        width: double.infinity,
                         fit: BoxFit.contain,
-                        placeholder: (context, url) =>
-                            const Center(child: CircularProgressIndicator()),
-                        errorWidget: (context, url, error) => const Icon(
-                          Icons.image_not_supported_outlined,
-                          size: 40,
-                          color: Color(0xFFE0E0E0),
-                        ),
+                        memCacheWidth: 400,
+                        memCacheHeight: 400,
+                        errorIcon: Icons.image_not_supported_outlined,
+                        errorIconSize: 40,
+                        errorIconColor: const Color(0xFFE0E0E0),
                       ),
                     ),
                   ),
@@ -2497,3 +2508,4 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 }
+

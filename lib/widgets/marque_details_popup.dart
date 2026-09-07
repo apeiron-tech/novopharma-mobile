@@ -160,12 +160,12 @@ class _MarqueDetailsPopupState extends State<MarqueDetailsPopup> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Secteur Filter Section (Replaces Categories)
+                      // Secteur Filter Section (Dropdown)
                       if (secteurs.isNotEmpty) ...[
                         Row(
                           children: [
                             const Text(
-                              'Secteurs',
+                              'Secteur',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -188,44 +188,302 @@ class _MarqueDetailsPopupState extends State<MarqueDetailsPopup> {
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // Horizontal scrollable chip list with "Tous" + available secteurs
-                        SizedBox(
-                          height: 38,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            children: [
-                              // "Tous" Chip
-                              _buildSecteurChip(
-                                label: 'Tous',
-                                isSelected: _selectedSecteur == null,
+                            if (_selectedSecteur != null) ...[
+                              const Spacer(),
+                              GestureDetector(
                                 onTap: () {
                                   setState(() {
                                     _selectedSecteur = null;
                                   });
                                 },
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.close,
+                                      size: 13,
+                                      color: LightModeColors.lightPrimary,
+                                    ),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Tous',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: LightModeColors.lightPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 6),
-                              ...secteurs.map((secteur) {
-                                final isSelected =
-                                    _selectedSecteur?.toLowerCase() == secteur.toLowerCase();
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: _buildSecteurChip(
-                                    label: secteur,
-                                    isSelected: isSelected,
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedSecteur = isSelected ? null : secteur;
-                                      });
-                                    },
-                                  ),
-                                );
-                              }),
                             ],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _selectedSecteur != null
+                                  ? LightModeColors.lightPrimary.withValues(alpha: 0.4)
+                                  : Colors.grey.shade200,
+                              width: _selectedSecteur != null ? 1.5 : 1,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String?>(
+                              value: secteurs.contains(_selectedSecteur) ? _selectedSecteur : null,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: LightModeColors.lightPrimary,
+                                size: 22,
+                              ),
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              elevation: 4,
+                              menuMaxHeight: 250,
+                              selectedItemBuilder: (context) {
+                                return [
+                                  // Closed state for "Tous les secteurs"
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.grid_view_rounded,
+                                        size: 17,
+                                        color: LightModeColors.lightPrimary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text(
+                                          'Tous les secteurs',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: LightModeColors.dashboardTextPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '${widget.marque.contactList.length}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: LightModeColors.lightPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  // Closed state for each sector
+                                  ...secteurs.map((secteur) {
+                                    final count = widget.marque.contactList
+                                        .where((c) =>
+                                            c.secteur != null &&
+                                            c.secteur!.trim().toLowerCase() ==
+                                                secteur.trim().toLowerCase())
+                                        .length;
+                                    return Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on,
+                                          size: 17,
+                                          color: LightModeColors.lightPrimary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            secteur,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: LightModeColors.dashboardTextPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            '$count',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: LightModeColors.lightPrimary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ];
+                              },
+                              items: [
+                                // Item "Tous les secteurs"
+                                DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: _selectedSecteur == null
+                                              ? LightModeColors.lightPrimary.withValues(alpha: 0.1)
+                                              : Colors.grey.shade100,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.grid_view_rounded,
+                                          size: 15,
+                                          color: _selectedSecteur == null
+                                              ? LightModeColors.lightPrimary
+                                              : Colors.grey.shade600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Tous les secteurs',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: _selectedSecteur == null
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: _selectedSecteur == null
+                                                ? LightModeColors.lightPrimary
+                                                : LightModeColors.dashboardTextPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: _selectedSecteur == null
+                                              ? LightModeColors.lightPrimary.withValues(alpha: 0.1)
+                                              : Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '${widget.marque.contactList.length}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: _selectedSecteur == null
+                                                ? LightModeColors.lightPrimary
+                                                : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ),
+                                      if (_selectedSecteur == null) ...[
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                          Icons.check_rounded,
+                                          size: 18,
+                                          color: LightModeColors.lightPrimary,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                // Items for each secteur
+                                ...secteurs.map((secteur) {
+                                  final isSelected = _selectedSecteur != null &&
+                                      _selectedSecteur!.trim().toLowerCase() ==
+                                          secteur.trim().toLowerCase();
+                                  final count = widget.marque.contactList
+                                      .where((c) =>
+                                          c.secteur != null &&
+                                          c.secteur!.trim().toLowerCase() ==
+                                              secteur.trim().toLowerCase())
+                                      .length;
+
+                                  return DropdownMenuItem<String?>(
+                                    value: secteur,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? LightModeColors.lightPrimary.withValues(alpha: 0.1)
+                                                : Colors.grey.shade100,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.location_on_outlined,
+                                            size: 15,
+                                            color: isSelected
+                                                ? LightModeColors.lightPrimary
+                                                : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            secteur,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.normal,
+                                              color: isSelected
+                                                  ? LightModeColors.lightPrimary
+                                                  : LightModeColors.dashboardTextPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? LightModeColors.lightPrimary.withValues(alpha: 0.1)
+                                                : Colors.grey.shade100,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            '$count',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: isSelected
+                                                  ? LightModeColors.lightPrimary
+                                                  : Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isSelected) ...[
+                                          const SizedBox(width: 8),
+                                          const Icon(
+                                            Icons.check_rounded,
+                                            size: 18,
+                                            color: LightModeColors.lightPrimary,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                              onChanged: (String? value) {
+                                setState(() {
+                                  _selectedSecteur = value;
+                                });
+                              },
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -425,49 +683,6 @@ class _MarqueDetailsPopupState extends State<MarqueDetailsPopup> {
     );
   }
 
-  Widget _buildSecteurChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? LightModeColors.lightPrimary
-              : LightModeColors.lightPrimary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? LightModeColors.lightPrimary
-                : LightModeColors.lightPrimary.withValues(alpha: 0.2),
-            width: isSelected ? 1.5 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: LightModeColors.lightPrimary.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : LightModeColors.lightPrimary,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildLogoFallback() {
     return Center(

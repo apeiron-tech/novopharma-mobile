@@ -38,6 +38,7 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
   bool _locationPermissionGranted = false;
   bool _hasLocalDraft = false;
   String? _visitComment;
+  String? _activePointOfSale;
 
   @override
   void initState() {
@@ -81,20 +82,28 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
       _globalActivePharmacyName = prefs.getString('active_pharmacy_name');
       _activeVisitId = prefs.getString('active_visit_id');
 
+      _activePointOfSale = prefs.getString('active_point_of_sale');
+
       if (_globalActivePharmacyId == widget.pharmacyId &&
           _activeVisitId != null) {
         _isActiveSession = true;
-        // Fetch comment from Firestore
+        // Fetch comment and pointOfSale from Firestore
         final visitDoc = await FirebaseFirestore.instance
             .collection('visits_history')
             .doc(_activeVisitId)
             .get();
         if (visitDoc.exists) {
           _visitComment = visitDoc.data()?['commentaire'] as String?;
+          final pos = visitDoc.data()?['pointOfSale'] as String?;
+          if (pos != null) {
+            _activePointOfSale = pos;
+            await prefs.setString('active_point_of_sale', pos);
+          }
         }
       } else {
         _isActiveSession = false;
         _visitComment = null;
+        _activePointOfSale = null;
       }
 
       await _checkLocalDraft();
@@ -252,108 +261,343 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
     final hasPermission = await _checkLocationPermission();
     if (!hasPermission) return;
 
+    String? selectedPointOfSale;
+    final hasPOS = (_pharmacy?.hasPointsOfSale ?? false) && (_pharmacy?.pointsOfSale.isNotEmpty ?? false);
+    if (hasPOS) {
+      selectedPointOfSale = _pharmacy!.pointsOfSale.first.name;
+    }
+
     final confirm = await showGeneralDialog<bool>(
       context: context,
       barrierDismissible: true,
       barrierLabel: "Confirmation",
       pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Align(
+              alignment: Alignment.center,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(22),
+                constraints: const BoxConstraints(maxWidth: 400),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: LightModeColors.novoPharmaLightBlue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.pin_drop_rounded,
-                      color: LightModeColors.novoPharmaBlue,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Confirmer le Check-in",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Voulez-vous enregistrer votre Check-in à la pharmacie :\n\n\"${widget.pharmacyName}\" ?",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: LightModeColors.novoPharmaGray,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  Row(
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                      // Header icon badge
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: LightModeColors.novoPharmaLightBlue,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.15),
+                            width: 2,
                           ),
-                          child: const Text(
-                            "Annuler",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                        ),
+                        child: const Icon(
+                          Icons.location_on_rounded,
+                          color: LightModeColors.novoPharmaBlue,
+                          size: 28,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.novoPharmaBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 14),
+                      const Text(
+                        "Confirmer le Check-in",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: LightModeColors.dashboardTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Pharmacy card info
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: LightModeColors.novoPharmaLightGray,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: LightModeColors.lightOutlineVariant),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: LightModeColors.novoPharmaLightBlue,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.local_pharmacy_rounded,
+                                size: 16,
+                                color: LightModeColors.novoPharmaBlue,
+                              ),
                             ),
-                          ),
-                          child: const Text(
-                            "Confirmer",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Pharmacie cible",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: LightModeColors.novoPharmaGray,
+                                    ),
+                                  ),
+                                  Text(
+                                    widget.pharmacyName,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: LightModeColors.dashboardTextPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (hasPOS) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.store_rounded,
+                              size: 15,
+                              color: LightModeColors.novoPharmaBlue,
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              "Sélectionner le point de vente",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: LightModeColors.dashboardTextPrimary,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: LightModeColors.novoPharmaLightBlue,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                "${_pharmacy!.pointsOfSale.length}",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: LightModeColors.novoPharmaBlue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 180),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _pharmacy!.pointsOfSale.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (context, idx) {
+                              final pos = _pharmacy!.pointsOfSale[idx];
+                              final isSelected = selectedPointOfSale == pos.name;
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    setDialogState(() {
+                                      selectedPointOfSale = pos.name;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.55)
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? LightModeColors.novoPharmaBlue
+                                            : LightModeColors.lightOutlineVariant,
+                                        width: isSelected ? 1.6 : 1.0,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(7),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? LightModeColors.novoPharmaBlue
+                                                : LightModeColors.novoPharmaLightGray,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.storefront_rounded,
+                                            size: 15,
+                                            color: isSelected ? Colors.white : LightModeColors.novoPharmaGray,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                pos.name,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                                  color: isSelected
+                                                      ? LightModeColors.novoPharmaDarkBlue
+                                                      : LightModeColors.dashboardTextPrimary,
+                                                ),
+                                              ),
+                                              if (pos.city.isNotEmpty) ...[
+                                                const SizedBox(height: 2),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.place_outlined,
+                                                      size: 11,
+                                                      color: isSelected
+                                                          ? LightModeColors.novoPharmaBlue
+                                                          : LightModeColors.novoPharmaGray,
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      pos.city,
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: isSelected
+                                                            ? LightModeColors.novoPharmaBlue
+                                                            : LightModeColors.novoPharmaGray,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                        Icon(
+                                          isSelected
+                                              ? Icons.check_circle_rounded
+                                              : Icons.radio_button_unchecked_rounded,
+                                          size: 20,
+                                          color: isSelected
+                                              ? LightModeColors.novoPharmaBlue
+                                              : LightModeColors.novoPharmaGray.withValues(alpha: 0.4),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
+                      ] else ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Voulez-vous enregistrer votre Check-in pour cette pharmacie ?",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: LightModeColors.novoPharmaGray,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                side: const BorderSide(color: LightModeColors.lightOutlineVariant, width: 1.2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                "Annuler",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: LightModeColors.novoPharmaGray,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: LightModeColors.novoPharmaBlue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_rounded, size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    "Confirmer",
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -394,6 +638,7 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
         'checkInTime': FieldValue.serverTimestamp(),
         'checkOutTime': null,
         'status': 'active',
+        if (selectedPointOfSale != null) 'pointOfSale': selectedPointOfSale,
       };
 
       await docRef.set(checkInData);
@@ -403,6 +648,11 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
       await prefs.setString('active_visit_id', visitId);
       await prefs.setString('active_pharmacy_id', widget.pharmacyId);
       await prefs.setString('active_pharmacy_name', widget.pharmacyName);
+      if (selectedPointOfSale != null) {
+        await prefs.setString('active_point_of_sale', selectedPointOfSale!);
+      } else {
+        await prefs.remove('active_point_of_sale');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -755,6 +1005,7 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
       await prefs.remove('active_visit_id');
       await prefs.remove('active_pharmacy_id');
       await prefs.remove('active_pharmacy_name');
+      await prefs.remove('active_point_of_sale');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -908,6 +1159,34 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen> {
                                       fontSize: 12 * scaleFactor,
                                       fontWeight: FontWeight.w600,
                                     ),
+                                  ),
+                                ),
+                              ],
+                              if (_activePointOfSale != null && _activePointOfSale!.isNotEmpty) ...[
+                                SizedBox(height: 8 * scaleFactor),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10 * scaleFactor,
+                                    vertical: 4 * scaleFactor,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.storefront_rounded, color: Colors.white, size: 14 * scaleFactor),
+                                      SizedBox(width: 6 * scaleFactor),
+                                      Text(
+                                        _activePointOfSale!,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12 * scaleFactor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
