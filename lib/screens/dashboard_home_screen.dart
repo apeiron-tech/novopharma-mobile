@@ -809,7 +809,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
           _buildManualSaleCard(context, l10n),
         _buildLeaderboardCard(context, l10n),
         _buildGoalsCard(context, l10n),
-        _buildBadgesCard(context, l10n),
+        if (user.role != 'Dermo-conseiller')
+          _buildBadgesCard(context, l10n),
         _buildChallengesCard(context, l10n),
       ],
     );
@@ -1204,10 +1205,16 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   final visitId = visitData['visitId'] ?? activeDocs.first.id;
                   final pharmacyId = visitData['pharmacyId'] ?? '';
                   final pharmacyName = visitData['pharmacyName'] ?? '';
+                  final pointOfSale = visitData['pointOfSale'];
 
                   await prefs.setString('active_visit_id', visitId.toString());
                   await prefs.setString('active_pharmacy_id', pharmacyId.toString());
                   await prefs.setString('active_pharmacy_name', pharmacyName.toString());
+                  if (pointOfSale != null && pointOfSale.toString().isNotEmpty) {
+                    await prefs.setString('active_point_of_sale', pointOfSale.toString());
+                  } else {
+                    await prefs.remove('active_point_of_sale');
+                  }
 
                   if (context.mounted) {
                     Navigator.push(

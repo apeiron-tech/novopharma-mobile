@@ -1,3 +1,5 @@
+import 'package:novopharma/screens/product_screen.dart';
+import 'package:novopharma/widgets/app_network_image.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:novopharma/models/custom_page_model.dart';
@@ -12,8 +14,6 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 import 'package:novopharma/widgets/video_player_dialog.dart';
 
 class CustomPageScreen extends StatefulWidget {
@@ -35,6 +35,10 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
   YoutubePlayerController? _youtubeController;
   VideoPlayerController? _videoPlayerController;
   bool _isVideoInitialized = false;
+
+  // Product search
+  final TextEditingController _productSearchController = TextEditingController();
+  String _productSearchQuery = '';
 
   // PDF state
   String? _localPdfPath;
@@ -189,44 +193,11 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
     );
   }
 
-  void _openImageGallery(int initialIndex) {
-    if (_page == null || _page!.imageUrls.isEmpty) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            title: Text(
-              '${initialIndex + 1} / ${_page!.imageUrls.length}',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-          body: PhotoViewGallery.builder(
-            itemCount: _page!.imageUrls.length,
-            pageController: PageController(initialPage: initialIndex),
-            builder: (context, index) {
-              return PhotoViewGalleryPageOptions(
-                imageProvider: NetworkImage(_page!.imageUrls[index]),
-                minScale: PhotoViewComputedScale.contained,
-                maxScale: PhotoViewComputedScale.covered * 2.5,
-              );
-            },
-            scrollPhysics: const BouncingScrollPhysics(),
-            backgroundDecoration: const BoxDecoration(color: Colors.black),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _youtubeController?.dispose();
     _videoPlayerController?.dispose();
+    _productSearchController.dispose();
     super.dispose();
   }
 
@@ -444,6 +415,12 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
             _buildPdfSection(page),
             const SizedBox(height: 20),
           ],
+
+          // 6. Products Section
+          if (page.products.isNotEmpty) ...[
+            _buildProductsSection(page.products),
+            const SizedBox(height: 20),
+          ],
         ],
       ),
     );
@@ -580,63 +557,26 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
               ),
               itemBuilder: (context, index, realIndex) {
                 final imageUrl = page.imageUrls[index];
-                return GestureDetector(
-                  onTap: () => _openImageGallery(index),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CachedNetworkImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: LightModeColors.lightSurfaceVariant,
-                              child: const Center(child: CircularProgressIndicator()),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: LightModeColors.lightSurfaceVariant,
-                              child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 12,
-                            right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.zoom_in, color: Colors.white, size: 14),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    "Agrandir",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: AppNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 800,
+                      memCacheHeight: 550,
+                      errorIcon: Icons.broken_image_rounded,
+                      errorIconSize: 44,
                     ),
                   ),
                 );
@@ -1136,6 +1076,274 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // Products Section Component
+  Widget _buildProductsSection(List<CustomPageProductItem> products) {
+    final filtered = products.where((p) {
+      if (_productSearchQuery.isEmpty) return true;
+      final query = _productSearchQuery.toLowerCase();
+      return p.name.toLowerCase().contains(query) ||
+          p.marque.toLowerCase().contains(query) ||
+          p.category.toLowerCase().contains(query) ||
+          p.sku.toLowerCase().contains(query);
+    }).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header with count badge
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_rounded,
+                  size: 20,
+                  color: LightModeColors.novoPharmaBlue,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Produits associés",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: LightModeColors.dashboardTextPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "${products.length} produits",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: LightModeColors.novoPharmaBlue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Search Field (shown if more than 5 products)
+          if (products.length > 5) ...[
+            const SizedBox(height: 14),
+            TextField(
+              controller: _productSearchController,
+              onChanged: (val) {
+                setState(() {
+                  _productSearchQuery = val;
+                });
+              },
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: "Rechercher un produit...",
+                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
+                suffixIcon: _productSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16, color: Colors.grey),
+                        onPressed: () {
+                          _productSearchController.clear();
+                          setState(() {
+                            _productSearchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                filled: true,
+                fillColor: LightModeColors.lightSurfaceVariant,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 14),
+
+          if (filtered.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.search_off_rounded, size: 36, color: Colors.grey.shade300),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Aucun produit ne correspond à « $_productSearchQuery »",
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filtered.length,
+              separatorBuilder: (context, index) => const Divider(height: 16, thickness: 0.8),
+              itemBuilder: (context, index) {
+                final product = filtered[index];
+                return _buildProductCard(product);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard(CustomPageProductItem product) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductScreen(id: product.id),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Product Image
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: AppNetworkImage(
+                    imageUrl: product.imageUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.contain,
+                    memCacheWidth: 180,
+                    memCacheHeight: 180,
+                    errorIcon: Icons.inventory_2_outlined,
+                    errorIconSize: 26,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Product Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: LightModeColors.dashboardTextPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    if (product.marque.isNotEmpty || product.category.isNotEmpty)
+                      Text(
+                        [
+                          if (product.marque.isNotEmpty) product.marque,
+                          if (product.category.isNotEmpty) product.category,
+                        ].join(' • '),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (product.points > 0) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: LightModeColors.success.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              "${product.points % 1 == 0 ? product.points.toInt() : product.points} pts",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: LightModeColors.success,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        if (product.price > 0)
+                          Text(
+                            "${product.price.toStringAsFixed(2)} DT",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: LightModeColors.novoPharmaBlue,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey.shade400,
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
