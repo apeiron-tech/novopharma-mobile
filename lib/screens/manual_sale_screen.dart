@@ -10,6 +10,7 @@ import 'package:novopharma/services/pharmacy_service.dart';
 import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/models/challenge.dart';
 import 'package:novopharma/services/challenge_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme.dart';
 
 class ManualSaleScreen extends StatefulWidget {
@@ -27,6 +28,7 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
   List<Challenge> _challenges = [];
+  UserModel? _user;
   String? _pharmacyCategory;
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
@@ -65,15 +67,25 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
       ]);
 
       final products = results[0] as List<Product>;
-      final user = results[1] as UserModel?;
+      _user = results[1] as UserModel?;
       _challenges = results[2] as List<Challenge>;
 
-      if (user != null && user.pharmacyId.isNotEmpty) {
-        final pharmacies = await _pharmacyService.getPharmaciesByIds([
-          user.pharmacyId,
-        ]);
-        if (pharmacies.isNotEmpty) {
-          _pharmacyCategory = pharmacies.first.clientCategory;
+      if (_user != null) {
+        String? resolvedPharmacyId;
+        if (_user!.role == 'Dermo-conseiller') {
+          final prefs = await SharedPreferences.getInstance();
+          resolvedPharmacyId = prefs.getString('active_pharmacy_id');
+        } else {
+          resolvedPharmacyId = _user!.pharmacyId;
+        }
+
+        if (resolvedPharmacyId != null && resolvedPharmacyId.isNotEmpty) {
+          final pharmacies = await _pharmacyService.getPharmaciesByIds([
+            resolvedPharmacyId,
+          ]);
+          if (pharmacies.isNotEmpty) {
+            _pharmacyCategory = pharmacies.first.clientCategory;
+          }
         }
       }
 
@@ -205,7 +217,9 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
 
   Challenge? _getMatchingChallenge(Product product) {
     final now = DateTime.now();
-    final effectiveCategory = (_pharmacyCategory == null || _pharmacyCategory!.isEmpty) ? 'Pharmacie' : _pharmacyCategory!;
+    final effectiveCategory = _user?.role == 'Dermo-conseiller'
+        ? 'Dermo-conseiller'
+        : ((_pharmacyCategory == null || _pharmacyCategory!.isEmpty) ? 'Pharmacie' : _pharmacyCategory!);
 
     for (var challenge in _challenges) {
       if (challenge.status == 'active' &&
@@ -213,7 +227,8 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
           challenge.productIds.contains(product.id) &&
           !now.isBefore(challenge.startDate) &&
           !now.isAfter(challenge.endDate) &&
-          challenge.clientCategory.contains(effectiveCategory)) {
+          (challenge.clientCategory.contains(effectiveCategory) ||
+           (_user?.role == 'Dermo-conseiller' && challenge.clientCategory.contains(_pharmacyCategory ?? 'Pharmacie')))) {
         return challenge;
       }
     }
@@ -331,7 +346,7 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
                             Builder(
                               builder: (context) {
                                 final matchingChallenge = _getMatchingChallenge(product);
-                                final standardPoints = product.getPoints(_pharmacyCategory);
+                                final standardPoints = product.getPoints(_pharmacyCategory, userRole: _user?.role);
                                 final pointsToDisplay = matchingChallenge != null ? matchingChallenge.salePoints : standardPoints;
                                 
                                 return Container(

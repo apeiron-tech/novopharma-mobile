@@ -1,4 +1,4 @@
-﻿import 'package:novopharma/widgets/app_network_image.dart';
+import 'package:novopharma/widgets/app_network_image.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +51,13 @@ class ProductScreen extends StatefulWidget {
   final String? id;
   final Sale? sale;
   final bool isSelectionMode;
-  const ProductScreen({super.key, this.sku, this.id, this.sale, this.isSelectionMode = false});
+  const ProductScreen({
+    super.key,
+    this.sku,
+    this.id,
+    this.sale,
+    this.isSelectionMode = false,
+  });
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -95,7 +101,12 @@ class _ProductScreenState extends State<ProductScreen> {
     final userId = authProvider.firebaseUser?.uid;
     if (userId == null) return _ProductScreenData(product: product);
 
-    final [recommendedProducts, allGoals, user, challenges] = await Future.wait([
+    final [
+      recommendedProducts,
+      allGoals,
+      user,
+      challenges,
+    ] = await Future.wait([
       product.recommendedWith.isNotEmpty
           ? _productService.getProductsByIds(product.recommendedWith)
           : Future.value(<Product>[]),
@@ -135,9 +146,18 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  double _getEffectivePoints(Product product, List<Challenge> challenges, String? pharmacyCategory) {
+  double _getEffectivePoints(
+    Product product,
+    List<Challenge> challenges,
+    String? pharmacyCategory, {
+    String? userRole,
+  }) {
     final now = DateTime.now();
-    final effectiveCategory = (pharmacyCategory == null || pharmacyCategory.isEmpty) ? 'Pharmacie' : pharmacyCategory;
+    final effectiveCategory = userRole == 'Dermo-conseiller'
+        ? 'Dermo-conseiller'
+        : ((pharmacyCategory == null || pharmacyCategory.isEmpty)
+            ? 'Pharmacie'
+            : pharmacyCategory);
 
     for (var challenge in challenges) {
       if (challenge.status == 'active' &&
@@ -145,16 +165,26 @@ class _ProductScreenState extends State<ProductScreen> {
           challenge.productIds.contains(product.id) &&
           !now.isBefore(challenge.startDate) &&
           !now.isAfter(challenge.endDate) &&
-          challenge.clientCategory.contains(effectiveCategory)) {
+          (challenge.clientCategory.contains(effectiveCategory) ||
+           (userRole == 'Dermo-conseiller' && challenge.clientCategory.contains(pharmacyCategory ?? 'Pharmacie')))) {
         return challenge.salePoints;
       }
     }
-    return product.getPoints(pharmacyCategory);
+    return product.getPoints(pharmacyCategory, userRole: userRole);
   }
 
-  Challenge? _getMatchingChallenge(Product product, List<Challenge> challenges, String? pharmacyCategory) {
+  Challenge? _getMatchingChallenge(
+    Product product,
+    List<Challenge> challenges,
+    String? pharmacyCategory, {
+    String? userRole,
+  }) {
     final now = DateTime.now();
-    final effectiveCategory = (pharmacyCategory == null || pharmacyCategory.isEmpty) ? 'Pharmacie' : pharmacyCategory;
+    final effectiveCategory = userRole == 'Dermo-conseiller'
+        ? 'Dermo-conseiller'
+        : ((pharmacyCategory == null || pharmacyCategory.isEmpty)
+            ? 'Pharmacie'
+            : pharmacyCategory);
 
     for (var challenge in challenges) {
       if (challenge.status == 'active' &&
@@ -162,24 +192,32 @@ class _ProductScreenState extends State<ProductScreen> {
           challenge.productIds.contains(product.id) &&
           !now.isBefore(challenge.startDate) &&
           !now.isAfter(challenge.endDate) &&
-          challenge.clientCategory.contains(effectiveCategory)) {
+          (challenge.clientCategory.contains(effectiveCategory) ||
+           (userRole == 'Dermo-conseiller' && challenge.clientCategory.contains(pharmacyCategory ?? 'Pharmacie')))) {
         return challenge;
       }
     }
     return null;
   }
 
-  List<Product> _getEligibleProductsForGift(Gift gift, List<Product> allProducts) {
+  List<Product> _getEligibleProductsForGift(
+    Gift gift,
+    List<Product> allProducts,
+  ) {
     return allProducts.where((p) {
       if (p.isDisabled) return false;
       bool matches = true;
       if (gift.listProducts.isNotEmpty && !gift.listProducts.contains(p.id)) {
         matches = false;
       }
-      if (matches && gift.productCategory.isNotEmpty && !gift.productCategory.contains(p.category)) {
+      if (matches &&
+          gift.productCategory.isNotEmpty &&
+          !gift.productCategory.contains(p.category)) {
         matches = false;
       }
-      if (matches && gift.productMarque.isNotEmpty && !gift.productMarque.contains(p.marque)) {
+      if (matches &&
+          gift.productMarque.isNotEmpty &&
+          !gift.productMarque.contains(p.marque)) {
         matches = false;
       }
       return matches;
@@ -192,7 +230,9 @@ class _ProductScreenState extends State<ProductScreen> {
   }) async {
     final Map<Product, int> selectedProducts = {};
     final searchController = TextEditingController();
-    final listToShow = eligibleProducts.where((p) => p.id != primaryProduct.id).toList();
+    final listToShow = eligibleProducts
+        .where((p) => p.id != primaryProduct.id)
+        .toList();
 
     return showDialog<Map<Product, int>>(
       context: context,
@@ -206,218 +246,597 @@ class _ProductScreenState extends State<ProductScreen> {
                   p.category.toLowerCase().contains(query);
             }).toList();
 
+            final screenWidth = MediaQuery.of(context).size.width;
+            final screenHeight = MediaQuery.of(context).size.height;
+
+            final totalSelectedQty =
+                selectedProducts.values.fold(0, (total, q) => total + q);
+            final totalSelectedAmount = selectedProducts.entries.fold(
+              0.0,
+              (total, e) => total + (e.key.price * e.value),
+            );
+
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               backgroundColor: LightModeColors.lightSurface,
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.7,
-                ),
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Sélectionner les produits éligibles",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: LightModeColors.dashboardTextPrimary,
+              clipBehavior: Clip.antiAlias,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 20,
+              ),
+              child: SizedBox(
+                width: screenWidth > 450 ? 420 : screenWidth * 0.92,
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxHeight: screenHeight * 0.82,
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with icon, title, count & close button
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: LightModeColors.lightPrimary
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.add_shopping_cart,
+                              color: LightModeColors.lightPrimary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Produits éligibles",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        LightModeColors.dashboardTextPrimary,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  "${listToShow.length} produit${listToShow.length > 1 ? 's' : ''} disponible${listToShow.length > 1 ? 's' : ''}",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        LightModeColors.dashboardTextSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close, size: 20),
+                            color: LightModeColors.dashboardTextSecondary,
+                            splashRadius: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Choisissez un ou plusieurs produits éligibles et ajustez les quantités (appui long pour voir les détails).",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: LightModeColors.dashboardTextSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: searchController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: "Rechercher un produit...",
-                        prefixIcon: const Icon(Icons.search),
-                        fillColor: LightModeColors.lightBackground,
-                        filled: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                      const SizedBox(height: 10),
+
+                      // Instruction tip chip
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: LightModeColors.lightBackground,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: LightModeColors.lightOutlineVariant,
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.touch_app_outlined,
+                              size: 14,
+                              color: LightModeColors.dashboardTextSecondary,
+                            ),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                "Touchez pour cocher • Appui long pour détails",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: LightModeColors
+                                      .dashboardTextSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: filteredList.isEmpty
-                          ? const Center(
-                              child: Text(
-                                "Aucun produit éligible trouvé",
-                                style: TextStyle(color: LightModeColors.dashboardTextSecondary),
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: filteredList.length,
-                              itemBuilder: (context, index) {
-                                final p = filteredList[index];
-                                final isSelected = selectedProducts.containsKey(p);
-                                final currentQty = selectedProducts[p] ?? 1;
+                      const SizedBox(height: 10),
 
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? LightModeColors.lightPrimary.withOpacity(0.08)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? LightModeColors.lightPrimary
-                                          : Colors.grey.shade200,
-                                      width: isSelected ? 2 : 1,
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                    leading: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: AppNetworkImage(
-                                          imageUrl: p.imageUrl,
-                                          width: 48,
-                                          height: 48,
-                                          fit: BoxFit.contain,
-                                          memCacheWidth: 150,
-                                          memCacheHeight: 150,
-                                          errorIcon: Icons.image_not_supported_outlined,
-                                          errorIconSize: 24,
-                                        ),
-                                      ),
-                                    title: Text(
-                                      p.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: LightModeColors.dashboardTextPrimary,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      "${p.marque} • ${p.price.toStringAsFixed(3)} TND",
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: LightModeColors.dashboardTextSecondary,
-                                      ),
-                                    ),
-                                    trailing: isSelected
-                                        ? Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(Icons.remove_circle_outline, color: LightModeColors.warning, size: 20),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    if (currentQty > 1) {
-                                                      selectedProducts[p] = currentQty - 1;
-                                                    } else {
-                                                      selectedProducts.remove(p);
-                                                    }
-                                                  });
-                                                },
-                                              ),
-                                              Text(
-                                                '$currentQty',
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.add_circle_outline, color: LightModeColors.warning, size: 20),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    selectedProducts[p] = currentQty + 1;
-                                                  });
-                                                },
-                                              ),
-                                            ],
-                                          )
-                                        : Checkbox(
-                                            value: false,
-                                            activeColor: LightModeColors.lightPrimary,
-                                            onChanged: (val) {
-                                              setState(() {
-                                                selectedProducts[p] = 1;
-                                              });
-                                            },
-                                          ),
-                                    onLongPress: () async {
-                                      final result = await Navigator.push<Map<Product, int>>(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ProductScreen(
-                                            id: p.id,
-                                            isSelectionMode: true,
-                                          ),
-                                        ),
-                                      );
-                                      if (result != null && result.isNotEmpty) {
-                                        setState(() {
-                                          selectedProducts[p] = result.values.first;
-                                        });
-                                      }
-                                    },
-                                    onTap: () {
-                                      setState(() {
-                                        if (isSelected) {
-                                          selectedProducts.remove(p);
-                                        } else {
-                                          selectedProducts[p] = 1;
-                                        }
-                                      });
-                                    },
-                                  ),
-                                );
-                              },
+                      // Search field
+                      TextField(
+                        controller: searchController,
+                        onChanged: (_) => setState(() {}),
+                        style: const TextStyle(fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: "Rechercher par nom, marque...",
+                          hintStyle: const TextStyle(
+                            fontSize: 12,
+                            color: LightModeColors.dashboardTextSecondary,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 18,
+                            color: LightModeColors.dashboardTextSecondary,
+                          ),
+                          suffixIcon: searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 16),
+                                  color:
+                                      LightModeColors.dashboardTextSecondary,
+                                  onPressed: () {
+                                    searchController.clear();
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          fillColor: LightModeColors.lightBackground,
+                          filled: true,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: LightModeColors.lightOutlineVariant,
                             ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: LightModeColors.lightOutline),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: LightModeColors.lightOutlineVariant,
                             ),
-                            child: const Text(
-                              "Annuler",
-                              style: TextStyle(color: LightModeColors.dashboardTextSecondary),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: LightModeColors.lightPrimary,
+                              width: 1.5,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: selectedProducts.isEmpty
-                                ? null
-                                : () => Navigator.pop(context, selectedProducts),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: LightModeColors.lightPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              elevation: 0,
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Product List
+                      Expanded(
+                        child: filteredList.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  "Aucun produit éligible trouvé",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: LightModeColors
+                                        .dashboardTextSecondary,
+                                  ),
+                                ),
+                              )
+                            : Scrollbar(
+                                thumbVisibility: filteredList.length > 3,
+                                child: ListView.separated(
+                                  itemCount: filteredList.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final p = filteredList[index];
+                                    final isSelected =
+                                        selectedProducts.containsKey(p);
+                                    final currentQty =
+                                        selectedProducts[p] ?? 1;
+
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? LightModeColors.lightPrimary
+                                                .withOpacity(0.06)
+                                            : LightModeColors.lightBackground,
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? LightModeColors.lightPrimary
+                                              : LightModeColors
+                                                  .lightOutlineVariant
+                                                  .withOpacity(0.8),
+                                          width: isSelected ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: InkWell(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                        onTap: () {
+                                          setState(() {
+                                            if (isSelected) {
+                                              selectedProducts.remove(p);
+                                            } else {
+                                              selectedProducts[p] = 1;
+                                            }
+                                          });
+                                        },
+                                        onLongPress: () async {
+                                          final result =
+                                              await Navigator.push<
+                                                Map<Product, int>
+                                              >(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ProductScreen(
+                                                        id: p.id,
+                                                        isSelectionMode: true,
+                                                      ),
+                                                ),
+                                              );
+                                          if (result != null &&
+                                              result.isNotEmpty) {
+                                            setState(() {
+                                              selectedProducts[p] =
+                                                  result.values.first;
+                                            });
+                                          }
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(10),
+                                          child: Row(
+                                            children: [
+                                              // Thumbnail
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                child: Container(
+                                                  width: 48,
+                                                  height: 48,
+                                                  color: Colors.white,
+                                                  child: AppNetworkImage(
+                                                    imageUrl: p.imageUrl,
+                                                    width: 48,
+                                                    height: 48,
+                                                    fit: BoxFit.contain,
+                                                    memCacheWidth: 150,
+                                                    memCacheHeight: 150,
+                                                    errorIcon: Icons
+                                                        .image_not_supported_outlined,
+                                                    errorIconSize: 22,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+
+                                              // Title, Marque & Price
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    if (p.marque
+                                                        .isNotEmpty) ...[
+                                                      Text(
+                                                        p.marque.toUpperCase(),
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color: LightModeColors
+                                                              .lightPrimary
+                                                              .withOpacity(
+                                                                0.85,
+                                                              ),
+                                                          letterSpacing: 0.5,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 2,
+                                                      ),
+                                                    ],
+                                                    Text(
+                                                      p.name,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 13,
+                                                        color: LightModeColors
+                                                            .dashboardTextPrimary,
+                                                        height: 1.25,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      "${p.price.toStringAsFixed(3)} TND",
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: LightModeColors
+                                                            .dashboardTextSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+
+                                              // Checkbox / Stepper
+                                              if (isSelected)
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: LightModeColors
+                                                          .lightPrimary
+                                                          .withOpacity(0.3),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                      MainAxisSize.min,
+                                                    children: [
+                                                      InkWell(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            if (currentQty >
+                                                                1) {
+                                                              selectedProducts[p] =
+                                                                  currentQty -
+                                                                      1;
+                                                            } else {
+                                                              selectedProducts
+                                                                  .remove(p);
+                                                            }
+                                                          });
+                                                        },
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                6,
+                                                              ),
+                                                          child: Icon(
+                                                            Icons.remove,
+                                                            size: 16,
+                                                            color:
+                                                                LightModeColors
+                                                                    .lightPrimary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                              horizontal: 4,
+                                                            ),
+                                                        child: Text(
+                                                          '$currentQty',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 13,
+                                                                color:
+                                                                    LightModeColors
+                                                                        .lightPrimary,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            selectedProducts[p] =
+                                                                currentQty +
+                                                                    1;
+                                                          });
+                                                        },
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                6,
+                                                              ),
+                                                          child: Icon(
+                                                            Icons.add,
+                                                            size: 16,
+                                                            color:
+                                                                LightModeColors
+                                                                    .lightPrimary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              else
+                                                Container(
+                                                  width: 26,
+                                                  height: 26,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color: LightModeColors
+                                                          .lightOutline,
+                                                      width: 1.5,
+                                                    ),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.add,
+                                                    size: 16,
+                                                    color: LightModeColors
+                                                        .dashboardTextSecondary,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                      ),
+
+                      // Selected summary badge
+                      if (selectedProducts.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: LightModeColors.lightPrimary.withOpacity(
+                              0.08,
                             ),
-                            child: const Text(
-                              "Valider",
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "$totalSelectedQty article${totalSelectedQty > 1 ? 's' : ''} sélectionné${totalSelectedQty > 1 ? 's' : ''}",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: LightModeColors.lightPrimary,
+                                ),
+                              ),
+                              Text(
+                                "${totalSelectedAmount.toStringAsFixed(3)} TND",
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: LightModeColors.lightPrimary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ],
+
+                      // Action Buttons
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: LightModeColors.lightOutline,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Text(
+                                "Annuler",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: LightModeColors
+                                      .dashboardTextSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: selectedProducts.isEmpty
+                                  ? null
+                                  : () => Navigator.pop(
+                                      context,
+                                      selectedProducts,
+                                    ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: LightModeColors.lightPrimary,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey.shade300,
+                                disabledForegroundColor: Colors.grey.shade500,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.check, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    selectedProducts.isEmpty
+                                        ? "Valider"
+                                        : "Valider ($totalSelectedQty)",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -430,164 +849,444 @@ class _ProductScreenState extends State<ProductScreen> {
   Future<bool> _showSaleConfirmationDialog({
     required Map<Product, int> productsToSell,
     required double totalPrice,
+    double? totalPoints,
   }) async {
     final l10n = AppLocalizations.of(context)!;
+    final totalItemsCount =
+        productsToSell.values.fold(0, (total, q) => total + q);
+
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: LightModeColors.lightSurface,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: LightModeColors.lightPrimary.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline,
-                  color: LightModeColors.lightPrimary,
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "Confirmer la vente",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: LightModeColors.dashboardTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: LightModeColors.lightBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ...productsToSell.entries.map((entry) {
-                      final p = entry.key;
-                      final qty = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
+      builder: (context) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: LightModeColors.lightSurface,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            width: screenWidth > 450 ? 420 : screenWidth * 0.92,
+            constraints: BoxConstraints(
+              maxHeight: screenHeight * 0.82,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 16, 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: LightModeColors.lightPrimary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_outlined,
+                          color: LightModeColors.lightPrimary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Produit : ",
-                                  style: TextStyle(fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextSecondary),
+                            const Text(
+                              "Confirmer la vente",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: LightModeColors.dashboardTextPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "$totalItemsCount article${totalItemsCount > 1 ? 's' : ''} • ${productsToSell.length} référence${productsToSell.length > 1 ? 's' : ''}",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: LightModeColors.dashboardTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        icon: const Icon(Icons.close, size: 20),
+                        color: LightModeColors.dashboardTextSecondary,
+                        splashRadius: 20,
+                        tooltip: l10n.cancel,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: LightModeColors.lightOutlineVariant,
+                ),
+
+                // Scrollable Products List
+                Flexible(
+                  child: Scrollbar(
+                    thumbVisibility: productsToSell.length > 3,
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      itemCount: productsToSell.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final entry = productsToSell.entries.elementAt(index);
+                        final p = entry.key;
+                        final qty = entry.value;
+                        final itemTotal = p.price * qty;
+
+                        return Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: LightModeColors.lightBackground,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: LightModeColors.lightOutlineVariant
+                                  .withOpacity(0.8),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Product Image
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  color: Colors.white,
+                                  child: AppNetworkImage(
+                                    imageUrl: p.imageUrl,
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.contain,
+                                    memCacheWidth: 150,
+                                    memCacheHeight: 150,
+                                    errorIcon:
+                                        Icons.image_not_supported_outlined,
+                                    errorIconSize: 22,
+                                  ),
                                 ),
-                                Expanded(
-                                  child: Text(
-                                    p.name,
-                                    style: const TextStyle(color: LightModeColors.dashboardTextPrimary),
+                              ),
+                              const SizedBox(width: 12),
+                              // Name and Marque
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (p.marque.isNotEmpty) ...[
+                                      Text(
+                                        p.marque.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: LightModeColors.lightPrimary
+                                              .withOpacity(0.85),
+                                          letterSpacing: 0.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                    ],
+                                    Text(
+                                      p.name,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: LightModeColors
+                                            .dashboardTextPrimary,
+                                        height: 1.25,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "${p.price.toStringAsFixed(3)} TND / unité",
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: LightModeColors
+                                            .dashboardTextSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Quantity Pill & Subtotal
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: LightModeColors.lightPrimary
+                                          .withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: LightModeColors.lightPrimary
+                                            .withOpacity(0.18),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "× $qty",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: LightModeColors.lightPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${itemTotal.toStringAsFixed(3)} TND",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          LightModeColors.dashboardTextPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                // Summary Card
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: LightModeColors.lightBackground,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: LightModeColors.lightOutlineVariant,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Total articles",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: LightModeColors.dashboardTextSecondary,
+                            ),
+                          ),
+                          Text(
+                            "$totalItemsCount",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: LightModeColors.dashboardTextPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (totalPoints != null && totalPoints > 0) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.stars_rounded,
+                                  size: 16,
+                                  color: LightModeColors.success,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  "Points cumulés",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color:
+                                        LightModeColors.dashboardTextSecondary,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Text(
-                                  "Quantité : ",
-                                  style: TextStyle(fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextSecondary),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    LightModeColors.success.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                "+${totalPoints % 1 == 0 ? totalPoints.toInt() : totalPoints.toStringAsFixed(1)} pts",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: LightModeColors.success,
                                 ),
-                                Text(
-                                  "$qty",
-                                  style: const TextStyle(color: LightModeColors.dashboardTextPrimary),
-                                ),
-                              ],
+                              ),
                             ),
-                            if (productsToSell.length > 1) const Divider(),
                           ],
                         ),
-                      );
-                    }).toList(),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Text(
-                          "Prix total : ",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextSecondary),
-                        ),
-                        Text(
-                          "${totalPrice.toStringAsFixed(3)} TND",
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: LightModeColors.lightPrimary),
-                        ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "Voulez-vous enregistrer cette vente ?",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: LightModeColors.dashboardTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: LightModeColors.lightOutline),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: LightModeColors.lightOutlineVariant,
+                        ),
                       ),
-                      child: Text(
-                        l10n.cancel,
-                        style: const TextStyle(color: LightModeColors.dashboardTextSecondary),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Montant total",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: LightModeColors.dashboardTextPrimary,
+                            ),
+                          ),
+                          Text(
+                            "${totalPrice.toStringAsFixed(3)} TND",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: LightModeColors.lightPrimary,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: LightModeColors.lightPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
+                ),
+
+                // Action Buttons
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: LightModeColors.lightOutline,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            l10n.cancel,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: LightModeColors.dashboardTextSecondary,
+                            ),
+                          ),
+                        ),
                       ),
-                      child: const Text(
-                        "Confirmer",
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: LightModeColors.lightPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Confirmer la vente",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
     return confirmed ?? false;
   }
 
-  Future<void> _submitSale(Product product, UserModel user, String? pharmacyCategory, List<Challenge> challenges) async {
+  Future<void> _submitSale(
+    Product product,
+    UserModel user,
+    String? pharmacyCategory,
+    List<Challenge> challenges,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final int quantity = _quantityNotifier.value;
-    final double unitPoints = _getEffectivePoints(product, challenges, pharmacyCategory);
+    final double unitPoints = _getEffectivePoints(
+      product,
+      challenges,
+      pharmacyCategory,
+      userRole: user.role,
+    );
     final double totalPrice = product.price * quantity;
 
     String? activeVisitId;
@@ -657,7 +1356,12 @@ class _ProductScreenState extends State<ProductScreen> {
       for (var entry in productsToSell.entries) {
         final p = entry.key;
         final qty = entry.value;
-        final pUnitPoints = _getEffectivePoints(p, challenges, pharmacyCategory);
+        final pUnitPoints = _getEffectivePoints(
+          p,
+          challenges,
+          pharmacyCategory,
+          userRole: user.role,
+        );
         final pTotalPrice = p.price * qty;
 
         final resolvedPointOfSale = user.role == 'Dermo-conseiller'
@@ -670,7 +1374,9 @@ class _ProductScreenState extends State<ProductScreen> {
           final updatedSale = Sale(
             id: widget.sale!.id,
             userId: user.uid,
-            pharmacyId: user.role == 'Dermo-conseiller' ? activePharmacyId! : user.pharmacyId,
+            pharmacyId: user.role == 'Dermo-conseiller'
+                ? activePharmacyId!
+                : user.pharmacyId,
             productId: p.id,
             productNameSnapshot: p.name,
             quantity: qty,
@@ -680,7 +1386,9 @@ class _ProductScreenState extends State<ProductScreen> {
             productBrandSnapshot: p.marque,
             productCategorySnapshot: p.category,
             status: widget.sale!.status, // Keep original status
-            visitId: user.role == 'Dermo-conseiller' ? activeVisitId : widget.sale!.visitId,
+            visitId: user.role == 'Dermo-conseiller'
+                ? activeVisitId
+                : widget.sale!.visitId,
             pointOfSaleSnapshot: user.role == 'Dermo-conseiller'
                 ? activePointOfSale
                 : (widget.sale!.pointOfSaleSnapshot ?? user.pointOfSale),
@@ -695,7 +1403,9 @@ class _ProductScreenState extends State<ProductScreen> {
           final newSale = Sale(
             id: '', // Firestore will generate ID
             userId: user.uid,
-            pharmacyId: user.role == 'Dermo-conseiller' ? activePharmacyId! : user.pharmacyId,
+            pharmacyId: user.role == 'Dermo-conseiller'
+                ? activePharmacyId!
+                : user.pharmacyId,
             productId: p.id,
             productNameSnapshot: p.name,
             quantity: qty,
@@ -717,7 +1427,9 @@ class _ProductScreenState extends State<ProductScreen> {
 
     // Check for gifts if it's a new sale or existing sale
     final giftService = GiftService();
-    final String targetPharmacyId = user.role == 'Dermo-conseiller' ? activePharmacyId! : user.pharmacyId;
+    final String targetPharmacyId = user.role == 'Dermo-conseiller'
+        ? activePharmacyId!
+        : user.pharmacyId;
     final List<GiftAssignment> assignments = user.role == 'Dermo-conseiller'
         ? await giftService.getAssignmentsForDermoOrPharmacy(
             pharmacyId: targetPharmacyId,
@@ -734,13 +1446,18 @@ class _ProductScreenState extends State<ProductScreen> {
       final gift = await giftService.getGiftById(assignment.giftId);
       if (gift != null && gift.status == 'active') {
         bool matchesProduct = true;
-        if (gift.listProducts.isNotEmpty && !gift.listProducts.contains(product.id)) {
+        if (gift.listProducts.isNotEmpty &&
+            !gift.listProducts.contains(product.id)) {
           matchesProduct = false;
         }
-        if (matchesProduct && gift.productCategory.isNotEmpty && !gift.productCategory.contains(product.category)) {
+        if (matchesProduct &&
+            gift.productCategory.isNotEmpty &&
+            !gift.productCategory.contains(product.category)) {
           matchesProduct = false;
         }
-        if (matchesProduct && gift.productMarque.isNotEmpty && !gift.productMarque.contains(product.marque)) {
+        if (matchesProduct &&
+            gift.productMarque.isNotEmpty &&
+            !gift.productMarque.contains(product.marque)) {
           matchesProduct = false;
         }
 
@@ -769,201 +1486,358 @@ class _ProductScreenState extends State<ProductScreen> {
       }
     }
 
-    Map<Product, int> productsToSell = { product: quantity };
+    Map<Product, int> productsToSell = {product: quantity};
 
-    if (potentialTradeGift != null && neededQty != null && neededQty > 0 && targetQty != null) {
+    if (potentialTradeGift != null &&
+        neededQty != null &&
+        neededQty > 0 &&
+        targetQty != null) {
       final gift = potentialTradeGift;
       final dynamic adjustResult = await showDialog<dynamic>(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: LightModeColors.lightSurface,
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
+        builder: (context) {
+          final screenWidth = MediaQuery.of(context).size.width;
+
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            backgroundColor: LightModeColors.lightSurface,
+            clipBehavior: Clip.antiAlias,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 24,
+            ),
+            child: SizedBox(
+              width: screenWidth > 450 ? 420 : screenWidth * 0.92,
+              child: Stack(
                 children: [
-                  if (gift.imageUrl.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: gift.imageUrl,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 180,
-                        color: Colors.grey.shade100,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: LightModeColors.lightPrimary,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 180,
-                        color: Colors.grey.shade100,
-                        child: const Icon(
-                          Icons.card_giftcard,
-                          size: 64,
-                          color: LightModeColors.dashboardTextSecondary,
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.warning.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: LightModeColors.warning,
-                          size: 48,
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
+                  SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          "Rappel Offre Trade",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: LightModeColors.dashboardTextPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          gift.thresholdType == 'amount'
-                              ? "Ce produit fait partie de l'offre : ${gift.title}.\n\nVous pouvez vendre $neededQty produit(s) supplémentaire(s) pour atteindre le montant minimum de ${gift.minPurchaseAmount} TND et débloquer le cadeau."
-                              : "Ce produit fait partie de l'offre : ${gift.title}.\n\nVous pouvez vendre $neededQty produit(s) supplémentaire(s) pour débloquer le cadeau associé.",
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: LightModeColors.dashboardTextSecondary,
-                          ),
-                        ),
-                        if (gift.description.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            gift.description,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: LightModeColors.dashboardTextPrimary,
+                        if (gift.imageUrl.isNotEmpty)
+                          Stack(
+                            children: [
+                              CachedNetworkImage(
+                                imageUrl: gift.imageUrl,
+                                height: 175,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  height: 175,
+                                  color: LightModeColors.lightBackground,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: LightModeColors.lightPrimary,
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  height: 175,
+                                  color: LightModeColors.lightBackground,
+                                  child: const Icon(
+                                    Icons.card_giftcard,
+                                    size: 54,
+                                    color: LightModeColors.lightPrimary,
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.35),
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.15),
+                                      ],
+                                      stops: const [0.0, 0.5, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(top: 24.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: LightModeColors.lightPrimary
+                                    .withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.card_giftcard,
+                                color: LightModeColors.lightPrimary,
+                                size: 44,
+                              ),
                             ),
                           ),
-                        ],
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final allProducts = await _productService.getProducts();
-                            final eligible = _getEligibleProductsForGift(gift, allProducts);
-                            if (context.mounted) {
-                              final selected = await _showProductSelectionDialog(
-                                eligibleProducts: eligible,
-                                primaryProduct: product,
-                              );
-                              if (selected != null) {
-                                Navigator.pop(context, selected);
-                              }
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.lightPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            elevation: 0,
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.add_shopping_cart, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text(
-                                "Ajouter d'autres produits éligibles",
-                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                              const Text(
+                                "Rappel Offre Trade",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: LightModeColors.dashboardTextPrimary,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text.rich(
+                                TextSpan(
+                                  text: "Ce produit fait partie de l'offre : ",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color:
+                                        LightModeColors.dashboardTextSecondary,
+                                    height: 1.35,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: gift.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: LightModeColors
+                                            .dashboardTextPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (gift.description.isNotEmpty) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: LightModeColors.lightPrimary
+                                        .withOpacity(0.06),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: LightModeColors.lightPrimary
+                                          .withOpacity(0.18),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: BoxDecoration(
+                                          color: LightModeColors.lightPrimary
+                                              .withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.card_giftcard,
+                                          size: 18,
+                                          color: LightModeColors.lightPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          gift.description,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: LightModeColors
+                                                .dashboardTextPrimary,
+                                            height: 1.35,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    final allProducts =
+                                        await _productService.getProducts();
+                                    final eligible =
+                                        _getEligibleProductsForGift(
+                                      gift,
+                                      allProducts,
+                                    );
+                                    if (context.mounted) {
+                                      final selected =
+                                          await _showProductSelectionDialog(
+                                        eligibleProducts: eligible,
+                                        primaryProduct: product,
+                                      );
+                                      if (selected != null) {
+                                        Navigator.pop(context, selected);
+                                      }
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        LightModeColors.lightPrimary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_shopping_cart,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Ajouter d'autres produits éligibles",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(
+                                          color: LightModeColors.lightOutline,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "Continuer sans cadeau",
+                                        style: TextStyle(
+                                          color: LightModeColors
+                                              .dashboardTextSecondary,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            LightModeColors.lightPrimary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.add,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            "Ajuster à $targetQty",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: LightModeColors.lightOutline),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                ),
-                                child: const Text(
-                                  "Continuer sans cadeau",
-                                  style: TextStyle(color: LightModeColors.dashboardTextSecondary, fontSize: 12),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: LightModeColors.lightPrimary,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                  elevation: 0,
-                                ),
-                                child: Text(
-                                  "Ajuster à $targetQty",
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: gift.imageUrl.isNotEmpty
+                              ? Colors.black.withOpacity(0.45)
+                              : LightModeColors.lightBackground,
+                          shape: BoxShape.circle,
+                          border: gift.imageUrl.isNotEmpty
+                              ? Border.all(
+                                  color: Colors.white.withOpacity(0.25),
+                                  width: 0.8,
+                                )
+                              : null,
+                        ),
+                        padding: const EdgeInsets.all(7),
+                        child: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: gift.imageUrl.isNotEmpty
+                              ? Colors.white
+                              : LightModeColors.dashboardTextSecondary,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: gift.imageUrl.isNotEmpty
-                          ? Colors.black.withOpacity(0.4)
-                          : Colors.grey.shade100,
-                      shape: BoxShape.circle,
-                    ),
-                    padding: const EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.close,
-                      size: 20,
-                      color: gift.imageUrl.isNotEmpty
-                          ? Colors.white
-                          : LightModeColors.dashboardTextSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       );
 
       if (adjustResult == null) {
@@ -982,14 +1856,18 @@ class _ProductScreenState extends State<ProductScreen> {
     }
 
     double finalTotalPrice = 0.0;
+    double finalTotalPoints = 0.0;
     productsToSell.forEach((p, qty) {
       finalTotalPrice += p.price * qty;
+      finalTotalPoints +=
+          _getEffectivePoints(p, challenges, pharmacyCategory, userRole: user.role) * qty;
     });
 
     // 2. Show the "Confirmer la vente" dialog first (in all scenarios)
     final confirmSale = await _showSaleConfirmationDialog(
       productsToSell: productsToSell,
       totalPrice: finalTotalPrice,
+      totalPoints: finalTotalPoints,
     );
     if (!confirmSale) {
       return; // Exit without saving if cancelled or back pressed
@@ -997,7 +1875,7 @@ class _ProductScreenState extends State<ProductScreen> {
 
     // 3. Evaluate valid/eligible gifts based on productsToSell
     List<Map<String, dynamic>> validGiftsData = [];
-    
+
     for (var assignment in assignments) {
       final gift = await giftService.getGiftById(assignment.giftId);
       if (gift != null && gift.status == 'active') {
@@ -1009,13 +1887,18 @@ class _ProductScreenState extends State<ProductScreen> {
           final qty = entry.value;
 
           bool matchesProduct = true;
-          if (gift.listProducts.isNotEmpty && !gift.listProducts.contains(p.id)) {
+          if (gift.listProducts.isNotEmpty &&
+              !gift.listProducts.contains(p.id)) {
             matchesProduct = false;
           }
-          if (matchesProduct && gift.productCategory.isNotEmpty && !gift.productCategory.contains(p.category)) {
+          if (matchesProduct &&
+              gift.productCategory.isNotEmpty &&
+              !gift.productCategory.contains(p.category)) {
             matchesProduct = false;
           }
-          if (matchesProduct && gift.productMarque.isNotEmpty && !gift.productMarque.contains(p.marque)) {
+          if (matchesProduct &&
+              gift.productMarque.isNotEmpty &&
+              !gift.productMarque.contains(p.marque)) {
             matchesProduct = false;
           }
 
@@ -1026,25 +1909,22 @@ class _ProductScreenState extends State<ProductScreen> {
         }
 
         if (giftMatchingQty > 0) {
-           bool isThresholdMet = true;
-           if (gift.thresholdType == 'products') {
-             final minQty = gift.minProductsCount ?? 1;
-             if (giftMatchingQty < minQty) {
-               isThresholdMet = false;
-             }
-           } else if (gift.thresholdType == 'amount') {
-             final minAmt = gift.minPurchaseAmount ?? 0.0;
-             if (giftMatchingAmt < minAmt) {
-               isThresholdMet = false;
-             }
-           }
+          bool isThresholdMet = true;
+          if (gift.thresholdType == 'products') {
+            final minQty = gift.minProductsCount ?? 1;
+            if (giftMatchingQty < minQty) {
+              isThresholdMet = false;
+            }
+          } else if (gift.thresholdType == 'amount') {
+            final minAmt = gift.minPurchaseAmount ?? 0.0;
+            if (giftMatchingAmt < minAmt) {
+              isThresholdMet = false;
+            }
+          }
 
-           if (isThresholdMet) {
-             validGiftsData.add({
-               'assignment': assignment,
-               'gift': gift,
-             });
-           }
+          if (isThresholdMet) {
+            validGiftsData.add({'assignment': assignment, 'gift': gift});
+          }
         }
       }
     }
@@ -1052,14 +1932,14 @@ class _ProductScreenState extends State<ProductScreen> {
     // 4. Save the sale
     final savedSaleIds = await performSave(productsToSell);
     final savedSaleId = savedSaleIds.first;
-    
+
     // 5. If gifts are available, show the "confirm gift" popup
     if (validGiftsData.isNotEmpty) {
       Map<String, Map<String, dynamic>> groupedGifts = {};
       for (var data in validGiftsData) {
         final assignment = data['assignment'] as GiftAssignment;
         final key = "${assignment.giftId}_${assignment.assigneeId}";
-        
+
         if (!groupedGifts.containsKey(key)) {
           groupedGifts[key] = {
             'gift': data['gift'],
@@ -1067,23 +1947,27 @@ class _ProductScreenState extends State<ProductScreen> {
             'totalStock': assignment.assignedStock,
           };
         } else {
-           groupedGifts[key]!['totalStock'] += assignment.assignedStock;
-           final existingAssignment = groupedGifts[key]!['assignment'] as GiftAssignment;
-           final existingCreatedAt = existingAssignment.createdAt ?? DateTime.now();
-           final currentCreatedAt = assignment.createdAt ?? DateTime.now();
-           if (currentCreatedAt.isBefore(existingCreatedAt)) {
-              groupedGifts[key]!['assignment'] = assignment;
-           }
+          groupedGifts[key]!['totalStock'] += assignment.assignedStock;
+          final existingAssignment =
+              groupedGifts[key]!['assignment'] as GiftAssignment;
+          final existingCreatedAt =
+              existingAssignment.createdAt ?? DateTime.now();
+          final currentCreatedAt = assignment.createdAt ?? DateTime.now();
+          if (currentCreatedAt.isBefore(existingCreatedAt)) {
+            groupedGifts[key]!['assignment'] = assignment;
+          }
         }
       }
-      
+
       final availableGifts = groupedGifts.values.toList();
-      
+
       final giveGift = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (context) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           backgroundColor: LightModeColors.lightSurface,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -1127,13 +2011,19 @@ class _ProductScreenState extends State<ProductScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context, false),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: LightModeColors.lightOutline),
+                          side: const BorderSide(
+                            color: LightModeColors.lightOutline,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                         child: Text(
                           l10n.noThanks,
-                          style: const TextStyle(color: LightModeColors.dashboardTextSecondary),
+                          style: const TextStyle(
+                            color: LightModeColors.dashboardTextSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -1144,12 +2034,17 @@ class _ProductScreenState extends State<ProductScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: LightModeColors.lightPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
                         child: Text(
                           l10n.yesOffer,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -1162,17 +2057,19 @@ class _ProductScreenState extends State<ProductScreen> {
       );
 
       if (giveGift == true) {
-         await _showGiftSelectionDialog(
-           availableGifts,
-           savedSaleIds,
-           user.role == 'Dermo-conseiller' ? activePharmacyId! : user.pharmacyId,
-           user.uid,
-           user.role == 'Dermo-conseiller' ? activePointOfSale : user.pointOfSale,
-           giftService,
-           finalQuantity,
-           finalTotalPrice,
-           visitId: activeVisitId,
-         );
+        await _showGiftSelectionDialog(
+          availableGifts,
+          savedSaleIds,
+          user.role == 'Dermo-conseiller' ? activePharmacyId! : user.pharmacyId,
+          user.uid,
+          user.role == 'Dermo-conseiller'
+              ? activePointOfSale
+              : user.pointOfSale,
+          giftService,
+          finalQuantity,
+          finalTotalPrice,
+          visitId: activeVisitId,
+        );
       }
     }
 
@@ -1191,15 +2088,16 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<void> _showGiftSelectionDialog(
-      List<Map<String, dynamic>> availableGifts,
-      List<String> saleIds,
-      String pharmacyId,
-      String userId,
-      String? pointOfSale,
-      GiftService giftService,
-      int quantity,
-      double totalPrice,
-      {String? visitId}) async {
+    List<Map<String, dynamic>> availableGifts,
+    List<String> saleIds,
+    String pharmacyId,
+    String userId,
+    String? pointOfSale,
+    GiftService giftService,
+    int quantity,
+    double totalPrice, {
+    String? visitId,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
     final formKey = GlobalKey<FormState>();
     final quantityController = TextEditingController();
@@ -1217,12 +2115,16 @@ class _ProductScreenState extends State<ProductScreen> {
       if (gift.thresholdType == 'products') {
         final minProducts = gift.minProductsCount ?? 1;
         if (minProducts > 0) {
-          calculated = (gift.isCumulative ?? false) ? (quantity ~/ minProducts) : 1;
+          calculated = (gift.isCumulative ?? false)
+              ? (quantity ~/ minProducts)
+              : 1;
         }
       } else if (gift.thresholdType == 'amount') {
         final minAmt = gift.minPurchaseAmount ?? 0.0;
         if (minAmt > 0) {
-          calculated = (gift.isCumulative ?? false) ? (totalPrice ~/ minAmt) : 1;
+          calculated = (gift.isCumulative ?? false)
+              ? (totalPrice ~/ minAmt)
+              : 1;
         }
       }
       if (calculated > totalStock) calculated = totalStock;
@@ -1242,7 +2144,9 @@ class _ProductScreenState extends State<ProductScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               backgroundColor: LightModeColors.lightSurface,
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -1258,53 +2162,86 @@ class _ProductScreenState extends State<ProductScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: LightModeColors.lightPrimary.withOpacity(0.1),
+                                color: LightModeColors.lightPrimary.withOpacity(
+                                  0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.card_giftcard, color: LightModeColors.lightPrimary, size: 24),
+                              child: const Icon(
+                                Icons.card_giftcard,
+                                color: LightModeColors.lightPrimary,
+                                size: 24,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Text(
                               l10n.offerGift,
-                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextPrimary),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: LightModeColors.dashboardTextPrimary,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
-                        
-                        Text(l10n.selectGift, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: LightModeColors.dashboardTextSecondary)),
+
+                        Text(
+                          l10n.selectGift,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: LightModeColors.dashboardTextSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<Map<String, dynamic>>(
                           value: selectedGiftData,
                           isExpanded: true,
                           decoration: InputDecoration(
                             fillColor: LightModeColors.lightBackground,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
                           ),
                           items: availableGifts.map((data) {
                             final gift = data['gift'] as Gift;
                             final totalStock = data['totalStock'] as int;
-                            final assignment = data['assignment'] as GiftAssignment;
-                            final String sourceType = assignment.assigneeType == 'Dermo-conseiller'
+                            final assignment =
+                                data['assignment'] as GiftAssignment;
+                            final String sourceType =
+                                assignment.assigneeType == 'Dermo-conseiller'
                                 ? "Stock personnel"
                                 : "Stock pharmacie";
                             return DropdownMenuItem(
                               value: data,
-                              child: Text('${gift.title} (Stock: $totalStock - $sourceType)', style: const TextStyle(fontSize: 14)),
+                              child: Text(
+                                '${gift.title} (Stock: $totalStock - $sourceType)',
+                                style: const TextStyle(fontSize: 14),
+                              ),
                             );
                           }).toList(),
                           onChanged: (value) {
                             setState(() {
                               selectedGiftData = value;
                               if (value != null) {
-                                quantityController.text = '${calculateDefaultQty(value)}';
+                                quantityController.text =
+                                    '${calculateDefaultQty(value)}';
                               }
                             });
                           },
                         ),
                         const SizedBox(height: 16),
-                        
-                        Text(l10n.quantity, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: LightModeColors.dashboardTextSecondary)),
+
+                        Text(
+                          l10n.quantity,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: LightModeColors.dashboardTextSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: quantityController,
@@ -1315,45 +2252,87 @@ class _ProductScreenState extends State<ProductScreen> {
                             hintText: l10n.giftQuantityHint,
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) return l10n.fieldRequired;
+                            if (value == null || value.isEmpty)
+                              return l10n.fieldRequired;
                             final intVal = int.tryParse(value);
-                            if (intVal == null || intVal <= 0) return l10n.fieldInvalid;
+                            if (intVal == null || intVal <= 0)
+                              return l10n.fieldInvalid;
                             if (selectedGiftData != null) {
-                               final totalStock = selectedGiftData!['totalStock'] as int;
-                               if (intVal > totalStock) return l10n.insufficientStock;
+                              final totalStock =
+                                  selectedGiftData!['totalStock'] as int;
+                              if (intVal > totalStock)
+                                return l10n.insufficientStock;
                             }
                             return null;
                           },
                           onSaved: (value) => quantityCount = int.parse(value!),
                         ),
                         const SizedBox(height: 16),
-                        
-                        Text(l10n.clientInfoOptional, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: LightModeColors.dashboardTextSecondary)),
+
+                        Text(
+                          l10n.clientInfoOptional,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: LightModeColors.dashboardTextSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          decoration: InputDecoration(fillColor: LightModeColors.lightBackground, hintText: l10n.lastName, prefixIcon: const Icon(Icons.person_outline, size: 20)),
+                          decoration: InputDecoration(
+                            fillColor: LightModeColors.lightBackground,
+                            hintText: l10n.lastName,
+                            prefixIcon: const Icon(
+                              Icons.person_outline,
+                              size: 20,
+                            ),
+                          ),
                           onSaved: (value) => nomClient = value,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
-                          decoration: InputDecoration(fillColor: LightModeColors.lightBackground, hintText: l10n.firstName, prefixIcon: const Icon(Icons.person_outline, size: 20)),
+                          decoration: InputDecoration(
+                            fillColor: LightModeColors.lightBackground,
+                            hintText: l10n.firstName,
+                            prefixIcon: const Icon(
+                              Icons.person_outline,
+                              size: 20,
+                            ),
+                          ),
                           onSaved: (value) => prenomClient = value,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           keyboardType: TextInputType.phone,
-                          decoration: InputDecoration(fillColor: LightModeColors.lightBackground, hintText: l10n.phone, prefixIcon: const Icon(Icons.phone_outlined, size: 20)),
+                          decoration: InputDecoration(
+                            fillColor: LightModeColors.lightBackground,
+                            hintText: l10n.phone,
+                            prefixIcon: const Icon(
+                              Icons.phone_outlined,
+                              size: 20,
+                            ),
+                          ),
                           onSaved: (value) => phoneNumber = value,
                         ),
                         const SizedBox(height: 32),
-                        
+
                         Row(
                           children: [
                             Expanded(
                               child: TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                                child: Text(l10n.cancel, style: const TextStyle(color: LightModeColors.dashboardTextSecondary)),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                ),
+                                child: Text(
+                                  l10n.cancel,
+                                  style: const TextStyle(
+                                    color:
+                                        LightModeColors.dashboardTextSecondary,
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -1363,34 +2342,47 @@ class _ProductScreenState extends State<ProductScreen> {
                                   if (formKey.currentState!.validate()) {
                                     formKey.currentState!.save();
                                     if (selectedGiftData != null) {
-                                       final gift = selectedGiftData!['gift'] as Gift;
-                                       final assignment = selectedGiftData!['assignment'] as GiftAssignment;
-                                       await _handleGiftSubmission(
-                                         saleIds: saleIds,
-                                         giftId: gift.id,
-                                         pharmacyId: pharmacyId,
-                                         quantity: quantityCount,
-                                         clientNom: nomClient,
-                                         clientPrenom: prenomClient,
-                                         clientPhone: phoneNumber,
-                                         userId: userId,
-                                         pointOfSale: pointOfSale,
-                                         giftService: giftService,
-                                         l10n: l10n,
-                                         context: context,
-                                         assignmentId: assignment.id,
-                                         visitId: visitId,
-                                       );
+                                      final gift =
+                                          selectedGiftData!['gift'] as Gift;
+                                      final assignment =
+                                          selectedGiftData!['assignment']
+                                              as GiftAssignment;
+                                      await _handleGiftSubmission(
+                                        saleIds: saleIds,
+                                        giftId: gift.id,
+                                        pharmacyId: pharmacyId,
+                                        quantity: quantityCount,
+                                        clientNom: nomClient,
+                                        clientPrenom: prenomClient,
+                                        clientPhone: phoneNumber,
+                                        userId: userId,
+                                        pointOfSale: pointOfSale,
+                                        giftService: giftService,
+                                        l10n: l10n,
+                                        context: context,
+                                        assignmentId: assignment.id,
+                                        visitId: visitId,
+                                      );
                                     }
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: LightModeColors.lightPrimary,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                   elevation: 0,
                                 ),
-                                child: Text(l10n.confirm, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                child: Text(
+                                  l10n.confirm,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1408,21 +2400,22 @@ class _ProductScreenState extends State<ProductScreen> {
     quantityController.dispose();
   }
 
-  Future<void> _handleGiftSubmission(
-      {required List<String> saleIds,
-      required String giftId,
-      required String pharmacyId,
-      required int quantity,
-      required String? clientNom,
-      required String? clientPrenom,
-      required String? clientPhone,
-      required String userId,
-      required String? pointOfSale,
-      required GiftService giftService,
-      required AppLocalizations l10n,
-      required BuildContext context,
-      String? assignmentId,
-      String? visitId}) async {
+  Future<void> _handleGiftSubmission({
+    required List<String> saleIds,
+    required String giftId,
+    required String pharmacyId,
+    required int quantity,
+    required String? clientNom,
+    required String? clientPrenom,
+    required String? clientPhone,
+    required String userId,
+    required String? pointOfSale,
+    required GiftService giftService,
+    required AppLocalizations l10n,
+    required BuildContext context,
+    String? assignmentId,
+    String? visitId,
+  }) async {
     try {
       await giftService.saveGiftOperation(
         saleId: saleIds.first,
@@ -1441,12 +2434,20 @@ class _ProductScreenState extends State<ProductScreen> {
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.giftRecordedSuccess), backgroundColor: Colors.green));
+          SnackBar(
+            content: Text(l10n.giftRecordedSuccess),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.errorOccurred(e.toString())), backgroundColor: Colors.red));
+          SnackBar(
+            content: Text(l10n.errorOccurred(e.toString())),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -1526,11 +2527,16 @@ class _ProductScreenState extends State<ProductScreen> {
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pushReplacementNamed('/dashboard_home');
+                          Navigator.of(
+                            context,
+                          ).pushReplacementNamed('/dashboard_home');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: LightModeColors.lightPrimary,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1579,6 +2585,7 @@ class _ProductScreenState extends State<ProductScreen> {
                         product,
                         pharmacy.clientCategory,
                         data.challenges,
+                        userRole: user.role,
                       ),
                       const SizedBox(height: 24),
 
@@ -1758,9 +2765,15 @@ class _ProductScreenState extends State<ProductScreen> {
     AppLocalizations l10n,
     Product product,
     String? pharmacyCategory,
-    List<Challenge> challenges,
-  ) {
-    final activeChallenge = _getMatchingChallenge(product, challenges, pharmacyCategory);
+    List<Challenge> challenges, {
+    String? userRole,
+  }) {
+    final activeChallenge = _getMatchingChallenge(
+      product,
+      challenges,
+      pharmacyCategory,
+      userRole: userRole,
+    );
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1896,11 +2909,18 @@ class _ProductScreenState extends State<ProductScreen> {
               ValueListenableBuilder<int>(
                 valueListenable: _quantityNotifier,
                 builder: (context, quantity, child) {
-                  final currentChallenge = _getMatchingChallenge(product, challenges, pharmacyCategory);
-                  final standardPoints = product.getPoints(pharmacyCategory);
-                  final pointsPerUnit = currentChallenge != null ? currentChallenge.salePoints : standardPoints;
+                  final currentChallenge = _getMatchingChallenge(
+                    product,
+                    challenges,
+                    pharmacyCategory,
+                    userRole: userRole,
+                  );
+                  final standardPoints = product.getPoints(pharmacyCategory, userRole: userRole);
+                  final pointsPerUnit = currentChallenge != null
+                      ? currentChallenge.salePoints
+                      : standardPoints;
                   final pointsEarned = pointsPerUnit * quantity;
-                  
+
                   // Format to remove trailing .0 for whole numbers
                   final pointsText = pointsEarned % 1 == 0
                       ? pointsEarned.toInt().toString()
@@ -1939,11 +2959,17 @@ class _ProductScreenState extends State<ProductScreen> {
               decoration: BoxDecoration(
                 color: LightModeColors.success.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: LightModeColors.success.withOpacity(0.2)),
+                border: Border.all(
+                  color: LightModeColors.success.withOpacity(0.2),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.celebration_outlined, color: LightModeColors.success, size: 16),
+                  const Icon(
+                    Icons.celebration_outlined,
+                    color: LightModeColors.success,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -2310,11 +3336,22 @@ class _ProductScreenState extends State<ProductScreen> {
             // Button row at the bottom, centered
             ElevatedButton(
               onPressed: widget.isSelectionMode
-                  ? () => Navigator.pop(context, {product: _quantityNotifier.value})
-                  : () => _submitSale(product, user, pharmacyCategory, challenges),
+                  ? () => Navigator.pop(context, {
+                      product: _quantityNotifier.value,
+                    })
+                  : () => _submitSale(
+                      product,
+                      user,
+                      pharmacyCategory,
+                      challenges,
+                    ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.isSelectionMode ? LightModeColors.lightPrimary : LightModeColors.lightError,
-                foregroundColor: widget.isSelectionMode ? Colors.white : LightModeColors.lightOnError,
+                backgroundColor: widget.isSelectionMode
+                    ? LightModeColors.lightPrimary
+                    : LightModeColors.lightError,
+                foregroundColor: widget.isSelectionMode
+                    ? Colors.white
+                    : LightModeColors.lightOnError,
                 padding: const EdgeInsets.symmetric(
                   vertical: 18,
                   horizontal: 24,
@@ -2327,12 +3364,19 @@ class _ProductScreenState extends State<ProductScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(widget.isSelectionMode ? Icons.add_shopping_cart : Icons.check_circle_outline, size: 20),
+                  Icon(
+                    widget.isSelectionMode
+                        ? Icons.add_shopping_cart
+                        : Icons.check_circle_outline,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     widget.isSelectionMode
                         ? "Ajouter à la vente"
-                        : (widget.sale != null ? l10n.updateSale : l10n.confirmSale),
+                        : (widget.sale != null
+                              ? l10n.updateSale
+                              : l10n.confirmSale),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -2508,4 +3552,3 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 }
-

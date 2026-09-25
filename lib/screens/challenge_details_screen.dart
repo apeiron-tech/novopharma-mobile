@@ -9,6 +9,7 @@ import 'package:novopharma/services/pharmacy_service.dart';
 import 'package:novopharma/services/product_service.dart';
 import 'package:novopharma/services/user_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme.dart';
 import 'product_screen.dart';
 
@@ -16,8 +17,9 @@ class _ChallengeDetailsData {
   final Challenge? challenge;
   final List<Product> products;
   final String? userCategory;
+  final String? userRole;
 
-  _ChallengeDetailsData({this.challenge, this.products = const [], this.userCategory});
+  _ChallengeDetailsData({this.challenge, this.products = const [], this.userCategory, this.userRole});
 }
 
 class ChallengeDetailsScreen extends StatefulWidget {
@@ -58,10 +60,22 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
 
     String? category;
     final userModel = user as UserModel?;
-    if (userModel != null && userModel.pharmacyId.isNotEmpty) {
-      final pharmacy = await _pharmacyService.getPharmacy(userModel.pharmacyId);
-      final cat = pharmacy?.clientCategory;
-      category = (cat == null || cat.isEmpty) ? 'Pharmacie' : cat;
+    if (userModel != null) {
+      String? resolvedPharmacyId;
+      if (userModel.role == 'Dermo-conseiller') {
+        final prefs = await SharedPreferences.getInstance();
+        resolvedPharmacyId = prefs.getString('active_pharmacy_id');
+      } else {
+        resolvedPharmacyId = userModel.pharmacyId;
+      }
+
+      if (resolvedPharmacyId != null && resolvedPharmacyId.isNotEmpty) {
+        final pharmacy = await _pharmacyService.getPharmacy(resolvedPharmacyId);
+        final cat = pharmacy?.clientCategory;
+        category = (cat == null || cat.isEmpty) ? 'Pharmacie' : cat;
+      } else {
+        category = 'Pharmacie';
+      }
     } else {
       category = 'Pharmacie';
     }
@@ -70,6 +84,7 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
       challenge: challenge,
       products: products as List<Product>,
       userCategory: category,
+      userRole: userModel?.role,
     );
   }
 
@@ -129,7 +144,7 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Produits du challenge"),
                       const SizedBox(height: 16),
-                       ...data.products.map((product) => _buildProductCard(context, product, data.userCategory, challenge)),
+                       ...data.products.map((product) => _buildProductCard(context, product, data.userCategory, challenge, userRole: data.userRole)),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -309,16 +324,22 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Product product, String? category, Challenge challenge) {
+  Widget _buildProductCard(BuildContext context, Product product, String? category, Challenge challenge, {String? userRole}) {
     final now = DateTime.now();
-    double points = product.getPoints(category);
+    double points = product.getPoints(category, userRole: userRole);
     
     // Check if we should use challenge points
+    final effectiveCategory = userRole == 'Dermo-conseiller'
+        ? 'Dermo-conseiller'
+        : ((category == null || category.isEmpty) ? 'Pharmacie' : category);
+
     if (challenge.status == 'active' && 
         challenge.hasSalePoints && 
         !now.isBefore(challenge.startDate) && 
         !now.isAfter(challenge.endDate) &&
-        (challenge.clientCategory.contains(category) || (category == 'Pharmacie' && challenge.clientCategory.contains('')))) {
+        (challenge.clientCategory.contains(effectiveCategory) ||
+         (userRole == 'Dermo-conseiller' && challenge.clientCategory.contains(category ?? 'Pharmacie')) ||
+         (category == 'Pharmacie' && challenge.clientCategory.contains('')))) {
       points = challenge.salePoints;
     }
     

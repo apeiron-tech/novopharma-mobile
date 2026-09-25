@@ -530,14 +530,18 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // Gallery Section
   Widget _buildGallerySection(CustomPageModel page) {
+    final hasTitle = page.galleryTitle != null && page.galleryTitle!.trim().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          title: "Galerie d'Images",
-          icon: Icons.collections_rounded,
-        ),
-        const SizedBox(height: 10),
+        if (hasTitle) ...[
+          _buildSectionHeader(
+            title: page.galleryTitle!.trim(),
+            icon: Icons.collections_rounded,
+          ),
+          const SizedBox(height: 10),
+        ],
         Stack(
           alignment: Alignment.center,
           children: [
@@ -662,14 +666,18 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // Description Card Component
   Widget _buildDescriptionCard(CustomPageModel page) {
+    final hasTitle = page.descriptionTitle != null && page.descriptionTitle!.trim().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          title: "Présentation & Contenu",
-          icon: Icons.article_rounded,
-        ),
-        const SizedBox(height: 10),
+        if (hasTitle) ...[
+          _buildSectionHeader(
+            title: page.descriptionTitle!.trim(),
+            icon: Icons.article_rounded,
+          ),
+          const SizedBox(height: 10),
+        ],
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -729,14 +737,18 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // Video Section Component
   Widget _buildVideoSection(CustomPageModel page, Widget? youtubePlayerWidget) {
+    final hasTitle = page.videoTitle != null && page.videoTitle!.trim().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          title: "Vidéo explicative",
-          icon: Icons.ondemand_video_rounded,
-        ),
-        const SizedBox(height: 10),
+        if (hasTitle) ...[
+          _buildSectionHeader(
+            title: page.videoTitle!.trim(),
+            icon: Icons.ondemand_video_rounded,
+          ),
+          const SizedBox(height: 10),
+        ],
         Container(
           decoration: BoxDecoration(
             color: Colors.black,
@@ -900,14 +912,18 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // PDF Section Component
   Widget _buildPdfSection(CustomPageModel page) {
+    final hasTitle = page.pdfTitle != null && page.pdfTitle!.trim().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          title: "Document PDF rattaché",
-          icon: Icons.picture_as_pdf_rounded,
-        ),
-        const SizedBox(height: 10),
+        if (hasTitle) ...[
+          _buildSectionHeader(
+            title: page.pdfTitle!.trim(),
+            icon: Icons.picture_as_pdf_rounded,
+          ),
+          const SizedBox(height: 10),
+        ],
         Container(
           decoration: BoxDecoration(
             color: Colors.white,

@@ -108,6 +108,7 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
         points: 0,
         pointsPharmacie: 0,
         pointsParaPharmacie: 0,
+        pointsDermoConseiller: 0,
         pointsUnified: true,
         sku: '',
         stock: 0,
@@ -177,8 +178,9 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    int totalTracked = _draftProducts.values.fold(0, (sum, item) => sum + item.totalQuantity);
-    int distinctItems = _draftProducts.keys.length;
+    final int totalTracked = _draftProducts.values.fold<int>(0, (sum, item) => sum + (item.totalQuantity ?? 0));
+    final int distinctItems = _draftProducts.keys.length;
+    final int priceOnlyCount = _draftProducts.values.where((item) => item.isPriceOnly || item.totalQuantity == null).length;
 
     return Scaffold(
       backgroundColor: LightModeColors.novoPharmaLightGray,
@@ -232,7 +234,9 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: LightModeColors.novoPharmaBlue),
                             ),
                             Text(
-                              "Total: $totalTracked Q",
+                              priceOnlyCount > 0 && totalTracked == 0
+                                  ? "$priceOnlyCount prix"
+                                  : (priceOnlyCount > 0 ? "$totalTracked Q (${priceOnlyCount}P)" : "Total: $totalTracked Q"),
                               style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.w600),
                             ),
                           ],

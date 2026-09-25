@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../models/blog_post.dart';
 import '../theme.dart';
 import '../widgets/video_player_dialog.dart';
@@ -17,8 +18,59 @@ class ActualiteDetailsScreen extends StatefulWidget {
 }
 
 class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
+  YoutubePlayerController? _youtubeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _initYoutubeVideo();
+  }
+
+  void _initYoutubeVideo() {
+    final youtubeUrl = widget.actualite.youtubeVideoUrl;
+    if (youtubeUrl != null && youtubeUrl.isNotEmpty) {
+      final videoId = YoutubePlayer.convertUrlToId(youtubeUrl);
+      if (videoId != null) {
+        _youtubeController = YoutubePlayerController(
+          initialVideoId: videoId,
+          flags: const YoutubePlayerFlags(
+            autoPlay: false,
+            mute: false,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _youtubeController?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_youtubeController != null) {
+      return YoutubePlayerBuilder(
+        player: YoutubePlayer(
+          controller: _youtubeController!,
+          showVideoProgressIndicator: true,
+          progressIndicatorColor: LightModeColors.novoPharmaBlue,
+          progressColors: const ProgressBarColors(
+            playedColor: LightModeColors.novoPharmaBlue,
+            handleColor: LightModeColors.novoPharmaBlue,
+          ),
+        ),
+        builder: (context, player) {
+          return _buildScaffold(context, player);
+        },
+      );
+    }
+
+    return _buildScaffold(context, null);
+  }
+
+  Widget _buildScaffold(BuildContext context, Widget? youtubePlayerWidget) {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(color: LightModeColors.lightSurfaceVariant),
@@ -26,7 +78,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
           child: Column(
             children: [
               _buildHeader(context),
-              Expanded(child: _buildContent(context)),
+              Expanded(child: _buildContent(context, youtubePlayerWidget)),
             ],
           ),
         ),
@@ -109,9 +161,9 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(BuildContext context, Widget? youtubePlayerWidget) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: LightModeColors.lightSurface,
         borderRadius: BorderRadius.circular(20),
@@ -149,33 +201,24 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                       end: Alignment.bottomCenter,
                     ),
                   ),
-                  child: GestureDetector(
-                    onTap: () => _handleMediaTap(
-                      widget.actualite.coverImageUrl!,
-                      widget.actualite.title,
-                      false,
-                      false,
-                      true,
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.actualite.coverImageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: LightModeColors.lightSurfaceVariant,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: LightModeColors.lightPrimary,
-                            strokeWidth: 2,
-                          ),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.actualite.coverImageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: LightModeColors.lightSurfaceVariant,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: LightModeColors.lightPrimary,
+                          strokeWidth: 2,
                         ),
                       ),
-                      errorWidget: (context, url, error) => Container(
-                        color: LightModeColors.lightSurfaceVariant,
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: LightModeColors.dashboardTextTertiary,
-                          size: 40,
-                        ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: LightModeColors.lightSurfaceVariant,
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: LightModeColors.dashboardTextTertiary,
+                        size: 40,
                       ),
                     ),
                   ),
@@ -324,13 +367,21 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                     const SizedBox(height: 24),
 
                     // Video Section
-                    if (widget.actualite.hasVideo &&
-                        widget.actualite.youtubeVideoUrl != null &&
-                        widget.actualite.youtubeVideoUrl!.isNotEmpty)
-                      _buildVideoSection(),
+                    if (_youtubeController != null &&
+                        youtubePlayerWidget != null) ...[
+                      _buildYoutubePlayerSection(youtubePlayerWidget),
+                      const SizedBox(height: 24),
+                    ] else if (widget.actualite.hasVideo ||
+                        (widget.actualite.youtubeVideoUrl != null &&
+                            widget.actualite.youtubeVideoUrl!.isNotEmpty) ||
+                        (widget.actualite.videoUrl != null &&
+                            widget.actualite.videoUrl!.isNotEmpty)) ...[
+                      _buildOpenVideoButtonSection(),
+                      const SizedBox(height: 24),
+                    ],
 
-                    // Media Section
-                    if (widget.actualite.media.isNotEmpty)
+                    // Media Section (Only PDF files)
+                    if (widget.actualite.pdfFiles.isNotEmpty) ...[
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -343,14 +394,13 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          ...widget.actualite.media.map((mediaFile) {
+                          ...widget.actualite.pdfFiles.map((mediaFile) {
                             return _buildMediaItem(mediaFile);
-                          }).toList(),
+                          }),
                         ],
                       ),
-
-                    if (widget.actualite.media.isNotEmpty)
                       const SizedBox(height: 24),
+                    ],
 
                     // Tags
                     if (widget.actualite.tags.isNotEmpty)
@@ -786,109 +836,131 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  Widget _buildVideoSection() {
+  Widget _buildYoutubePlayerSection(Widget youtubePlayerWidget) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Vidéo associée',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: LightModeColors.dashboardTextPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: LightModeColors.lightSurfaceVariant.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: LightModeColors.lightOutline),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => _showVideo(),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: LightModeColors.lightError.withValues(
-                          alpha: 0.1,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.play_circle_filled,
-                        color: LightModeColors.lightError,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Regarder la vidéo',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: LightModeColors.dashboardTextPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: LightModeColors.lightError.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'YOUTUBE',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: LightModeColors.lightError,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.play_arrow,
-                      color: LightModeColors.lightError,
-                      size: 20,
-                    ),
-                  ],
-                ),
+        Row(
+          children: [
+            const Icon(
+              Icons.ondemand_video_rounded,
+              size: 20,
+              color: LightModeColors.novoPharmaBlue,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Vidéo associée',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: LightModeColors.dashboardTextPrimary,
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: youtubePlayerWidget,
           ),
         ),
-        const SizedBox(height: 24),
       ],
     );
   }
 
-  void _showVideo() async {
-    if (widget.actualite.youtubeVideoUrl != null &&
-        widget.actualite.youtubeVideoUrl!.isNotEmpty) {
+  Widget _buildOpenVideoButtonSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.ondemand_video_rounded,
+              size: 20,
+              color: LightModeColors.novoPharmaBlue,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Vidéo associée',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: LightModeColors.dashboardTextPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _openVideo,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: LightModeColors.novoPharmaBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+            icon: const Icon(
+              Icons.play_circle_filled_rounded,
+              size: 22,
+              color: Colors.white,
+            ),
+            label: const Text(
+              "Ouvrir la vidéo",
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openVideo() async {
+    final videoUrl =
+        widget.actualite.videoUrl ?? widget.actualite.youtubeVideoUrl;
+    if (videoUrl == null || videoUrl.isEmpty) {
+      _showSnackBar('URL de la vidéo non disponible');
+      return;
+    }
+
+    final isDirectVideo = videoUrl.toLowerCase().endsWith('.mp4') ||
+        videoUrl.toLowerCase().endsWith('.mov') ||
+        videoUrl.toLowerCase().endsWith('.mkv') ||
+        videoUrl.toLowerCase().endsWith('.webm');
+
+    if (isDirectVideo) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => VideoPlayerDialog(
+          videoUrl: videoUrl,
+          videoTitle: widget.actualite.title,
+          onClose: () => Navigator.of(dialogContext).pop(),
+        ),
+      );
+    } else {
       try {
-        final Uri url = Uri.parse(widget.actualite.youtubeVideoUrl!);
+        final Uri url = Uri.parse(videoUrl);
         final launched = await launchUrl(
           url,
           mode: LaunchMode.externalApplication,

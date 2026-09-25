@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product {
   final String id;
@@ -10,6 +10,7 @@ class Product {
   final double points;
   final double pointsPharmacie;
   final double pointsParaPharmacie;
+  final double pointsDermoConseiller;
   final bool pointsUnified;
   final String sku;
   final int stock;
@@ -32,6 +33,7 @@ class Product {
     required this.points,
     required this.pointsPharmacie,
     required this.pointsParaPharmacie,
+    this.pointsDermoConseiller = 0.0,
     required this.pointsUnified,
     required this.sku,
     required this.stock,
@@ -80,6 +82,7 @@ class Product {
       points: parseDouble(data['points']),
       pointsPharmacie: parseDouble(data['pointsPharmacie']),
       pointsParaPharmacie: parseDouble(data['pointsParaPharmacie']),
+      pointsDermoConseiller: parseDouble(data['pointsDermoConseiller']),
       pointsUnified: data['pointsUnified'] ?? true, // Default to true
       sku: data['sku'] ?? '',
       stock: parseInt(data['stock']),
@@ -94,9 +97,13 @@ class Product {
     );
   }
 
-  double getPoints(String? pharmacyCategory) {
+  double getPoints(String? pharmacyCategory, {String? userRole}) {
     if (pointsUnified) {
       return points;
+    }
+
+    if (userRole == 'Dermo-conseiller') {
+      return pointsDermoConseiller > 0 ? pointsDermoConseiller : (pharmacyCategory == 'Para-Pharmacie' ? pointsParaPharmacie : pointsPharmacie);
     }
 
     if (pharmacyCategory == 'Para-Pharmacie') {

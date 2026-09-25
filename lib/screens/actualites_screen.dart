@@ -6,6 +6,7 @@ import '../controllers/actualite_provider.dart';
 import '../models/blog_post.dart';
 import '../theme.dart';
 import 'actualite_details_screen.dart';
+import 'custom_page_screen.dart';
 import '../widgets/bottom_navigation_bar.dart';
 
 class ActualitesScreen extends StatefulWidget {
@@ -329,13 +330,23 @@ class _ActualitesScreenState extends State<ActualitesScreen>
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    ActualiteDetailsScreen(actualite: actualite),
-              ),
-            );
+            if (actualite.isCustomPage) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      CustomPageScreen(customPageId: actualite.id),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ActualiteDetailsScreen(actualite: actualite),
+                ),
+              );
+            }
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +360,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                     topRight: Radius.circular(20),
                   ),
                   child: Container(
-                    height: 200,
+                    height: 250,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

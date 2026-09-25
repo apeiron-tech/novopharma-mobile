@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CustomPageProductItem {
   final String id;
@@ -9,6 +9,7 @@ class CustomPageProductItem {
   final double points;
   final double pointsPharmacie;
   final double pointsParaPharmacie;
+  final double pointsDermoConseiller;
   final String imageUrl;
   final String sku;
 
@@ -21,6 +22,7 @@ class CustomPageProductItem {
     this.points = 0.0,
     this.pointsPharmacie = 0.0,
     this.pointsParaPharmacie = 0.0,
+    this.pointsDermoConseiller = 0.0,
     this.imageUrl = '',
     this.sku = '',
   });
@@ -43,12 +45,16 @@ class CustomPageProductItem {
       points: parseDouble(data['points']),
       pointsPharmacie: parseDouble(data['pointsPharmacie']),
       pointsParaPharmacie: parseDouble(data['pointsParaPharmacie']),
+      pointsDermoConseiller: parseDouble(data['pointsDermoConseiller']),
       imageUrl: (data['imageUrl'] ?? '').toString().trim(),
       sku: (data['sku'] ?? '').toString(),
     );
   }
 
-  double getDisplayPoints(String? pharmacyCategory) {
+  double getDisplayPoints(String? pharmacyCategory, {String? userRole}) {
+    if (userRole == 'Dermo-conseiller' && pointsDermoConseiller > 0) {
+      return pointsDermoConseiller;
+    }
     if (pharmacyCategory == 'Para-Pharmacie' && pointsParaPharmacie > 0) {
       return pointsParaPharmacie;
     }
@@ -75,6 +81,12 @@ class CustomPageModel {
   final String? attachmentUrl;
   final List<CustomPageProductItem> products;
   final List<String> productIds;
+  final bool shareInActualites;
+  final String? actualiteCategory;
+  final String? descriptionTitle;
+  final String? galleryTitle;
+  final String? videoTitle;
+  final String? pdfTitle;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -94,6 +106,12 @@ class CustomPageModel {
     this.attachmentUrl,
     this.products = const [],
     this.productIds = const [],
+    this.shareInActualites = false,
+    this.actualiteCategory,
+    this.descriptionTitle,
+    this.galleryTitle,
+    this.videoTitle,
+    this.pdfTitle,
     this.createdAt,
     this.updatedAt,
   });
@@ -151,6 +169,12 @@ class CustomPageModel {
       attachmentUrl: data['attachmentUrl'] as String?,
       products: parsedProducts,
       productIds: List<String>.from(data['productIds'] ?? []),
+      shareInActualites: (data['shareInActualites'] as bool?) ?? false,
+      actualiteCategory: data['actualiteCategory'] as String?,
+      descriptionTitle: data['descriptionTitle'] as String?,
+      galleryTitle: data['galleryTitle'] as String?,
+      videoTitle: data['videoTitle'] as String?,
+      pdfTitle: data['pdfTitle'] as String?,
       createdAt: parseTimestamp(data['createdAt']),
       updatedAt: parseTimestamp(data['updatedAt']),
     );
