@@ -84,9 +84,9 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
       // Initialize text controllers
       for (var product in _brandProducts) {
         final hasDraft = _draftProducts.containsKey(product.id);
-        final initialQty = _draftProducts[product.id]?.totalQuantity ?? 0;
+        final initialQty = _draftProducts[product.id]?.totalQuantity;
         _controllers[product.id] = TextEditingController(
-          text: hasDraft ? initialQty.toString() : '',
+          text: hasDraft && initialQty != null ? initialQty.toString() : '',
         );
       }
     } catch (e) {
@@ -131,7 +131,7 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
           setState(() {
             if (updatedItem != null) {
               _draftProducts[product.id] = updatedItem;
-              _controllers[product.id]?.text = updatedItem.totalQuantity.toString();
+              _controllers[product.id]?.text = updatedItem.totalQuantity?.toString() ?? '';
             } else {
               _draftProducts.remove(product.id);
               _controllers[product.id]?.text = '';
@@ -320,8 +320,10 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
                                                   ),
                                                   if (hasQty) ...[
                                                     const SizedBox(width: 6),
-                                                    const Icon(
-                                                      Icons.check_circle_rounded,
+                                                    Icon(
+                                                      (draftItem.isPriceOnly || draftItem.totalQuantity == null)
+                                                          ? Icons.price_check_rounded
+                                                          : Icons.check_circle_rounded,
                                                       color: LightModeColors.novoPharmaBlue,
                                                       size: 18,
                                                     ),
@@ -336,83 +338,152 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
                                       ],
                                     ),
                                   const Divider(height: 24),
-                                  Row(
-                                    children: [
-                                      // Expiration details trigger
-                                      OutlinedButton.icon(
-                                        onPressed: () => _openExpirationDialog(product),
-                                        icon: Icon(
-                                          hasExpirations ? Icons.check_circle : Icons.calendar_today_rounded,
-                                          size: 16,
-                                          color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                        ),
-                                        label: Text(
-                                          hasExpirations
-                                              ? "${draftItem!.expirations.length} Lot(s) d'exp."
-                                              : "Lots d'exp.",
-                                          style: TextStyle(
-                                            color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                          side: BorderSide(
-                                            color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                          ),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      
-                                      // Quantity display badge (tapping opens dialog)
-                                      const Text("Qté: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () => _openExpirationDialog(product),
-                                        child: Container(
-                                          width: 80,
-                                          height: 40,
-                                          alignment: Alignment.center,
+                                  if (draftItem != null && (draftItem.isPriceOnly || draftItem.totalQuantity == null)) ...[
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                           decoration: BoxDecoration(
-                                            color: LightModeColors.novoPharmaLightGray,
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: LightModeColors.lightOutlineVariant),
+                                            color: draftItem.respectsPrice 
+                                                ? LightModeColors.success.withOpacity(0.1) 
+                                                : LightModeColors.novoPharmaLightBlue,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: draftItem.respectsPrice 
+                                                  ? LightModeColors.success.withOpacity(0.3) 
+                                                  : LightModeColors.novoPharmaBlue.withOpacity(0.3),
+                                            ),
                                           ),
-                                          child: Text(
-                                            _controllers[product.id]?.text.isNotEmpty == true
-                                                ? _controllers[product.id]!.text
-                                                : "0",
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: LightModeColors.novoPharmaBlue,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                draftItem.respectsPrice ? Icons.check_circle_outline : Icons.sell_outlined, 
+                                                size: 14, 
+                                                color: draftItem.respectsPrice ? LightModeColors.success : LightModeColors.novoPharmaBlue,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                draftItem.respectsPrice 
+                                                    ? "Prix respecté (${product.price.toStringAsFixed(2)} DT)" 
+                                                    : "Prix: ${draftItem.sellingPrice?.toStringAsFixed(2) ?? '-'} DT",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: draftItem.respectsPrice ? LightModeColors.success : LightModeColors.novoPharmaBlue,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        GestureDetector(
+                                          onTap: () => _openExpirationDialog(product),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: LightModeColors.novoPharmaLightGray,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: LightModeColors.lightOutlineVariant),
+                                            ),
+                                            child: const Text(
+                                              "Prix seul",
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: LightModeColors.novoPharmaBlue,
+                                              ),
                                             ),
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                  ] else ...[
+                                    Row(
+                                      children: [
+                                        // Expiration details trigger
+                                        OutlinedButton.icon(
+                                          onPressed: () => _openExpirationDialog(product),
+                                          icon: Icon(
+                                            hasExpirations ? Icons.check_circle : Icons.calendar_today_rounded,
+                                            size: 16,
+                                            color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
+                                          ),
+                                          label: Text(
+                                            hasExpirations
+                                                ? "${draftItem!.expirations.length} Lot(s) d'exp."
+                                                : "Lots d'exp.",
+                                            style: TextStyle(
+                                              color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            side: BorderSide(
+                                              color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
+                                            ),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        
+                                        // Quantity display badge (tapping opens dialog)
+                                        const Text("Qté: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: () => _openExpirationDialog(product),
+                                          child: Container(
+                                            width: 80,
+                                            height: 40,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: LightModeColors.novoPharmaLightGray,
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(color: LightModeColors.lightOutlineVariant),
+                                            ),
+                                            child: Text(
+                                              _controllers[product.id]?.text.isNotEmpty == true
+                                                  ? _controllers[product.id]!.text
+                                                  : "0",
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: LightModeColors.novoPharmaBlue,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (hasExpirations) ...[
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        children: draftItem!.expirations.map((exp) {
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: LightModeColors.novoPharmaLightBlue,
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              "${exp.expirationDate}: ${exp.quantity}",
+                                              style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.bold),
+                                            ),
+                                          );
+                                        }).toList(),
                                       ),
                                     ],
-                                  ),
-                                  if (hasExpirations) ...[
-                                    const SizedBox(height: 10),
-                                    Wrap(
-                                      spacing: 6,
-                                      runSpacing: 4,
-                                      children: draftItem!.expirations.map((exp) {
-                                        return Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: LightModeColors.novoPharmaLightBlue,
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            "${exp.expirationDate}: ${exp.quantity}",
-                                            style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.bold),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
+                                    if (draftItem != null && !draftItem.respectsPrice && draftItem.sellingPrice != null) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Prix réel: ${draftItem.sellingPrice!.toStringAsFixed(2)} DT (Conseillé: ${product.price.toStringAsFixed(2)} DT)",
+                                        style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaGray, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
                                   ],
                                 ],
                               ),

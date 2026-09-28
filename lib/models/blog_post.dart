@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'custom_page_model.dart';
 
 // MediaFile class to represent individual media files
 class MediaFile {
@@ -211,6 +212,75 @@ class BlogPost {
 
   // Helper method to check if this is a formation
   bool get isFormation => type == 'formation';
+
+  // Helper method to check if this is a custom page
+  bool get isCustomPage => type == 'custom_page';
+
+  factory BlogPost.fromCustomPage(CustomPageModel page) {
+    // Determine best cover image: first image in gallery, or logo
+    String? coverUrl;
+    if (page.imageUrls.isNotEmpty) {
+      coverUrl = page.imageUrls.first;
+    } else if (page.logoUrl != null && page.logoUrl!.isNotEmpty) {
+      coverUrl = page.logoUrl;
+    }
+
+    // Strip HTML tags for clean excerpt
+    final plainText = page.description
+        .replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final excerpt =
+        plainText.length > 180 ? '${plainText.substring(0, 180)}...' : plainText;
+
+    List<MediaFile> mediaFiles = [];
+    if (page.videoUrl != null && page.videoUrl!.isNotEmpty) {
+      mediaFiles.add(MediaFile(
+        name: 'Vidéo',
+        size: 0,
+        type: 'video',
+        url: page.videoUrl!,
+      ));
+    }
+    if (page.attachmentUrl != null && page.attachmentUrl!.isNotEmpty) {
+      mediaFiles.add(MediaFile(
+        name: 'Document PDF',
+        size: 0,
+        type: 'pdf',
+        url: page.attachmentUrl!,
+      ));
+    }
+
+    final createdAt = page.createdAt ?? DateTime.now();
+
+    return BlogPost(
+      id: page.id,
+      admin: (page.marqueName != null && page.marqueName!.isNotEmpty)
+          ? page.marqueName!
+          : 'Novopharma',
+      content: page.description,
+      coverImage: coverUrl,
+      createdAt: createdAt,
+      endDate: null,
+      isPublished: page.status == 'active',
+      linkedQuizId: null,
+      media: mediaFiles,
+      publishedAt: createdAt,
+      slug: page.id,
+      startDate: null,
+      tags: page.marqueNames,
+      title: page.title,
+      type: 'custom_page',
+      updatedAt: page.updatedAt ?? createdAt,
+      author: (page.marqueName != null && page.marqueName!.isNotEmpty)
+          ? page.marqueName!
+          : 'Novopharma',
+      excerpt: excerpt,
+      coverImageUrl: coverUrl,
+      actualiteCategory: page.actualiteCategory,
+      youtubeVideoUrl: !page.isVideoFile ? page.videoUrl : null,
+    );
+  }
 
   // Helper method to get formatted publish date
   String get formattedPublishedAt {

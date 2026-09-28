@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/blog_post.dart';
+import '../models/custom_page_model.dart';
 
 class CategoryState {
   List<BlogPost> items = [];
@@ -57,7 +58,7 @@ class ActualiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Load initial batch of 10 items for each category
+      // Load initial batch of items for each category
       final futures = _categoryMappings.keys.map((cat) => loadInitialCategory(cat));
       await Future.wait(futures);
     } catch (e) {
@@ -66,6 +67,51 @@ class ActualiteProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<List<BlogPost>> _fetchSharedCustomPages(String mappedCategory) async {
+    try {
+      final snapshot = await _firestore
+          .collection('customPage')
+          .where('status', isEqualTo: 'active')
+          .where('shareInActualites', isEqualTo: true)
+          .where('actualiteCategory', isEqualTo: mappedCategory)
+          .get();
+
+      final pages = snapshot.docs
+          .where((doc) {
+            final data = doc.data();
+            return data['status'] != 'DELETED';
+          })
+          .map((doc) => CustomPageModel.fromFirestore(doc))
+          .map((page) => BlogPost.fromCustomPage(page))
+          .toList();
+
+      return pages;
+    } catch (e) {
+      print('[ActualiteProvider] Error fetching shared custom pages for $mappedCategory: $e');
+      // Fallback: query active custom pages and filter in memory if composite index is pending
+      try {
+        final fallbackSnapshot = await _firestore
+            .collection('customPage')
+            .where('status', isEqualTo: 'active')
+            .get();
+
+        return fallbackSnapshot.docs
+            .where((doc) {
+              final data = doc.data();
+              return data['status'] != 'DELETED' &&
+                  data['shareInActualites'] == true &&
+                  data['actualiteCategory'] == mappedCategory;
+            })
+            .map((doc) => CustomPageModel.fromFirestore(doc))
+            .map((page) => BlogPost.fromCustomPage(page))
+            .toList();
+      } catch (fallbackError) {
+        print('[ActualiteProvider] Fallback custom pages error: $fallbackError');
+        return [];
+      }
     }
   }
 
@@ -82,7 +128,14 @@ class ActualiteProvider extends ChangeNotifier {
     try {
       final mappedCategory = _categoryMappings[category] ?? category;
 
-      // Try ordered Firestore query
+      // Fetch shared custom pages in parallel with initial batch of blog posts
+      final customPagesFuture = _fetchSharedCustomPages(mappedCategory);
+
+      List<BlogPost> blogPosts = [];
+      DocumentSnapshot? lastDoc;
+      bool hasMorePosts = false;
+
+      // Try ordered Firestore query for blog posts
       try {
         final query = _firestore
             .collection('blogPosts')
@@ -98,14 +151,12 @@ class ActualiteProvider extends ChangeNotifier {
           return data['status'] != 'DELETED';
         }).toList();
 
-        state.items = docs.map((doc) => BlogPost.fromFirestore(doc)).toList();
-        // Ensure strictly sorted newest first
-        state.items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        blogPosts = docs.map((doc) => BlogPost.fromFirestore(doc)).toList();
 
         if (snapshot.docs.isNotEmpty) {
-          state.lastDocument = snapshot.docs.last;
+          lastDoc = snapshot.docs.last;
         }
-        state.hasMore = snapshot.docs.length >= pageSize;
+        hasMorePosts = snapshot.docs.length >= pageSize;
       } catch (queryError) {
         print('[ActualiteProvider] Firestore query with index failed, using fallback: $queryError');
         // Fallback: Query all published actualites and sort/paginate in memory
@@ -121,20 +172,37 @@ class ActualiteProvider extends ChangeNotifier {
             .where((post) => post.actualiteCategory == mappedCategory)
             .toList();
 
-        // Sort newest first
         allValid.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-        state.items = allValid.take(pageSize).toList();
-        state.hasMore = allValid.length > pageSize;
-        if (state.items.isNotEmpty && fallbackQuery.docs.isNotEmpty) {
-          // Find matching document for last item if possible
-          final lastItem = state.items.last;
-          state.lastDocument = fallbackQuery.docs.firstWhere(
+        blogPosts = allValid.take(pageSize).toList();
+        hasMorePosts = allValid.length > pageSize;
+        if (blogPosts.isNotEmpty && fallbackQuery.docs.isNotEmpty) {
+          final lastItem = blogPosts.last;
+          lastDoc = fallbackQuery.docs.firstWhere(
             (d) => d.id == lastItem.id,
             orElse: () => fallbackQuery.docs.last,
           );
         }
       }
+
+      final customPages = await customPagesFuture;
+
+      // Combine both blog posts and custom pages, avoiding duplicates by id
+      final Map<String, BlogPost> uniqueItems = {};
+      for (final post in blogPosts) {
+        uniqueItems[post.id] = post;
+      }
+      for (final page in customPages) {
+        uniqueItems[page.id] = page;
+      }
+
+      final combined = uniqueItems.values.toList();
+      // Ensure strictly sorted newest first
+      combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      state.items = combined;
+      state.lastDocument = lastDoc;
+      state.hasMore = hasMorePosts;
     } catch (e) {
       print('[ActualiteProvider] Error loading category $category: $e');
       state.error = e.toString();
@@ -174,7 +242,12 @@ class ActualiteProvider extends ChangeNotifier {
           }).toList();
 
           final newItems = docs.map((doc) => BlogPost.fromFirestore(doc)).toList();
-          state.items.addAll(newItems);
+          final existingIds = state.items.map((i) => i.id).toSet();
+          for (final item in newItems) {
+            if (!existingIds.contains(item.id)) {
+              state.items.add(item);
+            }
+          }
           state.items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
           if (snapshot.docs.isNotEmpty) {
@@ -197,10 +270,16 @@ class ActualiteProvider extends ChangeNotifier {
 
           allValid.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-          final currentCount = state.items.length;
-          final nextBatch = allValid.skip(currentCount).take(pageSize).toList();
-          state.items.addAll(nextBatch);
-          state.hasMore = allValid.length > state.items.length;
+          final currentBlogCount = state.items.where((i) => !i.isCustomPage).length;
+          final nextBatch = allValid.skip(currentBlogCount).take(pageSize).toList();
+          final existingIds = state.items.map((i) => i.id).toSet();
+          for (final item in nextBatch) {
+            if (!existingIds.contains(item.id)) {
+              state.items.add(item);
+            }
+          }
+          state.items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          state.hasMore = allValid.length > currentBlogCount + nextBatch.length;
         }
       } else {
         state.hasMore = false;

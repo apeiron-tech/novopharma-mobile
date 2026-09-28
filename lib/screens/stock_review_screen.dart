@@ -99,6 +99,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
       points: 0,
       pointsPharmacie: 0,
       pointsParaPharmacie: 0,
+      pointsDermoConseiller: 0,
       pointsUnified: true,
       sku: '',
       stock: 0,
@@ -163,16 +164,40 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
 
       final productsDataList = _draftProducts.values.map((item) => item.toJson()).toList();
 
-      // 1. Write/overwrite pharmacies_stock
+      // 1. Write/merge pharmacies_stock for products that have physical stock entered
       final stockDocRef = firestore.collection('pharmacies_stock').doc(widget.pharmacyId);
+      final existingStockDoc = await stockDocRef.get();
+      final Map<String, dynamic> existingProductsMap = {};
+      if (existingStockDoc.exists) {
+        final data = existingStockDoc.data();
+        if (data != null && data['products'] is List) {
+          for (var p in data['products']) {
+            if (p is Map && p['productId'] != null) {
+              existingProductsMap[p['productId'].toString()] = p['quantity'];
+            }
+          }
+        }
+      }
+
+      for (var item in _draftProducts.values) {
+        if (item.totalQuantity != null) {
+          existingProductsMap[item.productId] = item.totalQuantity;
+        }
+      }
+
+      final mergedStockProducts = existingProductsMap.entries.map((e) => {
+        'productId': e.key,
+        'quantity': e.value,
+      }).toList();
+
       batch.set(stockDocRef, {
         'pharmacyId': widget.pharmacyId,
         'pharmacyName': widget.pharmacyName,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
         'updatedBy': userProfile.uid,
         'updaterRole': userProfile.role.isNotEmpty ? userProfile.role : 'Dermo-conseiller',
-        'products': productsDataList,
-      });
+        'products': mergedStockProducts,
+      }, SetOptions(merge: true));
 
       // 2. Generate stock_history entry
       final historyDocRef = firestore.collection('stock_history').doc();
@@ -296,6 +321,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                 points: 0,
                                 pointsPharmacie: 0,
                                 pointsParaPharmacie: 0,
+                                pointsDermoConseiller: 0,
                                 pointsUnified: true,
                                 sku: '',
                                 stock: 0,
@@ -376,7 +402,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(
-                                          "Qté: ${item.totalQuantity}",
+                                          item.totalQuantity != null ? "Qté: ${item.totalQuantity}" : "Prix uniquement",
                                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: LightModeColors.novoPharmaBlue),
                                         ),
                                       ),
@@ -402,8 +428,8 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextPrimary),
                                             ),
                                           );
-                                        }).toList(),
-                                        if (item.totalQuantity > item.expirations.fold<int>(0, (sum, exp) => sum + exp.quantity))
+                                          }),
+                                        if (item.totalQuantity != null && item.totalQuantity! > item.expirations.fold<int>(0, (acc, exp) => acc + exp.quantity))
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
@@ -412,7 +438,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                               border: Border.all(color: LightModeColors.lightOutlineVariant),
                                             ),
                                             child: Text(
-                                              "Sans date: ${item.totalQuantity - item.expirations.fold<int>(0, (sum, exp) => sum + exp.quantity)}",
+                                              "Sans date: ${item.totalQuantity! - item.expirations.fold<int>(0, (acc, exp) => acc + exp.quantity)}",
                                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: LightModeColors.novoPharmaGray),
                                             ),
                                           ),
