@@ -225,8 +225,11 @@ class BlogPost {
       coverUrl = page.logoUrl;
     }
 
-    // Strip HTML tags for clean excerpt
+    // Strip HTML tags and non-breaking spaces for clean excerpt
     final plainText = page.description
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('\u00A0', ' ')
+        .replaceAll('\u202F', ' ')
         .replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
