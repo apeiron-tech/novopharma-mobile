@@ -237,21 +237,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               letterSpacing: -0.3,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Consumer<SalesHistoryProvider>(
-                            builder: (context, provider, child) {
-                              return Text(
-                                l10n.salesRecorded(
-                                  provider.salesHistory.length,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: LightModeColors.dashboardTextSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              );
-                            },
-                          ),
                         ],
                       ),
                     ),
@@ -283,17 +268,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         ),
                       );
                     }
-                    if (provider.salesHistory.isEmpty) {
-                      return Center(
-                        child: Text(
-                          l10n.noSalesRecorded,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: LightModeColors.dashboardTextTertiary,
-                          ),
-                        ),
-                      );
-                    }
+
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                       itemCount: provider.salesHistory.length,

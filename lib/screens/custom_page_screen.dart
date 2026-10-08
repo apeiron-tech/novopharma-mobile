@@ -496,12 +496,16 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                           children: [
                             const Icon(Icons.local_offer, size: 12, color: LightModeColors.novoPharmaBlue),
                             const SizedBox(width: 4),
-                            Text(
-                              page.marqueName!,
-                              style: const TextStyle(
-                                color: LightModeColors.novoPharmaBlue,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                            Flexible(
+                              child: Text(
+                                page.marqueName!,
+                                style: const TextStyle(
+                                  color: LightModeColors.novoPharmaBlue,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -664,6 +668,22 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
     );
   }
 
+  String _cleanHtml(String html) {
+    if (html.isEmpty) return '';
+    var cleaned = html
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('\u00A0', ' ')
+        .replaceAll('\u202F', ' ')
+        .replaceAll('\u200B', '');
+
+    // Strip inline background-color (e.g. pasted white background from web content)
+    cleaned = cleaned.replaceAll(
+      RegExp(r'background-color\s*:\s*[^;"]+;?', caseSensitive: false),
+      '',
+    );
+    return cleaned;
+  }
+
   // Description Card Component
   Widget _buildDescriptionCard(CustomPageModel page) {
     final hasTitle = page.descriptionTitle != null && page.descriptionTitle!.trim().isNotEmpty;
@@ -694,7 +714,7 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Html(
-              data: page.description,
+              data: _cleanHtml(page.description),
               onLinkTap: (url, _, __) async {
                 if (url != null && await canLaunchUrl(Uri.parse(url))) {
                   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -707,6 +727,13 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                   lineHeight: const LineHeight(1.6),
                   margin: Margins.zero,
                   padding: HtmlPaddings.zero,
+                ),
+                "p": Style(
+                  margin: Margins.only(bottom: 12),
+                  lineHeight: const LineHeight(1.6),
+                ),
+                "span": Style(
+                  backgroundColor: Colors.transparent,
                 ),
                 "h1": Style(
                   fontSize: FontSize(22),
@@ -1079,16 +1106,22 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   Widget _buildSectionHeader({required String title, required IconData icon}) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: LightModeColors.novoPharmaBlue),
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 20, color: LightModeColors.novoPharmaBlue),
+        ),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            color: LightModeColors.dashboardTextPrimary,
-            letterSpacing: -0.2,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: LightModeColors.dashboardTextPrimary,
+              letterSpacing: -0.2,
+            ),
           ),
         ),
       ],

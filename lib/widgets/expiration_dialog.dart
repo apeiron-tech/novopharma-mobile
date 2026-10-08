@@ -676,33 +676,7 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                         ),
                       ),
 
-                      const SizedBox(height: 10),
-
-                      // Quick Chips (+1, +5, +10, etc.)
-                      Center(
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            _buildQuickChip("+1", () => _adjustQuantity(1)),
-                            _buildQuickChip("+5", () => _adjustQuantity(5)),
-                            _buildQuickChip("+10", () => _adjustQuantity(10)),
-                            _buildQuickChip("+20", () => _adjustQuantity(20)),
-                            if (currentQty > 0)
-                              _buildQuickChip("Vider", () {
-                                setState(() {
-                                  _globalQuantityController.text = sumOfLots > 0
-                                      ? sumOfLots.toString()
-                                      : "";
-                                });
-                              }, isDanger: true),
-                          ],
-                        ),
-                      ),
-
                       if (hasLots && currentQty > sumOfLots) ...[
-                        const SizedBox(height: 6),
                         Center(
                           child: Text(
                             "Dont ${currentQty - sumOfLots} unité(s) sans lot spécifique.",
