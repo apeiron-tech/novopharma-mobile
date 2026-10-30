@@ -10,6 +10,7 @@ import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import '../theme.dart';
+import 'package:novopharma/widgets/sticky_cart_bar.dart';
 
 // Constants for consistent positioning
 const double kNavBarHeight = 64.0;
@@ -202,9 +203,15 @@ class _BottomNavigationScaffoldWrapperState
         child: const Icon(Icons.qr_code_scanner, color: LightModeColors.lightOnPrimary, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: SharedBottomNavigationBar(
-        currentIndex: widget.currentIndex, // Use widget.currentIndex
-        onTap: widget.onTap, // Use widget.onTap
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StickyCartBar(),
+          SharedBottomNavigationBar(
+            currentIndex: widget.currentIndex,
+            onTap: widget.onTap,
+          ),
+        ],
       ),
     );
   }

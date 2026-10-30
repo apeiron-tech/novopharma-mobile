@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -19,6 +19,8 @@ import 'package:novopharma/controllers/locale_provider.dart';
 import 'package:novopharma/controllers/formation_provider.dart';
 import 'package:novopharma/controllers/actualite_provider.dart';
 import 'package:novopharma/controllers/notification_provider.dart';
+import 'package:novopharma/controllers/basket_provider.dart';
+import 'package:novopharma/screens/basket_screen.dart';
 import 'package:novopharma/services/notification_service.dart';
 import 'package:novopharma/services/chottu_link_service.dart';
 import 'package:novopharma/firebase_options.dart';
@@ -109,6 +111,12 @@ void main() async {
             Provider.of<AuthProvider>(context, listen: false),
           ),
           update: (context, auth, previous) => previous!..update(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, BasketProvider>(
+          create: (context) => BasketProvider(
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
+          update: (context, auth, previous) => (previous ?? BasketProvider())..update(auth),
         ),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
         ChangeNotifierProvider(create: (_) => ScanProvider()),
@@ -231,6 +239,7 @@ class NovoPharmaApp extends StatelessWidget {
             pharmacyName: args?['pharmacyName'] ?? '',
           );
         },
+        '/basket': (context) => const BasketScreen(),
         '/product': (context) {
           final args =
               ModalRoute.of(context)?.settings.arguments
