@@ -16,6 +16,7 @@ import 'package:novopharma/screens/stock_review_screen.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
+import 'package:novopharma/controllers/basket_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PharmacyProfileScreen extends StatefulWidget {
@@ -2123,6 +2124,38 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
 
   Future<void> _handleCheckOut() async {
     if (_activeVisitId == null) return;
+
+    final basketProvider = Provider.of<BasketProvider>(context, listen: false);
+    if (basketProvider.hasOpenBasket) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Panier en cours"),
+          content: Text(
+            "Vous avez un panier ouvert contenant ${basketProvider.totalItemsCount} article(s). Veuillez le clôturer ou l'annuler avant d'effectuer le check-out.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Fermer"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/basket');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: LightModeColors.novoPharmaBlue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Voir le panier"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     final confirm = await showGeneralDialog<bool>(
       context: context,

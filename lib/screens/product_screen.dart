@@ -24,6 +24,7 @@ import 'package:novopharma/models/gift.dart';
 import 'package:novopharma/models/gift_assignment.dart';
 import 'package:novopharma/models/challenge.dart';
 import 'package:novopharma/services/challenge_service.dart';
+import 'package:novopharma/controllers/basket_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme.dart';
 
@@ -1281,12 +1282,6 @@ class _ProductScreenState extends State<ProductScreen> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final int quantity = _quantityNotifier.value;
-    final double unitPoints = _getEffectivePoints(
-      product,
-      challenges,
-      pharmacyCategory,
-      userRole: user.role,
-    );
     final double totalPrice = product.price * quantity;
 
     String? activeVisitId;
@@ -1392,6 +1387,7 @@ class _ProductScreenState extends State<ProductScreen> {
             pointOfSaleSnapshot: user.role == 'Dermo-conseiller'
                 ? activePointOfSale
                 : (widget.sale!.pointOfSaleSnapshot ?? user.pointOfSale),
+            basketId: widget.sale!.basketId,
           );
           Provider.of<SalesHistoryProvider>(
             context,
@@ -3334,57 +3330,145 @@ class _ProductScreenState extends State<ProductScreen> {
             ),
             const SizedBox(height: 16), // Space between price and button
             // Button row at the bottom, centered
-            ElevatedButton(
-              onPressed: widget.isSelectionMode
-                  ? () => Navigator.pop(context, {
-                      product: _quantityNotifier.value,
-                    })
-                  : () => _submitSale(
+            if (user != null && user.role == 'Dermo-conseiller' && !widget.isSelectionMode && widget.sale == null) ...[
+              // Option B: Ajouter au panier (nouvelle methode panier)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final basketProvider = Provider.of<BasketProvider>(context, listen: false);
+                    final int quantity = _quantityNotifier.value;
+                    final double unitPoints = _getEffectivePoints(
                       product,
-                      user,
-                      pharmacyCategory,
                       challenges,
-                    ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: widget.isSelectionMode
-                    ? LightModeColors.lightPrimary
-                    : LightModeColors.lightError,
-                foregroundColor: widget.isSelectionMode
-                    ? Colors.white
-                    : LightModeColors.lightOnError,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 18,
-                  horizontal: 24,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    widget.isSelectionMode
-                        ? Icons.add_shopping_cart
-                        : Icons.check_circle_outline,
-                    size: 20,
+                      pharmacyCategory,
+                      userRole: user.role,
+                    );
+                    final success = await basketProvider.addProduct(
+                      product: product,
+                      quantity: quantity,
+                      pointsEarned: unitPoints * quantity,
+                    );
+                    if (success && context.mounted) {
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.hideCurrentSnackBar();
+                      final controller = messenger.showSnackBar(
+                        SnackBar(
+                          content: Text("${product.name} (x$quantity) ajouté au panier !"),
+                          backgroundColor: const Color(0xFF2E7D32),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          duration: const Duration(seconds: 5),
+                          showCloseIcon: true,
+                          action: SnackBarAction(
+                            label: "Voir le panier",
+                            textColor: Colors.white,
+                            onPressed: () {
+                              messenger.hideCurrentSnackBar();
+                              Navigator.pushNamed(context, '/basket');
+                            },
+                          ),
+                        ),
+                      );
+
+                      Timer(const Duration(seconds: 5), () {
+                        try {
+                          controller.close();
+                        } catch (_) {}
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.add_shopping_cart, size: 20),
+                  label: const Text(
+                    "Ajouter au panier",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.isSelectionMode
-                        ? "Ajouter à la vente"
-                        : (widget.sale != null
-                              ? l10n.updateSale
-                              : l10n.confirmSale),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: LightModeColors.novoPharmaBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 10),
+              // Option A: Vente directe (ancienne methode sans panier)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _submitSale(
+                    product,
+                    user,
+                    pharmacyCategory,
+                    challenges,
+                  ),
+                  icon: const Icon(Icons.flash_on_outlined, size: 20),
+                  label: Text(
+                    l10n.confirmSale,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: LightModeColors.lightError,
+                    side: const BorderSide(color: LightModeColors.lightError, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+            ] else ...[
+              ElevatedButton(
+                onPressed: widget.isSelectionMode
+                    ? () => Navigator.pop(context, {
+                        product: _quantityNotifier.value,
+                      })
+                    : () => _submitSale(
+                        product,
+                        user,
+                        pharmacyCategory,
+                        challenges,
+                      ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: widget.isSelectionMode
+                      ? LightModeColors.lightPrimary
+                      : LightModeColors.lightError,
+                  foregroundColor: widget.isSelectionMode
+                      ? Colors.white
+                      : LightModeColors.lightOnError,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                    horizontal: 24,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      widget.isSelectionMode
+                          ? Icons.add_shopping_cart
+                          : Icons.check_circle_outline,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.isSelectionMode
+                          ? "Ajouter à la vente"
+                          : (widget.sale != null
+                                ? l10n.updateSale
+                                : l10n.confirmSale),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

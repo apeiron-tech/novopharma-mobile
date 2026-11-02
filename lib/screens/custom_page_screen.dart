@@ -50,6 +50,9 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
   int _currentCarouselIndex = 0;
   final CarouselSliderController _carouselController = CarouselSliderController();
 
+  int _currentProductIndex = 0;
+  final CarouselSliderController _productCarouselController = CarouselSliderController();
+
   @override
   void initState() {
     super.initState();
@@ -987,80 +990,98 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                     ),
                   ),
                 ] else if (_localPdfPath != null) ...[
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
+                  Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: _openFullPdfViewer,
+                      child: Container(
+                        height: 380,
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade200),
                         ),
-                        child: const Icon(Icons.picture_as_pdf, color: Colors.red, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Document PDF",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: LightModeColors.dashboardTextPrimary,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Stack(
+                            children: [
+                              PDFView(
+                                filePath: _localPdfPath,
+                                enableSwipe: false,
+                                swipeHorizontal: false,
+                                autoSpacing: true,
+                                pageFling: false,
+                                onRender: (pages) {
+                                  if (mounted) {
+                                    setState(() {
+                                      _pdfTotalPages = pages ?? 0;
+                                    });
+                                  }
+                                },
+                                onPageChanged: (page, total) {
+                                  if (mounted) {
+                                    setState(() {
+                                      _pdfCurrentPage = page ?? 0;
+                                      if (total != null) _pdfTotalPages = total;
+                                    });
+                                  }
+                                },
                               ),
-                            ),
-                            if (_pdfTotalPages > 0)
-                              Text(
-                                "Page ${_pdfCurrentPage + 1} sur $_pdfTotalPages",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: LightModeColors.dashboardTextSecondary,
+                              Positioned.fill(
+                                child: Container(
+                                  color: Colors.transparent,
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _openFullPdfViewer,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: LightModeColors.novoPharmaBlue,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.fullscreen, size: 18, color: Colors.white),
-                        label: const Text("Ouvrir", style: TextStyle(color: Colors.white, fontSize: 13)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: _openFullPdfViewer,
-                    child: Container(
-                      height: 380,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: PDFView(
-                          filePath: _localPdfPath,
-                          enableSwipe: true,
-                          swipeHorizontal: false,
-                          autoSpacing: true,
-                          pageFling: true,
-                          onRender: (pages) {
-                            setState(() {
-                              _pdfTotalPages = pages ?? 0;
-                            });
-                          },
-                          onPageChanged: (page, total) {
-                            setState(() {
-                              _pdfCurrentPage = page ?? 0;
-                              if (total != null) _pdfTotalPages = total;
-                            });
-                          },
+                              if (_pdfTotalPages > 0)
+                                Positioned(
+                                  bottom: 12,
+                                  left: 0,
+                                  right: 0,
+                                  child: IgnorePointer(
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.7),
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.15),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.picture_as_pdf_rounded,
+                                              color: Colors.white,
+                                              size: 13,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              "Page ${_pdfCurrentPage + 1} sur $_pdfTotalPages",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1130,15 +1151,6 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // Products Section Component
   Widget _buildProductsSection(List<CustomPageProductItem> products) {
-    final filtered = products.where((p) {
-      if (_productSearchQuery.isEmpty) return true;
-      final query = _productSearchQuery.toLowerCase();
-      return p.name.toLowerCase().contains(query) ||
-          p.marque.toLowerCase().contains(query) ||
-          p.category.toLowerCase().contains(query) ||
-          p.sku.toLowerCase().contains(query);
-    }).toList();
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -1201,195 +1213,194 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
             ],
           ),
 
-          // Search Field (shown if more than 5 products)
-          if (products.length > 5) ...[
-            const SizedBox(height: 14),
-            TextField(
-              controller: _productSearchController,
-              onChanged: (val) {
-                setState(() {
-                  _productSearchQuery = val;
-                });
-              },
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: "Rechercher un produit...",
-                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-                prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
-                suffixIcon: _productSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16, color: Colors.grey),
-                        onPressed: () {
-                          _productSearchController.clear();
-                          setState(() {
-                            _productSearchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                filled: true,
-                fillColor: LightModeColors.lightSurfaceVariant,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ],
+          const SizedBox(height: 16),
 
-          const SizedBox(height: 14),
-
-          if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.search_off_rounded, size: 36, color: Colors.grey.shade300),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Aucun produit ne correspond à « $_productSearchQuery »",
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+          Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              CarouselSlider.builder(
+                carouselController: _productCarouselController,
+                itemCount: products.length,
+                options: CarouselOptions(
+                  height: 240,
+                  viewportFraction: 0.54,
+                  padEnds: false,
+                  enableInfiniteScroll: products.length > 2,
+                  enlargeCenterPage: false,
+                  onPageChanged: (index, reason) {
+                    setState(() {
+                      _currentProductIndex = index;
+                    });
+                  },
                 ),
+                itemBuilder: (context, index, realIndex) {
+                  final product = products[index];
+                  return _buildCarouselProductCard(product);
+                },
               ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: filtered.length,
-              separatorBuilder: (context, index) => const Divider(height: 16, thickness: 0.8),
-              itemBuilder: (context, index) {
-                final product = filtered[index];
-                return _buildProductCard(product);
-              },
-            ),
+
+              // Animated Arrow Navigation Buttons (Left & Right) like the image carousel
+              if (products.length > 1) ...[
+                Positioned(
+                  left: -6,
+                  child: _AnimatingArrowButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    isLeft: true,
+                    onPressed: () {
+                      _productCarouselController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                  ),
+                ),
+                Positioned(
+                  right: -6,
+                  child: _AnimatingArrowButton(
+                    icon: Icons.arrow_forward_ios_rounded,
+                    isLeft: false,
+                    onPressed: () {
+                      _productCarouselController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProductCard(CustomPageProductItem product) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductScreen(id: product.id),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Product Image
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(11),
-                  child: AppNetworkImage(
-                    imageUrl: product.imageUrl,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.contain,
-                    memCacheWidth: 180,
-                    memCacheHeight: 180,
-                    errorIcon: Icons.inventory_2_outlined,
-                    errorIconSize: 26,
+  Widget _buildCarouselProductCard(CustomPageProductItem product) {
+    return Container(
+      margin: const EdgeInsets.only(right: 10, bottom: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1.1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductScreen(id: product.id),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Image
+                Container(
+                  height: 105,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: LightModeColors.lightBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: AppNetworkImage(
+                      imageUrl: product.imageUrl,
+                      fit: BoxFit.contain,
+                      memCacheWidth: 260,
+                      memCacheHeight: 260,
+                      errorIcon: Icons.inventory_2_outlined,
+                      errorIconSize: 30,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(height: 8),
 
-              // Product Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Brand
+                if (product.marque.isNotEmpty)
+                  Text(
+                    product.marque.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: LightModeColors.novoPharmaBlue,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                const SizedBox(height: 2),
+
+                // Product Name
+                Expanded(
+                  child: Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: LightModeColors.dashboardTextPrimary,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Price & Points
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: LightModeColors.dashboardTextPrimary,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    if (product.marque.isNotEmpty || product.category.isNotEmpty)
+                    if (product.price > 0)
                       Text(
-                        [
-                          if (product.marque.isNotEmpty) product.marque,
-                          if (product.category.isNotEmpty) product.category,
-                        ].join(' • '),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
+                        "${product.price.toStringAsFixed(2)} DT",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: LightModeColors.novoPharmaBlue,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    if (product.points > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: LightModeColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: LightModeColors.success.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Text(
+                          "+${product.points % 1 == 0 ? product.points.toInt() : product.points} pts",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: LightModeColors.success,
+                          ),
+                        ),
                       ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        if (product.points > 0) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: LightModeColors.success.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              "${product.points % 1 == 0 ? product.points.toInt() : product.points} pts",
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: LightModeColors.success,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        if (product.price > 0)
-                          Text(
-                            "${product.price.toStringAsFixed(2)} DT",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                          ),
-                      ],
-                    ),
                   ],
                 ),
-              ),
-
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.grey.shade400,
-                size: 22,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
