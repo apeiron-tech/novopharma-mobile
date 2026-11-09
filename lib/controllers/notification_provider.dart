@@ -61,6 +61,8 @@ class NotificationProvider with ChangeNotifier {
     switch (notification.type) {
       case NotificationType.newTraining:
         return '/formation/${notification.resourceId}';
+      case NotificationType.quizCorrection:
+        return '/quiz_correction/${notification.resourceId}';
       case NotificationType.newActualite:
         return '/actualites'; // Assume a route could be added or handled manually
       case NotificationType.newGoal:
@@ -71,6 +73,8 @@ class NotificationProvider with ChangeNotifier {
       case NotificationType.achievement:
         return '/badges';
       case NotificationType.reminder:
+        return null;
+      default:
         return null;
     }
   }

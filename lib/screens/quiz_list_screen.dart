@@ -3,6 +3,7 @@ import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/quiz_provider.dart';
 import 'package:novopharma/models/quiz.dart';
 import 'package:novopharma/screens/quiz_question_screen.dart';
+import 'package:novopharma/screens/quiz_correction_screen.dart';
 import 'package:novopharma/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
@@ -112,8 +113,34 @@ class _QuizListScreenState extends State<QuizListScreen> {
   }
 
   Widget _buildQuizCard(Quiz quiz, int attempts, AppLocalizations l10n) {
-    final bool canAttempt = attempts < quiz.attemptLimit;
-    final String buttonText = canAttempt ? l10n.startQuiz : 'Limit Reached';
+    final bool isClosed = !quiz.isAvailable;
+    final bool canAttempt = !isClosed && attempts < quiz.attemptLimit;
+
+    String buttonText;
+    VoidCallback? onButtonPressed;
+    Color buttonColor = LightModeColors.novoPharmaBlue;
+
+    if (isClosed) {
+      if (attempts > 0) {
+        buttonText = "Voir les bonnes réponses";
+        buttonColor = Colors.green.shade700;
+        onButtonPressed = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  QuizCorrectionScreen(quizId: quiz.id, quiz: quiz),
+            ),
+          );
+        };
+      } else {
+        buttonText = "Quiz clôturé";
+        onButtonPressed = null;
+      }
+    } else {
+      buttonText = canAttempt ? l10n.startQuiz : 'Limite atteinte';
+      onButtonPressed = canAttempt ? () => _startQuiz(quiz) : null;
+    }
 
     return Card(
       elevation: 4,
@@ -121,19 +148,42 @@ class _QuizListScreenState extends State<QuizListScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
       child: Opacity(
-        opacity: canAttempt ? 1.0 : 0.6,
+        opacity: (canAttempt || (isClosed && attempts > 0)) ? 1.0 : 0.6,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                quiz.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: LightModeColors.dashboardTextPrimary,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      quiz.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: LightModeColors.dashboardTextPrimary,
+                      ),
+                    ),
+                  ),
+                  if (isClosed)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "Clôturé",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(
@@ -154,10 +204,13 @@ class _QuizListScreenState extends State<QuizListScreen> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: canAttempt ? () => _startQuiz(quiz) : null,
+                child: ElevatedButton.icon(
+                  icon: isClosed && attempts > 0
+                      ? const Icon(Icons.assignment_turned_in_rounded, size: 18)
+                      : const SizedBox.shrink(),
+                  onPressed: onButtonPressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: LightModeColors.novoPharmaBlue,
+                    backgroundColor: buttonColor,
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: Colors.grey.shade400,
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -165,7 +218,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text(
+                  label: Text(
                     buttonText,
                     style: const TextStyle(
                       fontSize: 16,
@@ -177,7 +230,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Attempts: $attempts/${quiz.attemptLimit}',
+                  'Tentatives : $attempts/${quiz.attemptLimit}',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               ),

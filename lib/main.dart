@@ -40,6 +40,7 @@ import 'package:novopharma/screens/formations_screen.dart';
 import 'package:novopharma/screens/actualites_screen.dart';
 import 'package:novopharma/screens/badges_screen.dart';
 import 'package:novopharma/screens/formation_details_screen.dart';
+import 'package:novopharma/screens/quiz_correction_screen.dart';
 import 'package:novopharma/screens/splash_screen.dart';
 import 'package:novopharma/screens/manual_sale_screen.dart';
 import 'package:novopharma/screens/product_screen.dart';
@@ -151,6 +152,13 @@ class NovoPharmaApp extends StatelessWidget {
       home: const SplashScreen(),
       navigatorObservers: [routeObserver],
       onGenerateRoute: (settings) {
+        // Handle dynamic routes for quiz correction from notifications
+        if (settings.name?.startsWith('/quiz_correction/') == true) {
+          final quizId = settings.name!.split('/').last;
+          return MaterialPageRoute(
+            builder: (context) => QuizCorrectionScreen(quizId: quizId),
+          );
+        }
         // Handle dynamic routes for formations from notifications
         if (settings.name?.startsWith('/formation/') == true) {
           final formationId = settings.name!.split('/').last;
