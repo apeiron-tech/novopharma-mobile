@@ -7,6 +7,7 @@ import 'package:novopharma/models/blog_post.dart';
 import 'package:novopharma/controllers/quiz_provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/screens/quiz_question_screen.dart';
+import 'package:novopharma/screens/quiz_correction_screen.dart';
 import 'package:novopharma/models/quiz.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:novopharma/services/chottu_link_service.dart';
@@ -1450,6 +1451,20 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
       );
 
       final attempts = quizProvider.userAttempts[quiz.id] ?? 0;
+      if (!quiz.isAvailable) {
+        if (attempts > 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  QuizCorrectionScreen(quizId: quiz.id, quiz: quiz),
+            ),
+          );
+        } else {
+          _showSnackBar('Ce quiz est actuellement clôturé.');
+        }
+        return;
+      }
       if (attempts >= quiz.attemptLimit) {
         _showSnackBar(
           'Vous avez atteint la limite de tentatives pour ce quiz (${attempts}/${quiz.attemptLimit})',

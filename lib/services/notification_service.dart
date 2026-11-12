@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:novopharma/models/notification_model.dart';
 import 'package:novopharma/navigation.dart';
 import 'package:novopharma/screens/notifications_screen.dart';
+import 'package:novopharma/screens/quiz_correction_screen.dart';
 
 class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -161,11 +162,14 @@ class NotificationService {
   void _handleForegroundMessage(RemoteMessage message) {
     print('[NotificationService] Foreground message: ${message.messageId}');
 
-    // Show local notification
+    final type = message.data['type'] ?? '';
+    final resourceId = message.data['resourceId'] ?? '';
+
+    // Show local notification with formatted payload
     _showLocalNotification(
       title: message.notification?.title ?? '',
       body: message.notification?.body ?? '',
-      payload: message.data['resourceId'],
+      payload: '$type|$resourceId',
     );
   }
 
@@ -209,6 +213,22 @@ class NotificationService {
     print('[NotificationService] Notification tapped: ${response.payload}');
     final BuildContext? context = appNavigatorKey.currentContext;
     if (context != null) {
+      final payload = response.payload;
+      if (payload != null && payload.contains('|')) {
+        final parts = payload.split('|');
+        final type = parts[0];
+        final resourceId = parts.length > 1 ? parts[1] : '';
+        if (type == 'quizCorrection' && resourceId.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuizCorrectionScreen(quizId: resourceId),
+            ),
+          );
+          return;
+        }
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const NotificationsScreen()),
@@ -221,6 +241,21 @@ class NotificationService {
     print('[NotificationService] Notification opened: ${message.messageId}');
     final BuildContext? context = appNavigatorKey.currentContext;
     if (context != null) {
+      final type = message.data['type'];
+      final resourceId = message.data['resourceId'];
+      if (type == 'quizCorrection' &&
+          resourceId != null &&
+          resourceId.toString().isNotEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                QuizCorrectionScreen(quizId: resourceId.toString()),
+          ),
+        );
+        return;
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const NotificationsScreen()),

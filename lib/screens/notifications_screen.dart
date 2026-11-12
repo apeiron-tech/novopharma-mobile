@@ -10,6 +10,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:novopharma/screens/actualites_screen.dart';
 import 'package:novopharma/screens/goals_screen.dart';
+import 'package:novopharma/screens/quiz_correction_screen.dart';
 import '../theme.dart';
 import '../generated/l10n/app_localizations.dart';
 
@@ -261,6 +262,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   );
                 }
+              } else if (notification.type == NotificationType.quizCorrection) {
+                if (context.mounted && notification.resourceId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => QuizCorrectionScreen(
+                        quizId: notification.resourceId!,
+                      ),
+                    ),
+                  );
+                }
               }
             },
             borderRadius: BorderRadius.circular(12),
@@ -359,6 +371,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.newGoal:
       case NotificationType.goalCompleted:
         return Icons.flag_rounded;
+      case NotificationType.quizCorrection:
+        return Icons.assignment_turned_in_rounded;
       case NotificationType.reminder:
         return Icons.notifications_active_rounded;
     }
@@ -376,6 +390,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return LightModeColors.success;
       case NotificationType.newGoal:
       case NotificationType.goalCompleted:
+        return LightModeColors.novoPharmaBlue;
+      case NotificationType.quizCorrection:
         return LightModeColors.novoPharmaBlue;
       case NotificationType.reminder:
         return LightModeColors.lightSecondary;

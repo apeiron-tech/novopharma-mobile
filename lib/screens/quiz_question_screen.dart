@@ -90,6 +90,7 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
       widget.quiz.id,
       correctAnswers,
       pointsEarned,
+      selectedAnswers: _selectedAnswers,
     );
 
     if (mounted) {

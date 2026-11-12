@@ -34,6 +34,15 @@ class Quiz {
   int get effectiveMinCorrectAnswers =>
       (minCorrectAnswersToWin <= 0) ? questions.length : minCorrectAnswersToWin;
 
+  bool get isExpired {
+    final now = DateTime.now();
+    final endOfDay =
+        DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59, 999);
+    return now.isAfter(endOfDay);
+  }
+
+  bool get isAvailable => active && !isExpired;
+
   factory Quiz.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     var questionsData = data['questions'] as List<dynamic>? ?? [];

@@ -8,7 +8,17 @@ if (admin.apps.length === 0) {
 }
 
 // Export notification functions
-export {onNewTrainingCreated, onNewBadgeCreated, onNewGoalCreated, sendUserBadgeNotification, onUserGoalCompleted, sendReminderNotifications, onNewCustomNotificationCreated, processScheduledNotification, onFormationQuizUpdated} from "./notifications";
+export {
+    onNewTrainingCreated,
+    onNewBadgeCreated,
+    onNewGoalCreated,
+    sendUserBadgeNotification,
+    onUserGoalCompleted,
+    sendReminderNotifications,
+    onNewCustomNotificationCreated,
+    processScheduledNotification,
+    onFormationQuizUpdated,
+} from "./notifications";
 
 /**
  * DEPRECATED / DISABLED: Badge progress processing is now handled by novopharma-back (salesTriggers.ts)
