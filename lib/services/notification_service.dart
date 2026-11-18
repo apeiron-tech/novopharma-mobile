@@ -20,16 +20,22 @@ class NotificationService {
 
   // Initialize FCM and local notifications
   Future<void> initialize() async {
-    // Request permission for iOS
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
+    // Request permission for iOS / Android 13+
+    try {
+      NotificationSettings settings = await _messaging
+          .requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+            provisional: false,
+          )
+          .timeout(const Duration(seconds: 5));
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('[NotificationService] User granted permission');
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('[NotificationService] User granted permission');
+      }
+    } catch (e) {
+      print('[NotificationService] Permission request skipped/failed: $e');
     }
 
     // Initialize local notifications
@@ -52,7 +58,8 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Get FCM token (may be unavailable on iOS until APNs registers)
+    // Get FCM token (may be unavailable on iOS until APNs registers,
+    // or on Android devices/emulators without Google Play Services)
     final String? token = await _safeGetToken();
     print('[NotificationService] FCM Token: $token');
 
@@ -63,12 +70,18 @@ class NotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationOpen);
 
     // Handle terminated state message
-    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      // Delay navigation slightly to let app initialize
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _handleNotificationOpen(initialMessage);
-      });
+    try {
+      RemoteMessage? initialMessage = await _messaging
+          .getInitialMessage()
+          .timeout(const Duration(seconds: 3));
+      if (initialMessage != null) {
+        // Delay navigation slightly to let app initialize
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _handleNotificationOpen(initialMessage);
+        });
+      }
+    } catch (e) {
+      print('[NotificationService] getInitialMessage skipped/failed: $e');
     }
   }
 
@@ -89,7 +102,7 @@ class NotificationService {
           return null;
         }
       }
-      return await _messaging.getToken();
+      return await _messaging.getToken().timeout(const Duration(seconds: 5));
     } catch (e) {
       print('[NotificationService] Unable to get FCM token: $e');
       return null;

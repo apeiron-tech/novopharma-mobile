@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -74,23 +75,8 @@ void main() async {
   if (!kIsWeb) {
     HttpOverrides.global = AppHttpOverrides();
   }
-  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  /// âœ… Initialize the ChottuLink SDK
-  await ChottuLink.init(apiKey: dotenv.env['CHOTTULINK_API_KEY'] ?? '');
-
-  // Initialize ChottuLink handling
-  ChottuLinkService().initialize();
-
-  // Initialize notification service. A failure here must never block runApp
-  // (otherwise the app stays on a black screen).
-  try {
-    await NotificationService().initialize();
-  } catch (e) {
-    debugPrint('[main] Notification init failed: $e');
-  }
 
   runApp(
     MultiProvider(
@@ -137,6 +123,29 @@ void main() async {
       child: const NovoPharmaApp(),
     ),
   );
+
+  // Initialize deep linking and notifications after runApp so slow or
+  // unavailable SDKs on Android never leave the app stuck on the first screen.
+  unawaited(_initializePostLaunchServices());
+}
+
+Future<void> _initializePostLaunchServices() async {
+  try {
+    await ChottuLink.init(
+      apiKey: dotenv.env['CHOTTULINK_API_KEY'] ?? '',
+    ).timeout(const Duration(seconds: 5));
+    ChottuLinkService().initialize();
+  } catch (e) {
+    debugPrint('[main] ChottuLink init failed: $e');
+  }
+
+  try {
+    await NotificationService().initialize().timeout(
+      const Duration(seconds: 8),
+    );
+  } catch (e) {
+    debugPrint('[main] Notification init failed: $e');
+  }
 }
 
 class NovoPharmaApp extends StatelessWidget {
