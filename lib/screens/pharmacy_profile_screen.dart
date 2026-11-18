@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:novopharma/models/pharmacy.dart';
 import 'package:novopharma/services/pharmacy_service.dart';
 import 'package:novopharma/navigation_observer.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'dart:io';
 import 'dart:math';
 import 'package:image_picker/image_picker.dart';
@@ -239,113 +239,55 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
 
   Future<void> _showGPSDisabledDialog() async {
     if (!mounted) return;
-    await showGeneralDialog<void>(
+    await showGlassDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "GPS désactivé",
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
+      child: Builder(
+        builder: (context) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: LightModeColors.lightErrorContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.location_off_rounded,
-                      color: LightModeColors.lightError,
-                      size: 32,
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: BlisterIcon(
+                      icon: Icons.location_off_rounded,
+                      tone: Tone.coral,
+                      size: 56,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "GPS désactivé",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 18),
+                  Text("GPS désactivé", style: AppText.display(size: 22)),
+                  const SizedBox(height: 8),
+                  Text(
                     "Votre GPS semble être désactivé. Veuillez l'activer dans les paramètres de votre téléphone pour utiliser cette fonctionnalité.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: LightModeColors.novoPharmaGray,
-                    ),
+                    style: AppText.body(size: 14.5),
                   ),
-                  const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Annuler",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await Geolocator.openLocationSettings();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.novoPharmaBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Paramètres",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 24),
+                  PrimaryButton(
+                    label: "Paramètres",
+                    icon: Icons.settings_rounded,
+                    height: 52,
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await Geolocator.openLocationSettings();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48,
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -386,339 +328,254 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
       selectedPointOfSale = _pharmacy!.pointsOfSale.first.name;
     }
 
-    final confirm = await showGeneralDialog<bool>(
+    final confirm = await showGlassDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "Confirmation",
-      pageBuilder: (context, anim1, anim2) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Align(
-              alignment: Alignment.center,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(22),
-                constraints: const BoxConstraints(maxWidth: 400),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.all(22),
+      child: StatefulBuilder(
+        builder: (context, setDialogState) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Row(
                     children: [
-                      // Header icon badge
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightBlue,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.15),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          color: LightModeColors.novoPharmaBlue,
-                          size: 28,
-                        ),
+                      const BlisterIcon(
+                        icon: Icons.location_on_rounded,
+                        tone: Tone.mint,
+                        size: 52,
                       ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        "Confirmer le Check-in",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: LightModeColors.dashboardTextPrimary,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          "Confirmer le Check-in",
+                          style: AppText.display(size: 21),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Pharmacy card info
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightGray,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: LightModeColors.lightOutlineVariant),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.novoPharmaLightBlue,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.local_pharmacy_rounded,
-                                size: 16,
-                                color: LightModeColors.novoPharmaBlue,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Pharmacie cible",
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: LightModeColors.novoPharmaGray,
-                                    ),
-                                  ),
-                                  Text(
-                                    widget.pharmacyName,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: LightModeColors.dashboardTextPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (hasPOS) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.store_rounded,
-                              size: 15,
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              "Sélectionner le point de vente",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: LightModeColors.dashboardTextPrimary,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.novoPharmaLightBlue,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                "${_pharmacy!.pointsOfSale.length}",
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.novoPharmaBlue,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 180),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: _pharmacy!.pointsOfSale.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
-                            itemBuilder: (context, idx) {
-                              final pos = _pharmacy!.pointsOfSale[idx];
-                              final isSelected = selectedPointOfSale == pos.name;
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    setDialogState(() {
-                                      selectedPointOfSale = pos.name;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 180),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.55)
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? LightModeColors.novoPharmaBlue
-                                            : LightModeColors.lightOutlineVariant,
-                                        width: isSelected ? 1.6 : 1.0,
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-                                                blurRadius: 6,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(7),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? LightModeColors.novoPharmaBlue
-                                                : LightModeColors.novoPharmaLightGray,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.storefront_rounded,
-                                            size: 15,
-                                            color: isSelected ? Colors.white : LightModeColors.novoPharmaGray,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                pos.name,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                                  color: isSelected
-                                                      ? LightModeColors.novoPharmaDarkBlue
-                                                      : LightModeColors.dashboardTextPrimary,
-                                                ),
-                                              ),
-                                              if (pos.city.isNotEmpty) ...[
-                                                const SizedBox(height: 2),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.place_outlined,
-                                                      size: 11,
-                                                      color: isSelected
-                                                          ? LightModeColors.novoPharmaBlue
-                                                          : LightModeColors.novoPharmaGray,
-                                                    ),
-                                                    const SizedBox(width: 3),
-                                                    Text(
-                                                      pos.city,
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: isSelected
-                                                            ? LightModeColors.novoPharmaBlue
-                                                            : LightModeColors.novoPharmaGray,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(
-                                          isSelected
-                                              ? Icons.check_circle_rounded
-                                              : Icons.radio_button_unchecked_rounded,
-                                          size: 20,
-                                          color: isSelected
-                                              ? LightModeColors.novoPharmaBlue
-                                              : LightModeColors.novoPharmaGray.withValues(alpha: 0.4),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ] else ...[
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Voulez-vous enregistrer votre Check-in pour cette pharmacie ?",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: LightModeColors.novoPharmaGray,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 22),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                side: const BorderSide(color: LightModeColors.lightOutlineVariant, width: 1.2),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                "Annuler",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: LightModeColors.novoPharmaGray,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: LightModeColors.novoPharmaBlue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.check_rounded, size: 18),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    "Confirmer",
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  // Pharmacy card info
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.66),
+                      borderRadius: BorderRadius.circular(AppRadii.md),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const TintIcon(
+                          icon: Icons.local_pharmacy_rounded,
+                          tone: Tone.mint,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Pharmacie cible",
+                                style: AppText.label(size: 12),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                widget.pharmacyName,
+                                style: AppText.display(size: 16),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (hasPOS) ...[
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.store_rounded,
+                          size: 18,
+                          color: AppColors.mintDeep,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Sélectionner le point de vente",
+                            style: AppText.body(
+                              size: 14.5,
+                              weight: FontWeight.w700,
+                              height: 1.25,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TonePill(
+                          label: "${_pharmacy!.pointsOfSale.length}",
+                          tone: Tone.mint,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: _pharmacy!.pointsOfSale.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, idx) {
+                          final pos = _pharmacy!.pointsOfSale[idx];
+                          final isSelected = selectedPointOfSale == pos.name;
+                          return Semantics(
+                            selected: isSelected,
+                            child: Pressable(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedPointOfSale = pos.name;
+                                });
+                              },
+                              pressedScale: 0.98,
+                              child: AnimatedContainer(
+                                duration: AppMotion.fast,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.mintTint
+                                      : Colors.white.withValues(alpha: 0.66),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.sm,
+                                  ),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.mint
+                                        : AppColors.line,
+                                    width: isSelected ? 1.6 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.mint
+                                            : AppColors.surfaceSunken,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.storefront_rounded,
+                                        size: 17,
+                                        color: isSelected
+                                            ? AppColors.ink
+                                            : AppColors.textMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            pos.name,
+                                            style: AppText.body(
+                                              size: 14.5,
+                                              weight: isSelected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w600,
+                                              height: 1.25,
+                                            ),
+                                          ),
+                                          if (pos.city.isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.place_outlined,
+                                                  size: 13,
+                                                  color: isSelected
+                                                      ? AppColors.mintDeep
+                                                      : AppColors.textMuted,
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Flexible(
+                                                  child: Text(
+                                                    pos.city,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: AppText.label(
+                                                      size: 12.5,
+                                                      color: isSelected
+                                                          ? AppColors.mintDeep
+                                                          : AppColors.textMuted,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      isSelected
+                                          ? Icons.check_circle_rounded
+                                          : Icons.radio_button_unchecked_rounded,
+                                      size: 22,
+                                      color: isSelected
+                                          ? AppColors.mintDeep
+                                          : AppColors.textFaint,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      "Voulez-vous enregistrer votre Check-in pour cette pharmacie ?",
+                      style: AppText.body(size: 14.5),
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  PrimaryButton.mint(
+                    label: "Confirmer",
+                    icon: Icons.check_rounded,
+                    height: 52,
+                    onPressed: () => Navigator.pop(context, true),
+                  ),
+                  const SizedBox(height: 10),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48,
+                    onPressed: () => Navigator.pop(context, false),
+                  ),
+                ],
               ),
-            );
-          },
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
 
     if (confirm != true) return;
@@ -794,130 +651,69 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
 
   Future<void> _showCommentDialog() async {
     final textController = TextEditingController(text: _visitComment ?? '');
-    final confirm = await showGeneralDialog<bool>(
+    final confirm = await showGlassDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "Commentaire",
-      pageBuilder: (context, anim1, anim2) {
-        final double screenWidth = MediaQuery.of(context).size.width;
-        final double scale = (screenWidth > 600) ? 1.4 : 1.0;
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 24 * scale),
-            padding: EdgeInsets.all(24 * scale),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
+      child: Builder(
+        builder: (context) {
+          final double screenWidth = MediaQuery.of(context).size.width;
+          final double scale = (screenWidth > 600) ? 1.4 : 1.0;
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 420 * scale),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(10 * scale),
-                        decoration: const BoxDecoration(
-                          color: LightModeColors.novoPharmaLightBlue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          color: LightModeColors.novoPharmaBlue,
-                          size: 24 * scale,
-                        ),
+                      TintIcon(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        tone: Tone.mint,
+                        size: 44 * scale,
                       ),
                       SizedBox(width: 14 * scale),
-                      Text(
-                        "Ajouter un commentaire",
-                        style: TextStyle(
-                          fontSize: 18 * scale,
-                          fontWeight: FontWeight.bold,
-                          color: LightModeColors.dashboardTextPrimary,
+                      Expanded(
+                        child: Text(
+                          "Ajouter un commentaire",
+                          style: AppText.display(size: 20 * scale),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20 * scale),
+                  SizedBox(height: 18 * scale),
                   TextField(
                     controller: textController,
                     maxLines: 4,
                     decoration: InputDecoration(
                       hintText: "Saisissez votre commentaire ici...",
-                      hintStyle: TextStyle(fontSize: 14 * scale, color: LightModeColors.novoPharmaGray),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
+                      hintStyle: AppText.body(
+                        size: 15 * scale,
+                        color: AppColors.textMuted,
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue, width: 2),
-                      ),
+                      fillColor: Colors.white.withValues(alpha: 0.72),
                     ),
-                    style: TextStyle(fontSize: 14 * scale),
+                    style: AppText.body(size: 15 * scale),
                   ),
-                  SizedBox(height: 24 * scale),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 14 * scale),
-                            side: const BorderSide(
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            "Annuler",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14 * scale),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 16 * scale),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.novoPharmaBlue,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 14 * scale),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            "Enregistrer",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14 * scale),
-                          ),
-                        ),
-                      ),
-                    ],
+                  SizedBox(height: 22 * scale),
+                  PrimaryButton(
+                    label: "Enregistrer",
+                    icon: Icons.check_rounded,
+                    height: 52 * scale,
+                    onPressed: () => Navigator.pop(context, true),
+                  ),
+                  SizedBox(height: 10 * scale),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48 * scale,
+                    onPressed: () => Navigator.pop(context, false),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
 
     if (confirm == true) {
@@ -983,114 +779,62 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
   }
 
   Future<void> _showPhotoPreviewModal(File imageFile) async {
-    final result = await showGeneralDialog<String>(
+    final result = await showGlassDialog<String>(
       context: context,
       barrierDismissible: false,
-      barrierLabel: "Aperçu de la photo",
-      pageBuilder: (ctx, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
+      child: Builder(
+        builder: (ctx) {
+          return ConstrainedBox(
             constraints: BoxConstraints(
+              maxWidth: 520,
               maxHeight: MediaQuery.of(ctx).size.height * 0.85,
             ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 25,
-                  offset: const Offset(0, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Aperçu de la photo",
+                        style: AppText.display(size: 20),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: MaterialLocalizations.of(ctx).closeButtonTooltip,
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx, 'cancel'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                    child: Image.file(imageFile, fit: BoxFit.contain),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                PrimaryButton(
+                  label: "Confirmer",
+                  icon: Icons.check_rounded,
+                  height: 52,
+                  onPressed: () => Navigator.pop(ctx, 'confirm'),
+                ),
+                const SizedBox(height: 10),
+                SecondaryButton(
+                  label: "Reprendre",
+                  icon: Icons.refresh_rounded,
+                  height: 48,
+                  onPressed: () => Navigator.pop(ctx, 'retake'),
                 ),
               ],
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Aperçu de la photo",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: LightModeColors.dashboardTextPrimary,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.pop(ctx, 'cancel'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Flexible(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.file(
-                        imageFile,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => Navigator.pop(ctx, 'retake'),
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text(
-                            "Reprendre",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => Navigator.pop(ctx, 'confirm'),
-                          icon: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
-                          label: const Text(
-                            "Confirmer",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.novoPharmaBlue,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
 
     if (result == 'confirm') {
@@ -1200,112 +944,55 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
       return false;
     }
 
-    final confirm = await showGeneralDialog<bool>(
+    final confirm = await showGlassDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "Supprimer la photo",
-      pageBuilder: (ctx, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
+      child: Builder(
+        builder: (ctx) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: LightModeColors.lightErrorContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.delete_forever_rounded,
-                      color: LightModeColors.lightError,
-                      size: 32,
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: BlisterIcon(
+                      icon: Icons.delete_forever_rounded,
+                      tone: Tone.coral,
+                      size: 56,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
+                  const SizedBox(height: 18),
+                  Text(
                     "Supprimer la photo ?",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
+                    style: AppText.display(size: 22),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 8),
+                  Text(
                     "Êtes-vous sûr de vouloir supprimer définitivement cette photo de la visite ?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: LightModeColors.novoPharmaGray,
-                    ),
+                    style: AppText.body(size: 14.5),
                   ),
-                  const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Annuler",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.lightError,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            "Supprimer",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 24),
+                  PrimaryButton.coral(
+                    label: "Supprimer",
+                    icon: Icons.delete_outline_rounded,
+                    height: 52,
+                    onPressed: () => Navigator.pop(ctx, true),
+                  ),
+                  const SizedBox(height: 10),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48,
+                    onPressed: () => Navigator.pop(ctx, false),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
 
     if (confirm != true) return false;
@@ -1369,7 +1056,7 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
       context: context,
       barrierDismissible: true,
       barrierLabel: "Photo de la visite",
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: AppColors.ink.withValues(alpha: 0.78),
       transitionDuration: const Duration(milliseconds: 250),
       transitionBuilder: (context, anim, secondaryAnim, child) {
         return FadeTransition(
@@ -1417,128 +1104,117 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
               }
             }
 
-            return Center(
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 18 * scale,
-                    vertical: 24 * scale,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: 520,
-                    maxHeight: screenHeight * 0.82,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22 * scale),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
+            // Round control that stays readable over any photo.
+            Widget navButton(
+              IconData icon,
+              String tooltip,
+              VoidCallback onTap,
+            ) {
+              return Tooltip(
+                message: tooltip,
+                child: Pressable(
+                  onTap: onTap,
+                  pressedScale: 0.9,
+                  semanticLabel: tooltip,
+                  child: Container(
+                    width: 44 * scale,
+                    height: 44 * scale,
+                    decoration: BoxDecoration(
+                      color: AppColors.ink.withValues(alpha: 0.55),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.24),
                       ),
-                    ],
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 20 * scale),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22 * scale),
+                ),
+              );
+            }
+
+            final softWhite = Colors.white.withValues(alpha: 0.78);
+
+            return Center(
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: 18 * scale,
+                  vertical: 24 * scale,
+                ),
+                constraints: BoxConstraints(
+                  maxWidth: 520,
+                  maxHeight: screenHeight * 0.82,
+                ),
+                // Smoked glass: a photo reads best on a dark frame.
+                child: Glass(
+                  style: GlassStyle.smoked,
+                  blur: Glass.frost,
+                  borderRadius: BorderRadius.circular(AppRadii.lg),
+                  child: Material(
+                    type: MaterialType.transparency,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Popup Header
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16 * scale,
-                            vertical: 14 * scale,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: LightModeColors.lightOutlineVariant.withValues(alpha: 0.6),
-                              ),
-                            ),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            16 * scale,
+                            10 * scale,
+                            6 * scale,
+                            10 * scale,
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                padding: EdgeInsets.all(7 * scale),
-                                decoration: BoxDecoration(
-                                  color: LightModeColors.novoPharmaLightBlue,
-                                  borderRadius: BorderRadius.circular(10 * scale),
-                                ),
-                                child: Icon(
-                                  Icons.photo_library_rounded,
-                                  color: LightModeColors.novoPharmaBlue,
-                                  size: 18 * scale,
-                                ),
+                              TintIcon(
+                                icon: Icons.photo_library_rounded,
+                                tone: Tone.indigo,
+                                size: 38 * scale,
                               ),
-                              SizedBox(width: 10 * scale),
+                              SizedBox(width: 12 * scale),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       "Photo ${currentIndex + 1} sur ${_visitPhotos.length}",
-                                      style: TextStyle(
-                                        fontSize: 15 * scale,
-                                        fontWeight: FontWeight.bold,
-                                        color: LightModeColors.dashboardTextPrimary,
+                                      style: AppText.display(
+                                        size: 16 * scale,
+                                        color: Colors.white,
                                       ),
                                     ),
-                                    if (takenDate != null)
+                                    if (takenDate != null) ...[
+                                      SizedBox(height: 3 * scale),
                                       Text(
                                         "${takenDate.day.toString().padLeft(2, '0')}/${takenDate.month.toString().padLeft(2, '0')}/${takenDate.year} à ${takenDate.hour.toString().padLeft(2, '0')}:${takenDate.minute.toString().padLeft(2, '0')}",
-                                        style: TextStyle(
-                                          fontSize: 11 * scale,
-                                          color: LightModeColors.novoPharmaGray,
-                                          fontWeight: FontWeight.w500,
+                                        style: AppText.label(
+                                          size: 12 * scale,
+                                          color: softWhite,
                                         ),
                                       ),
+                                    ],
                                   ],
                                 ),
                               ),
                               // Delete Button (when session is active)
-                              if (_isActiveSession && photo != null) ...[
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(20),
-                                    onTap: handleDeletePhoto,
-                                    child: Container(
-                                      padding: EdgeInsets.all(6 * scale),
-                                      decoration: const BoxDecoration(
-                                        color: LightModeColors.lightErrorContainer,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.delete_outline_rounded,
-                                        color: LightModeColors.lightError,
-                                        size: 18 * scale,
-                                      ),
-                                    ),
+                              if (_isActiveSession && photo != null)
+                                IconButton(
+                                  tooltip: "Supprimer",
+                                  onPressed: handleDeletePhoto,
+                                  icon: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: AppColors.coral,
+                                    size: 22 * scale,
                                   ),
                                 ),
-                                SizedBox(width: 8 * scale),
-                              ],
                               // Close Button
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () => Navigator.pop(dialogCtx),
-                                  child: Container(
-                                    padding: EdgeInsets.all(6 * scale),
-                                    decoration: const BoxDecoration(
-                                      color: LightModeColors.novoPharmaLightGray,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.close_rounded,
-                                      color: LightModeColors.dashboardTextSecondary,
-                                      size: 18 * scale,
-                                    ),
-                                  ),
+                              IconButton(
+                                tooltip: MaterialLocalizations.of(
+                                  dialogCtx,
+                                ).closeButtonTooltip,
+                                onPressed: () => Navigator.pop(dialogCtx),
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 22 * scale,
                                 ),
                               ),
                             ],
@@ -1548,7 +1224,7 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                         // Image Area with PageView and Pinch-to-zoom
                         Flexible(
                           child: Container(
-                            color: const Color(0xFF0F172A),
+                            color: AppColors.ink,
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
@@ -1570,9 +1246,9 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                                           imageUrl: currentUrl,
                                           fit: BoxFit.contain,
                                           placeholder: (_, __) => const Center(
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2.5,
+                                            child: CapsuleLoader(
+                                              left: Colors.white,
+                                              right: AppColors.mintBright,
                                             ),
                                           ),
                                           errorWidget: (_, __, ___) => Column(
@@ -1580,15 +1256,15 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                                             children: [
                                               Icon(
                                                 Icons.broken_image_rounded,
-                                                color: Colors.white54,
+                                                color: softWhite,
                                                 size: 48 * scale,
                                               ),
                                               SizedBox(height: 8 * scale),
                                               Text(
                                                 "Image indisponible",
-                                                style: TextStyle(
-                                                  color: Colors.white54,
-                                                  fontSize: 12 * scale,
+                                                style: AppText.body(
+                                                  size: 13 * scale,
+                                                  color: softWhite,
                                                 ),
                                               ),
                                             ],
@@ -1603,26 +1279,17 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                                 if (_visitPhotos.length > 1 && currentIndex > 0)
                                   Positioned(
                                     left: 10 * scale,
-                                    child: GestureDetector(
-                                      onTap: () {
+                                    child: navButton(
+                                      Icons.arrow_back_rounded,
+                                      MaterialLocalizations.of(
+                                        dialogCtx,
+                                      ).previousPageTooltip,
+                                      () {
                                         pageController.previousPage(
                                           duration: const Duration(milliseconds: 250),
                                           curve: Curves.easeInOut,
                                         );
                                       },
-                                      child: Container(
-                                        padding: EdgeInsets.all(8 * scale),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black54,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.white24, width: 1),
-                                        ),
-                                        child: Icon(
-                                          Icons.arrow_back_ios_new_rounded,
-                                          color: Colors.white,
-                                          size: 16 * scale,
-                                        ),
-                                      ),
                                     ),
                                   ),
 
@@ -1630,26 +1297,17 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                                 if (_visitPhotos.length > 1 && currentIndex < _visitPhotos.length - 1)
                                   Positioned(
                                     right: 10 * scale,
-                                    child: GestureDetector(
-                                      onTap: () {
+                                    child: navButton(
+                                      Icons.arrow_forward_rounded,
+                                      MaterialLocalizations.of(
+                                        dialogCtx,
+                                      ).nextPageTooltip,
+                                      () {
                                         pageController.nextPage(
                                           duration: const Duration(milliseconds: 250),
                                           curve: Curves.easeInOut,
                                         );
                                       },
-                                      child: Container(
-                                        padding: EdgeInsets.all(8 * scale),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black54,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.white24, width: 1),
-                                        ),
-                                        child: Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          color: Colors.white,
-                                          size: 16 * scale,
-                                        ),
-                                      ),
                                     ),
                                   ),
                               ],
@@ -1658,66 +1316,51 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                         ),
 
                         // Popup Footer
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16 * scale,
-                            vertical: 10 * scale,
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            16 * scale,
+                            4 * scale,
+                            8 * scale,
+                            4 * scale,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              top: BorderSide(
-                                color: LightModeColors.lightOutlineVariant.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.zoom_in_rounded,
-                                    size: 15 * scale,
-                                    color: LightModeColors.novoPharmaGray,
-                                  ),
-                                  SizedBox(width: 6 * scale),
-                                  Text(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minHeight: 48 * scale),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.zoom_in_rounded,
+                                  size: 16 * scale,
+                                  color: softWhite,
+                                ),
+                                SizedBox(width: 6 * scale),
+                                Expanded(
+                                  child: Text(
                                     "Pincez pour zoomer • Glissez",
-                                    style: TextStyle(
-                                      fontSize: 11 * scale,
-                                      color: LightModeColors.novoPharmaGray,
-                                      fontWeight: FontWeight.w500,
+                                    style: AppText.label(
+                                      size: 12 * scale,
+                                      color: softWhite,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              if (_isActiveSession && photo != null)
-                                TextButton.icon(
-                                  onPressed: handleDeletePhoto,
-                                  icon: Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: LightModeColors.lightError,
-                                    size: 16 * scale,
-                                  ),
-                                  label: Text(
-                                    "Supprimer",
-                                    style: TextStyle(
-                                      color: LightModeColors.lightError,
-                                      fontSize: 12 * scale,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 10 * scale,
-                                      vertical: 4 * scale,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
                                 ),
-                            ],
+                                if (_isActiveSession && photo != null)
+                                  TextButton.icon(
+                                    onPressed: handleDeletePhoto,
+                                    icon: Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 18 * scale,
+                                    ),
+                                    label: const Text("Supprimer"),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.coral,
+                                      iconColor: AppColors.coral,
+                                      textStyle: AppText.body(
+                                        size: 14 * scale,
+                                        weight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -1736,388 +1379,352 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
     final hasPhotos = _visitPhotos.isNotEmpty;
     final totalItems = _visitPhotos.length + (_isActiveSession ? 1 : 0);
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16 * scaleFactor),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.photo_library_rounded,
-                    color: LightModeColors.novoPharmaBlue,
-                    size: 20 * scaleFactor,
-                  ),
-                  SizedBox(width: 8 * scaleFactor),
-                  Text(
-                    "Photos de la visite (${_visitPhotos.length})",
-                    style: TextStyle(
-                      fontSize: 15 * scaleFactor,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                  ),
-                  if (totalItems >= 4) ...[
-                    SizedBox(width: 6 * scaleFactor),
-                    AnimatedBuilder(
-                      animation: _arrowAnimation,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(_arrowAnimation.value * 0.7 * scaleFactor, 0),
-                          child: child,
-                        );
-                      },
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 16 * scaleFactor,
-                        color: LightModeColors.novoPharmaBlue,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (_isActiveSession)
-                TextButton.icon(
-                  onPressed: _isUploadingPhoto ? null : _takeAndPreviewPhoto,
-                  icon: _isUploadingPhoto
-                      ? SizedBox(
-                          width: 14 * scaleFactor,
-                          height: 14 * scaleFactor,
-                          child: const CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(
-                          Icons.add_a_photo_rounded,
-                          size: 16 * scaleFactor,
-                          color: LightModeColors.novoPharmaBlue,
-                        ),
-                  label: Text(
-                    "Prendre",
-                    style: TextStyle(
-                      fontSize: 12 * scaleFactor,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.novoPharmaBlue,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8 * scaleFactor,
-                      vertical: 4 * scaleFactor,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(height: 12 * scaleFactor),
-          if (!hasPhotos && _isActiveSession)
-            InkWell(
-              onTap: _isUploadingPhoto ? null : _takeAndPreviewPhoto,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  vertical: 18 * scaleFactor,
-                  horizontal: 14 * scaleFactor,
-                ),
-                decoration: BoxDecoration(
-                  color: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(10 * scaleFactor),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: _isUploadingPhoto
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              Icons.add_a_photo_rounded,
-                              color: LightModeColors.novoPharmaBlue,
-                              size: 20 * scaleFactor,
-                            ),
-                    ),
-                    SizedBox(width: 12 * scaleFactor),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Ajouter des photos de la visite",
-                            style: TextStyle(
-                              fontSize: 13 * scaleFactor,
-                              fontWeight: FontWeight.bold,
-                              color: LightModeColors.dashboardTextPrimary,
-                            ),
-                          ),
-                          SizedBox(height: 2 * scaleFactor),
-                          Text(
-                            "Photographiez vos vitrines, gondoles ou linéaires",
-                            style: TextStyle(
-                              fontSize: 11 * scaleFactor,
-                              color: LightModeColors.novoPharmaGray,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 13 * scaleFactor,
-                      color: LightModeColors.novoPharmaBlue,
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (!hasPhotos && !_isActiveSession)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8 * scaleFactor),
-              child: Text(
-                "Aucune photo enregistrée pour cette visite.",
-                style: TextStyle(
-                  fontSize: 12 * scaleFactor,
-                  color: LightModeColors.novoPharmaGray,
-                ),
-              ),
-            )
-          else
-            SizedBox(
-              height: 90 * scaleFactor,
-              child: Stack(
-                children: [
-                  ListView.separated(
-                    controller: _photosScrollController,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: totalItems,
-                    separatorBuilder: (_, __) => SizedBox(width: 10 * scaleFactor),
-                    itemBuilder: (context, idx) {
-                      if (_isActiveSession && idx == 0) {
-                        return GestureDetector(
-                          onTap: _isUploadingPhoto ? null : _takeAndPreviewPhoto,
-                          child: Container(
-                            width: 85 * scaleFactor,
-                            height: 90 * scaleFactor,
-                            decoration: BoxDecoration(
-                              color: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (_isUploadingPhoto)
-                                  const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                else
-                                  Icon(
-                                    Icons.add_a_photo_rounded,
-                                    color: LightModeColors.novoPharmaBlue,
-                                    size: 24 * scaleFactor,
-                                  ),
-                                SizedBox(height: 6 * scaleFactor),
-                                Text(
-                                  "Ajouter",
-                                  style: TextStyle(
-                                    fontSize: 11 * scaleFactor,
-                                    fontWeight: FontWeight.bold,
-                                    color: LightModeColors.novoPharmaBlue,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      final photoIndex = _isActiveSession ? idx - 1 : idx;
-                      final photo = _visitPhotos[photoIndex];
-                      final url = photo['url'] as String? ?? '';
-
-                      return Stack(
-                        children: [
-                          GestureDetector(
-                            onTap: () => _viewPhotoPopup(photoIndex),
-                            child: Container(
-                              width: 90 * scaleFactor,
-                              height: 90 * scaleFactor,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CachedNetworkImage(
-                                  imageUrl: url,
-                                  fit: BoxFit.cover,
-                                  placeholder: (_, __) => Container(
-                                    color: Colors.grey.shade100,
-                                    child: const Center(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (_, __, ___) => Container(
-                                    color: Colors.grey.shade200,
-                                    child: const Icon(Icons.broken_image_rounded, size: 24),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (_isActiveSession)
-                            Positioned(
-                              top: 4 * scaleFactor,
-                              right: 4 * scaleFactor,
-                              child: GestureDetector(
-                                onTap: () => _confirmDeletePhoto(photo),
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.close_rounded,
-                                    color: Colors.white,
-                                    size: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                  if (totalItems >= 4)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: AnimatedOpacity(
-                        opacity: _canScrollRight ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 250),
-                        child: IgnorePointer(
-                          ignoring: !_canScrollRight,
-                          child: GestureDetector(
-                            onTap: () {
-                              if (_photosScrollController.hasClients) {
-                                _photosScrollController.animateTo(
-                                  (_photosScrollController.offset + 120 * scaleFactor)
-                                      .clamp(
-                                        0.0,
-                                        _photosScrollController.position.maxScrollExtent,
-                                      ),
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutCubic,
-                                );
-                              }
-                            },
-                            child: Container(
-                              alignment: Alignment.center,
-                              padding: EdgeInsets.only(
-                                left: 16 * scaleFactor,
-                                right: 2 * scaleFactor,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.0),
-                                    Colors.white.withValues(alpha: 0.8),
-                                    Colors.white,
-                                  ],
-                                ),
-                                borderRadius: const BorderRadius.only(
-                                  topRight: Radius.circular(12),
-                                  bottomRight: Radius.circular(12),
-                                ),
-                              ),
-                              child: AnimatedBuilder(
-                                animation: _arrowAnimation,
-                                builder: (context, child) {
-                                  return Transform.translate(
-                                    offset: Offset(
-                                      _arrowAnimation.value * scaleFactor,
-                                      0,
-                                    ),
-                                    child: child,
-                                  );
-                                },
-                                child: Container(
-                                  width: 28 * scaleFactor,
-                                  height: 28 * scaleFactor,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: LightModeColors.novoPharmaBlue,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: LightModeColors.novoPharmaBlue
-                                            .withValues(alpha: 0.35),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      color: Colors.white,
-                                      size: 13 * scaleFactor,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: SectionHeader(
+                title: "Photos de la visite (${_visitPhotos.length})",
               ),
             ),
-        ],
+            if (_isActiveSession)
+              _buildSectionAction(
+                icon: Icons.add_a_photo_rounded,
+                label: "Prendre",
+                busy: _isUploadingPhoto,
+                onTap: _isUploadingPhoto ? null : _takeAndPreviewPhoto,
+                scaleFactor: scaleFactor,
+              ),
+          ],
+        ),
+        SizedBox(height: 8 * scaleFactor),
+        SoftCard(
+          radius: 24,
+          padding: EdgeInsets.all(14 * scaleFactor),
+          child: !hasPhotos && _isActiveSession
+              ? Pressable(
+                  onTap: _isUploadingPhoto ? null : _takeAndPreviewPhoto,
+                  pressedScale: 0.98,
+                  semanticLabel: "Ajouter des photos de la visite",
+                  child: Row(
+                    children: [
+                      _isUploadingPhoto
+                          ? SizedBox.square(
+                              dimension: 46 * scaleFactor,
+                              child: Center(
+                                child: CapsuleLoader(size: 30 * scaleFactor),
+                              ),
+                            )
+                          : TintIcon(
+                              icon: Icons.add_a_photo_rounded,
+                              tone: Tone.indigo,
+                              size: 46 * scaleFactor,
+                            ),
+                      SizedBox(width: 12 * scaleFactor),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Ajouter des photos de la visite",
+                              style: AppText.display(
+                                size: 15.5 * scaleFactor,
+                                height: 1.15,
+                              ),
+                            ),
+                            SizedBox(height: 3 * scaleFactor),
+                            Text(
+                              "Photographiez vos vitrines, gondoles ou linéaires",
+                              style: AppText.body(
+                                size: 12.5 * scaleFactor,
+                                color: AppColors.textMuted,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8 * scaleFactor),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 22 * scaleFactor,
+                        color: AppColors.textFaint,
+                      ),
+                    ],
+                  ),
+                )
+              : !hasPhotos && !_isActiveSession
+              ? const EmptyState(
+                  icon: Icons.photo_library_outlined,
+                  title: "Aucune photo enregistrée pour cette visite.",
+                )
+              : SizedBox(
+                  height: 92 * scaleFactor,
+                  child: Stack(
+                    children: [
+                      ListView.separated(
+                        controller: _photosScrollController,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: totalItems,
+                        separatorBuilder: (_, __) =>
+                            SizedBox(width: 10 * scaleFactor),
+                        itemBuilder: (context, idx) {
+                          if (_isActiveSession && idx == 0) {
+                            return Pressable(
+                              onTap: _isUploadingPhoto
+                                  ? null
+                                  : _takeAndPreviewPhoto,
+                              semanticLabel: "Ajouter",
+                              child: Container(
+                                width: 86 * scaleFactor,
+                                height: 92 * scaleFactor,
+                                decoration: BoxDecoration(
+                                  color: AppColors.indigoTint,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.sm,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.indigo.withValues(
+                                      alpha: 0.28,
+                                    ),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (_isUploadingPhoto)
+                                      CapsuleLoader(size: 26 * scaleFactor)
+                                    else
+                                      Icon(
+                                        Icons.add_a_photo_rounded,
+                                        color: AppColors.indigo,
+                                        size: 24 * scaleFactor,
+                                      ),
+                                    SizedBox(height: 6 * scaleFactor),
+                                    Text(
+                                      "Ajouter",
+                                      style: AppText.label(
+                                        size: 12 * scaleFactor,
+                                        weight: FontWeight.w700,
+                                        color: AppColors.indigoDeep,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          final photoIndex = _isActiveSession ? idx - 1 : idx;
+                          final photo = _visitPhotos[photoIndex];
+                          final url = photo['url'] as String? ?? '';
+
+                          return Stack(
+                            children: [
+                              Pressable(
+                                onTap: () => _viewPhotoPopup(photoIndex),
+                                semanticLabel:
+                                    "Photo ${photoIndex + 1} sur ${_visitPhotos.length}",
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.sm,
+                                  ),
+                                  child: SizedBox(
+                                    width: 92 * scaleFactor,
+                                    height: 92 * scaleFactor,
+                                    child: CachedNetworkImage(
+                                      imageUrl: url,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => const Shimmer(
+                                        child: SkeletonBox(
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          radius: 0,
+                                        ),
+                                      ),
+                                      errorWidget: (_, __, ___) =>
+                                          const ColoredBox(
+                                            color: AppColors.surfaceSunken,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.broken_image_rounded,
+                                                size: 24,
+                                                color: AppColors.textFaint,
+                                              ),
+                                            ),
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (_isActiveSession)
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Pressable(
+                                    onTap: () => _confirmDeletePhoto(photo),
+                                    pressedScale: 0.9,
+                                    semanticLabel: "Supprimer",
+                                    // A 44pt target around a small glyph.
+                                    child: SizedBox.square(
+                                      dimension: 44,
+                                      child: Align(
+                                        alignment: Alignment.topRight,
+                                        child: Container(
+                                          margin: const EdgeInsets.all(5),
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.ink.withValues(
+                                              alpha: 0.62,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close_rounded,
+                                            color: Colors.white,
+                                            size: 15,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      if (totalItems >= 4)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: AnimatedOpacity(
+                            opacity: _canScrollRight ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 250),
+                            child: IgnorePointer(
+                              ignoring: !_canScrollRight,
+                              child: Pressable(
+                                semanticLabel: MaterialLocalizations.of(
+                                  context,
+                                ).nextPageTooltip,
+                                onTap: () {
+                                  if (_photosScrollController.hasClients) {
+                                    _photosScrollController.animateTo(
+                                      (_photosScrollController.offset + 120 * scaleFactor)
+                                          .clamp(
+                                            0.0,
+                                            _photosScrollController.position.maxScrollExtent,
+                                          ),
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeOutCubic,
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.only(
+                                    left: 18 * scaleFactor,
+                                    right: 2 * scaleFactor,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.0),
+                                        Colors.white.withValues(alpha: 0.82),
+                                        Colors.white.withValues(alpha: 0.94),
+                                      ],
+                                    ),
+                                    borderRadius: const BorderRadius.horizontal(
+                                      right: Radius.circular(AppRadii.sm),
+                                    ),
+                                  ),
+                                  child: AnimatedBuilder(
+                                    animation: _arrowAnimation,
+                                    builder: (context, child) {
+                                      return Transform.translate(
+                                        offset: Offset(
+                                          AppMotion.reduced(context)
+                                              ? 0
+                                              : _arrowAnimation.value * scaleFactor,
+                                          0,
+                                        ),
+                                        child: child,
+                                      );
+                                    },
+                                    child: Container(
+                                      width: 30 * scaleFactor,
+                                      height: 30 * scaleFactor,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: AppGradients.indigo,
+                                        boxShadow: AppShadows.glow(
+                                          AppColors.indigo,
+                                          strength: 0.3,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: Colors.white,
+                                        size: 16 * scaleFactor,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  /// A compact text action for a section title, sized for a thumb.
+  Widget _buildSectionAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+    required double scaleFactor,
+    bool busy = false,
+  }) {
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: label,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: 44 * scaleFactor),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 10 * scaleFactor,
+            right: 2 * scaleFactor,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (busy)
+                CapsuleLoader(size: 20 * scaleFactor)
+              else
+                Icon(icon, size: 18 * scaleFactor, color: AppColors.indigo),
+              SizedBox(width: 6 * scaleFactor),
+              Text(
+                label,
+                style: AppText.label(
+                  size: 14 * scaleFactor,
+                  weight: FontWeight.w700,
+                  color: AppColors.indigo,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2127,171 +1734,126 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
 
     final basketProvider = Provider.of<BasketProvider>(context, listen: false);
     if (basketProvider.hasOpenBasket) {
-      showDialog(
+      showGlassDialog<void>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Panier en cours"),
-          content: Text(
-            "Vous avez un panier ouvert contenant ${basketProvider.totalItemsCount} article(s). Veuillez le clôturer ou l'annuler avant d'effectuer le check-out.",
+        child: Builder(
+          builder: (ctx) => ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(
+                  child: BlisterIcon(
+                    icon: Icons.shopping_basket_rounded,
+                    tone: Tone.peach,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Panier en cours",
+                  textAlign: TextAlign.center,
+                  style: AppText.display(size: 21),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Vous avez un panier ouvert contenant ${basketProvider.totalItemsCount} article(s). Veuillez le clôturer ou l'annuler avant d'effectuer le check-out.",
+                  textAlign: TextAlign.center,
+                  style: AppText.body(
+                    size: 14.5,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 22),
+                PrimaryButton(
+                  label: "Voir le panier",
+                  icon: Icons.shopping_cart_rounded,
+                  gradient: Tone.peach.gradient,
+                  glowColor: AppColors.peach,
+                  foreground: AppColors.ink,
+                  height: 52,
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pushNamed(context, '/basket');
+                  },
+                ),
+                const SizedBox(height: 10),
+                SecondaryButton(
+                  label: "Fermer",
+                  height: 48,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Fermer"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/basket');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LightModeColors.novoPharmaBlue,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text("Voir le panier"),
-            ),
-          ],
         ),
       );
       return;
     }
 
-    final confirm = await showGeneralDialog<bool>(
+    final confirm = await showGlassDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "Confirmation",
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
+      child: Builder(
+        builder: (context) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: LightModeColors.lightErrorContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.logout_rounded,
-                      color: LightModeColors.lightError,
-                      size: 32,
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: BlisterIcon(
+                      icon: Icons.logout_rounded,
+                      tone: Tone.coral,
+                      size: 56,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
+                  const SizedBox(height: 18),
+                  Text(
                     "Confirmer le Check-out",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
+                    style: AppText.display(size: 22),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 8),
+                  Text(
                     "Voulez-vous vraiment enregistrer votre Check-out et terminer votre visite ?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: LightModeColors.novoPharmaGray,
-                    ),
+                    style: AppText.body(size: 14.5),
                   ),
                   if (_visitComment == null || _visitComment!.trim().isEmpty) ...[
                     const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context, false);
-                          _showCommentDialog();
-                        },
-                        icon: const Icon(Icons.chat_bubble_outline_rounded, color: LightModeColors.novoPharmaBlue, size: 18),
-                        label: const Text(
-                          "Ajouter un commentaire",
-                          style: TextStyle(
-                            color: LightModeColors.novoPharmaBlue,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: const BorderSide(color: LightModeColors.novoPharmaBlue),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
+                    SecondaryButton(
+                      label: "Ajouter un commentaire",
+                      icon: Icons.chat_bubble_outline_rounded,
+                      tone: Tone.mint,
+                      height: 48,
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                        _showCommentDialog();
+                      },
                     ),
                   ],
-                  const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                              color: LightModeColors.novoPharmaGray,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Annuler",
-                            style: TextStyle(
-                              color: LightModeColors.novoPharmaGray,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.lightError,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Déconnexion",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 24),
+                  PrimaryButton.coral(
+                    label: "Déconnexion",
+                    icon: Icons.logout_rounded,
+                    height: 52,
+                    onPressed: () => Navigator.pop(context, true),
+                  ),
+                  const SizedBox(height: 10),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48,
+                    onPressed: () => Navigator.pop(context, false),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
 
     if (confirm != true) return;
@@ -2398,357 +1960,372 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
       currentIndex: 0,
       onTap: (index) {},
       child: Scaffold(
-        backgroundColor: LightModeColors.novoPharmaLightGray,
-        appBar: AppBar(
-          title: const Text(
-            "Profil de la Pharmacie",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          foregroundColor: LightModeColors.dashboardTextPrimary,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-            onPressed: () {
-              if (_isActiveSession) {
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/dashboard_home', (route) => false);
-              } else {
-                Navigator.pop(context);
-              }
-            },
-          ),
-          actions: [
-            if (_isActiveSession)
-              IconButton(
-                icon: _isCheckingOut
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: LightModeColors.lightError,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.logout_rounded,
-                        color: LightModeColors.lightError,
-                      ),
-                tooltip: "Check-out",
-                onPressed: _isCheckingOut ? null : _handleCheckOut,
-              ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _locationPermissionGranted == false
-            ? _buildGPSBlocker()
-            : SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 18.0 * scaleFactor,
-                  vertical: 16.0 * scaleFactor,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Unified Pharmacy Hero Card
-                    _buildPharmacyHeroCard(pharmacyName, scaleFactor),
-                    SizedBox(height: 16 * scaleFactor),
-
-                    // 2. State-dependent sections:
-                    if (!_isActiveSession) ...[
-                      // Not active: either warning or check-in card
-                      if (_globalActivePharmacyId != null && isDermo) ...[
-                        _buildActiveElsewhereWarning(scaleFactor),
-                        SizedBox(height: 16 * scaleFactor),
-                      ] else if (_globalActivePharmacyId == null && isDermo) ...[
-                        _buildCheckInCard(scaleFactor),
-                        SizedBox(height: 16 * scaleFactor),
-                      ],
-                    ] else ...[
-                      // Active Session: Visit Workflow Dashboard
-
-                      // 2.1 Local Draft Notice (if any)
-                      if (_hasLocalDraft) ...[
-                        _buildDraftAlertBanner(scaleFactor),
-                      ],
-
-                      // 2.2 Visit Actions Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 4 * scaleFactor,
-                                height: 16 * scaleFactor,
-                                decoration: BoxDecoration(
-                                  color: LightModeColors.novoPharmaBlue,
-                                  borderRadius: BorderRadius.circular(2),
+        // The wrapper paints the pastel canvas; this page stays clear glass.
+        backgroundColor: Colors.transparent,
+        // Builder: below the wrapper, the bottom padding is the height of
+        // the glass dock the page scrolls under.
+        body: Builder(
+          builder: (context) => SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.paddingOf(context).bottom + 20,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Ink hero: the pharmacy and the state of the visit.
+                InkHero(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpace.page * scaleFactor,
+                    10,
+                    AppSpace.page * scaleFactor,
+                    24,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Entrance(
+                        offset: const Offset(0, -12),
+                        child: Row(
+                          children: [
+                            GlassIconButton(
+                              icon: Icons.arrow_back_rounded,
+                              tooltip: MaterialLocalizations.of(
+                                context,
+                              ).backButtonTooltip,
+                              onTap: () {
+                                if (_isActiveSession) {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamedAndRemoveUntil('/dashboard_home', (route) => false);
+                                } else {
+                                  Navigator.pop(context);
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Profil de la Pharmacie",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppText.display(
+                                  size: 19 * scaleFactor,
+                                  color: Colors.white,
                                 ),
                               ),
-                              SizedBox(width: 8 * scaleFactor),
-                              Text(
-                                "Actions de la visite",
-                                style: TextStyle(
-                                  fontSize: 16 * scaleFactor,
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.dashboardTextPrimary,
-                                ),
-                              ),
+                            ),
+                            if (_isActiveSession) ...[
+                              const SizedBox(width: 8),
+                              _isCheckingOut
+                                  ? const SizedBox.square(
+                                      dimension: 44,
+                                      child: Center(
+                                        child: CapsuleLoader(
+                                          size: 28,
+                                          left: Colors.white,
+                                          right: AppColors.mintBright,
+                                        ),
+                                      ),
+                                    )
+                                  : GlassIconButton(
+                                      icon: Icons.logout_rounded,
+                                      tooltip: "Check-out",
+                                      onTap: _handleCheckOut,
+                                    ),
                             ],
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8 * scaleFactor,
-                              vertical: 3 * scaleFactor,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 18 * scaleFactor),
+
+                      // 1. Pharmacy identity and visit status
+                      _buildPharmacyHeroCard(pharmacyName, scaleFactor),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpace.page * scaleFactor,
+                    22 * scaleFactor,
+                    AppSpace.page * scaleFactor,
+                    0,
+                  ),
+                  // One arrival for the canvas; later reloads swap in place.
+                  child: Entrance(
+                    delay: const Duration(milliseconds: 280),
+                    child: _isLoading
+                        ? Shimmer(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Container(
-                                  width: 6 * scaleFactor,
-                                  height: 6 * scaleFactor,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF10B981),
-                                    shape: BoxShape.circle,
-                                  ),
+                                const Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: SkeletonBox(width: 190, height: 22),
                                 ),
-                                SizedBox(width: 4 * scaleFactor),
-                                Text(
-                                  "Visite active",
-                                  style: TextStyle(
-                                    fontSize: 11 * scaleFactor,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF047857),
+                                SizedBox(height: 14 * scaleFactor),
+                                for (var i = 0; i < 2; i++) ...[
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: SkeletonBox(
+                                          height: 112 * scaleFactor,
+                                          radius: 24,
+                                        ),
+                                      ),
+                                      SizedBox(width: 12 * scaleFactor),
+                                      Expanded(
+                                        child: SkeletonBox(
+                                          height: 112 * scaleFactor,
+                                          radius: 24,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                  SizedBox(height: 12 * scaleFactor),
+                                ],
+                                SizedBox(height: 12 * scaleFactor),
+                                SkeletonBox(
+                                  height: 120 * scaleFactor,
+                                  radius: 24,
                                 ),
                               ],
                             ),
+                          )
+                        : _locationPermissionGranted == false
+                        ? _buildGPSBlocker()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // 2. State-dependent sections:
+                              if (!_isActiveSession) ...[
+                                // Not active: either warning or check-in card
+                                if (_globalActivePharmacyId != null && isDermo) ...[
+                                  _buildActiveElsewhereWarning(scaleFactor),
+                                  SizedBox(height: 16 * scaleFactor),
+                                ] else if (_globalActivePharmacyId == null && isDermo) ...[
+                                  _buildCheckInCard(scaleFactor),
+                                  SizedBox(height: 16 * scaleFactor),
+                                ],
+                              ] else ...[
+                                // Active Session: Visit Workflow Dashboard
+
+                                // 2.1 Local Draft Notice (if any)
+                                if (_hasLocalDraft) ...[
+                                  _buildDraftAlertBanner(scaleFactor),
+                                ],
+
+                                // 2.2 Visit Actions Section
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: SectionHeader(
+                                        title: "Actions de la visite",
+                                      ),
+                                    ),
+                                    SizedBox(width: 8 * scaleFactor),
+                                    const TonePill(
+                                      label: "Visite active",
+                                      tone: Tone.mint,
+                                      icon: Icons.fiber_manual_record_rounded,
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 12 * scaleFactor),
+
+                                // 2.3 Ergonomic Quick Actions Grid
+                                _buildVisitActionsGrid(isDermo, scaleFactor),
+                                SizedBox(height: 24 * scaleFactor),
+
+                                // 2.4 Visit Comment Display Card (if written)
+                                if (_visitComment != null && _visitComment!.trim().isNotEmpty) ...[
+                                  _buildVisitCommentCard(scaleFactor),
+                                  SizedBox(height: 24 * scaleFactor),
+                                ],
+
+                                // 2.5 Photos Gallery Card
+                                _buildPhotosGallery(scaleFactor),
+                                SizedBox(height: 28 * scaleFactor),
+
+                                // 2.6 Bottom Check-out Card
+                                _buildCheckOutCard(scaleFactor),
+                              ],
+                            ],
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 12 * scaleFactor),
-
-                      // 2.3 Ergonomic Quick Actions Grid
-                      _buildVisitActionsGrid(isDermo, scaleFactor),
-                      SizedBox(height: 16 * scaleFactor),
-
-                      // 2.4 Visit Comment Display Card (if written)
-                      if (_visitComment != null && _visitComment!.trim().isNotEmpty) ...[
-                        _buildVisitCommentCard(scaleFactor),
-                        SizedBox(height: 16 * scaleFactor),
-                      ],
-
-                      // 2.5 Photos Gallery Card
-                      _buildPhotosGallery(scaleFactor),
-                      SizedBox(height: 20 * scaleFactor),
-
-                      // 2.6 Bottom Check-out Card
-                      _buildCheckOutCard(scaleFactor),
-                    ],
-
-                    SizedBox(height: 50 * scaleFactor),
-                  ],
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
+  /// The hero's content on ink: the pharmacy's name, the visit status in a
+  /// dark glass card, then how to reach the place.
   Widget _buildPharmacyHeroCard(String pharmacyName, double scaleFactor) {
     final hasPhone = _pharmacy != null && _pharmacy!.phone.trim().isNotEmpty;
     final hasAddress = _pharmacy != null && _pharmacy!.address.trim().isNotEmpty;
     final cityZone = _pharmacy != null ? "${_pharmacy!.city} / ${_pharmacy!.zone}".trim() : "";
+    // The visit state is only known once the first load has gone through.
+    final showVisit = _locationPermissionGranted && !(_isLoading && _pharmacy == null);
+    final soft = Colors.white.withValues(alpha: 0.86);
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: LightModeColors.lightOutlineVariant.withValues(alpha: 0.7),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Gradient Banner Header
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(18 * scaleFactor),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  LightModeColors.novoPharmaBlue,
-                  LightModeColors.lightPrimary,
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Entrance(
+          delay: const Duration(milliseconds: 80),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                pharmacyName,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.display(
+                  size: 28 * scaleFactor,
+                  color: Colors.white,
+                ),
               ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(19),
-                topRight: Radius.circular(19),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(10 * scaleFactor),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.local_hospital_rounded,
-                        color: Colors.white,
-                        size: 26 * scaleFactor,
-                      ),
+              if (_pharmacy != null && _pharmacy!.clientCategory.isNotEmpty) ...[
+                SizedBox(height: 10 * scaleFactor),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10 * scaleFactor,
+                    vertical: 5 * scaleFactor,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
-                    SizedBox(width: 12 * scaleFactor),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            pharmacyName,
-                            style: TextStyle(
-                              fontSize: 18 * scaleFactor,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          if (_pharmacy != null && _pharmacy!.clientCategory.isNotEmpty) ...[
-                            SizedBox(height: 6 * scaleFactor),
+                  ),
+                  child: Text(
+                    _pharmacy!.clientCategory,
+                    style: AppText.label(
+                      size: 12 * scaleFactor,
+                      weight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (showVisit) ...[
+          SizedBox(height: 16 * scaleFactor),
+
+          // Visit status, live
+          Entrance(
+            delay: const Duration(milliseconds: 160),
+            scaleFrom: 0.96,
+            child: SoftCard(
+              style: GlassStyle.dark,
+              blur: Glass.frost,
+              radius: AppRadii.md,
+              padding: EdgeInsets.all(14 * scaleFactor),
+              child: Row(
+                children: [
+                  BlisterIcon(
+                    icon: Icons.local_pharmacy_rounded,
+                    tone: Tone.mint,
+                    size: 46 * scaleFactor,
+                    glow: _isActiveSession,
+                  ),
+                  SizedBox(width: 12 * scaleFactor),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            // The "live" dot
                             Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8 * scaleFactor,
-                                vertical: 3 * scaleFactor,
-                              ),
+                              width: 9 * scaleFactor,
+                              height: 9 * scaleFactor,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
+                                shape: BoxShape.circle,
+                                color: _isActiveSession
+                                    ? AppColors.mintBright
+                                    : Colors.white.withValues(alpha: 0.5),
+                                boxShadow: _isActiveSession
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.mint.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                          blurRadius: 8,
+                                        ),
+                                      ]
+                                    : null,
                               ),
+                            ),
+                            SizedBox(width: 8 * scaleFactor),
+                            Flexible(
                               child: Text(
-                                _pharmacy!.clientCategory,
-                                style: TextStyle(
+                                _isActiveSession ? "En visite" : "Non débutée",
+                                style: AppText.display(
+                                  size: 18 * scaleFactor,
                                   color: Colors.white,
-                                  fontSize: 11 * scaleFactor,
-                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                    // Status Badge Pill
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10 * scaleFactor,
-                        vertical: 5 * scaleFactor,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _isActiveSession
-                            ? const Color(0xFF10B981)
-                            : Colors.white.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: _isActiveSession
-                            ? [
-                                BoxShadow(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6 * scaleFactor,
-                            height: 6 * scaleFactor,
-                            decoration: BoxDecoration(
-                              color: _isActiveSession ? Colors.white : Colors.white70,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 5 * scaleFactor),
-                          Text(
-                            _isActiveSession ? "En visite" : "Non débutée",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11 * scaleFactor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (_activePointOfSale != null && _activePointOfSale!.isNotEmpty) ...[
-                  SizedBox(height: 12 * scaleFactor),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10 * scaleFactor,
-                      vertical: 4 * scaleFactor,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.storefront_rounded, color: Colors.white, size: 14 * scaleFactor),
-                        SizedBox(width: 6 * scaleFactor),
-                        Text(
-                          "Point de vente : $_activePointOfSale",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12 * scaleFactor,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
+                        if (_activePointOfSale != null && _activePointOfSale!.isNotEmpty) ...[
+                          SizedBox(height: 5 * scaleFactor),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.storefront_rounded,
+                                color: soft,
+                                size: 15 * scaleFactor,
+                              ),
+                              SizedBox(width: 6 * scaleFactor),
+                              Expanded(
+                                child: Text(
+                                  "Point de vente : $_activePointOfSale",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppText.body(
+                                    size: 13.5 * scaleFactor,
+                                    weight: FontWeight.w600,
+                                    color: soft,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
-              ],
+              ),
             ),
           ),
+          SizedBox(height: 14 * scaleFactor),
 
           // Quick Information & Contact Strip
-          Padding(
-            padding: EdgeInsets.all(14 * scaleFactor),
+          Entrance(
+            delay: const Duration(milliseconds: 220),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 16 * scaleFactor,
-                      color: LightModeColors.novoPharmaBlue,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Icon(
+                        Icons.location_on_outlined,
+                        size: 17 * scaleFactor,
+                        color: soft,
+                      ),
                     ),
                     SizedBox(width: 8 * scaleFactor),
                     Expanded(
@@ -2756,94 +2333,38 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
                         hasAddress
                             ? "${_pharmacy!.address}${cityZone.isNotEmpty ? " • $cityZone" : ""}"
                             : (cityZone.isNotEmpty ? cityZone : "Adresse non spécifiée"),
-                        style: TextStyle(
-                          fontSize: 12 * scaleFactor,
-                          color: LightModeColors.dashboardTextPrimary,
-                          fontWeight: FontWeight.w500,
+                        style: AppText.body(
+                          size: 13.5 * scaleFactor,
+                          color: soft,
+                          weight: FontWeight.w500,
+                          height: 1.3,
                         ),
                       ),
                     ),
                   ],
                 ),
                 if (hasPhone || hasAddress || _pharmacy?.location != null) ...[
-                  SizedBox(height: 10 * scaleFactor),
-                  Row(
+                  SizedBox(height: 12 * scaleFactor),
+                  Wrap(
+                    spacing: 10 * scaleFactor,
+                    runSpacing: 8 * scaleFactor,
                     children: [
                       if (hasPhone)
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _callPhone(_pharmacy!.phone),
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 7 * scaleFactor,
-                                horizontal: 10 * scaleFactor,
-                              ),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.phone_rounded, size: 13 * scaleFactor, color: LightModeColors.novoPharmaBlue),
-                                  SizedBox(width: 6 * scaleFactor),
-                                  Flexible(
-                                    child: Text(
-                                      _pharmacy!.phone,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 11 * scaleFactor,
-                                        fontWeight: FontWeight.bold,
-                                        color: LightModeColors.novoPharmaBlue,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        _buildHeroChip(
+                          icon: Icons.phone_rounded,
+                          label: _pharmacy!.phone,
+                          onTap: () => _callPhone(_pharmacy!.phone),
+                          scaleFactor: scaleFactor,
                         ),
-                      if (hasPhone && (hasAddress || _pharmacy?.location != null))
-                        SizedBox(width: 10 * scaleFactor),
                       if (hasAddress || _pharmacy?.location != null)
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _openMap(
-                              _pharmacy?.address ?? widget.pharmacyName,
-                              _pharmacy?.location,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 7 * scaleFactor,
-                                horizontal: 10 * scaleFactor,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.directions_rounded, size: 14 * scaleFactor, color: LightModeColors.dashboardTextPrimary),
-                                  SizedBox(width: 6 * scaleFactor),
-                                  Text(
-                                    "Itinéraire",
-                                    style: TextStyle(
-                                      fontSize: 11 * scaleFactor,
-                                      fontWeight: FontWeight.bold,
-                                      color: LightModeColors.dashboardTextPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        _buildHeroChip(
+                          icon: Icons.directions_rounded,
+                          label: "Itinéraire",
+                          onTap: () => _openMap(
+                            _pharmacy?.address ?? widget.pharmacyName,
+                            _pharmacy?.location,
                           ),
+                          scaleFactor: scaleFactor,
                         ),
                     ],
                   ),
@@ -2852,109 +2373,136 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  /// A compact dark-glass pill for the hero's contact actions.
+  Widget _buildHeroChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required double scaleFactor,
+  }) {
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: label,
+      child: Glass(
+        style: GlassStyle.dark,
+        shadow: false,
+        height: 44 * scaleFactor,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        padding: EdgeInsets.symmetric(horizontal: 14 * scaleFactor),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 17 * scaleFactor, color: Colors.white),
+            SizedBox(width: 7 * scaleFactor),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body(
+                  size: 14 * scaleFactor,
+                  weight: FontWeight.w700,
+                  color: Colors.white,
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDraftAlertBanner(double scaleFactor) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 16 * scaleFactor),
-      padding: EdgeInsets.all(14 * scaleFactor),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFFFB74D),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8 * scaleFactor),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFE082),
-              shape: BoxShape.circle,
+    return Padding(
+      padding: EdgeInsets.only(bottom: 20 * scaleFactor),
+      child: SoftCard(
+        tint: AppColors.amberTint,
+        radius: 24,
+        padding: EdgeInsets.all(14 * scaleFactor),
+        onTap: () async {
+          await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StockReviewScreen(
+                pharmacyId: widget.pharmacyId,
+                pharmacyName: widget.pharmacyName,
+              ),
             ),
-            child: const Icon(
-              Icons.pending_actions_rounded,
-              color: Color(0xFFE65100),
-              size: 22,
+          );
+          if (!mounted) return;
+          _loadData();
+        },
+        child: Row(
+          children: [
+            BlisterIcon(
+              icon: Icons.pending_actions_rounded,
+              tone: Tone.amber,
+              size: 42 * scaleFactor,
+              glow: false,
             ),
-          ),
-          SizedBox(width: 12 * scaleFactor),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Brouillon d'audit non soumis",
-                  style: TextStyle(
-                    fontSize: 13 * scaleFactor,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFB71C1C),
+            SizedBox(width: 12 * scaleFactor),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Brouillon d'audit non soumis",
+                    style: AppText.display(
+                      size: 15.5 * scaleFactor,
+                      height: 1.15,
+                    ),
                   ),
-                ),
-                SizedBox(height: 2 * scaleFactor),
-                Text(
-                  "Des lots saisis attendent votre révision.",
-                  style: TextStyle(
-                    fontSize: 11 * scaleFactor,
-                    color: const Color(0xFF5D4037),
+                  SizedBox(height: 3 * scaleFactor),
+                  Text(
+                    "Des lots saisis attendent votre révision.",
+                    style: AppText.body(
+                      size: 12.5 * scaleFactor,
+                      color: AppColors.textMuted,
+                      height: 1.3,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          SizedBox(width: 8 * scaleFactor),
-          ElevatedButton(
-            onPressed: () async {
-              await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StockReviewScreen(
-                    pharmacyId: widget.pharmacyId,
-                    pharmacyName: widget.pharmacyName,
-                  ),
-                ),
-              );
-              if (!mounted) return;
-              _loadData();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE65100),
-              foregroundColor: Colors.white,
+            SizedBox(width: 10 * scaleFactor),
+            // The card is the button; this pill names what a tap does.
+            Container(
               padding: EdgeInsets.symmetric(
                 horizontal: 12 * scaleFactor,
                 vertical: 8 * scaleFactor,
               ),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              decoration: BoxDecoration(
+                gradient: AppGradients.amber,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+              ),
+              child: Text(
+                "Réviser",
+                style: AppText.label(
+                  size: 13 * scaleFactor,
+                  weight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
               ),
             ),
-            child: Text(
-              "Réviser",
-              style: TextStyle(
-                fontSize: 12 * scaleFactor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildVisitActionsGrid(bool isDermo, double scaleFactor) {
+    final chevron = Icon(
+      Icons.chevron_right_rounded,
+      size: 22 * scaleFactor,
+      color: AppColors.textFaint,
+    );
+    final hasComment = _visitComment != null && _visitComment!.trim().isNotEmpty;
+
     return Column(
       children: [
         // Row 1: Audit Stock & Vente Manuelle
@@ -2962,35 +2510,12 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
           children: [
             _buildQuickActionCard(
               icon: Icons.inventory_2_rounded,
-              iconColor: LightModeColors.novoPharmaBlue,
-              iconBgColor: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.4),
+              tone: Tone.amber,
               title: "Audit Stock",
               subtitle: "Inventaire & lots",
               badge: _hasLocalDraft
-                  ? Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 6 * scaleFactor,
-                        vertical: 2 * scaleFactor,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3E0),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFFFB74D)),
-                      ),
-                      child: Text(
-                        "Brouillon",
-                        style: TextStyle(
-                          color: const Color(0xFFE65100),
-                          fontSize: 9 * scaleFactor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                  : Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 16 * scaleFactor,
-                      color: LightModeColors.novoPharmaGray.withValues(alpha: 0.5),
-                    ),
+                  ? const TonePill(label: "Brouillon", tone: Tone.amber)
+                  : chevron,
               onTap: () async {
                 await Navigator.push(
                   context,
@@ -3010,15 +2535,10 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
               SizedBox(width: 12 * scaleFactor),
               _buildQuickActionCard(
                 icon: Icons.shopping_cart_rounded,
-                iconColor: const Color(0xFFEA580C),
-                iconBgColor: const Color(0xFFFFEDD5),
+                tone: Tone.peach,
                 title: "Vente Manuelle",
                 subtitle: "Saisir ventes",
-                badge: Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 16 * scaleFactor,
-                  color: LightModeColors.novoPharmaGray.withValues(alpha: 0.5),
-                ),
+                badge: chevron,
                 onTap: () async {
                   await Navigator.pushNamed(context, '/manual-sale');
                   if (!mounted) return;
@@ -3036,45 +2556,33 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
           children: [
             _buildQuickActionCard(
               icon: Icons.edit_note_rounded,
-              iconColor: const Color(0xFF0D9488),
-              iconBgColor: const Color(0xFFCCFBF1),
+              tone: Tone.mint,
               title: "Commentaire",
-              subtitle: (_visitComment != null && _visitComment!.trim().isNotEmpty)
-                  ? "Note enregistrée"
-                  : "Ajouter une note",
-              badge: (_visitComment != null && _visitComment!.trim().isNotEmpty)
-                  ? Icon(
-                      Icons.check_circle_rounded,
-                      size: 16 * scaleFactor,
-                      color: const Color(0xFF0D9488),
-                    )
-                  : Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 16 * scaleFactor,
-                      color: const Color(0xFF0D9488),
-                    ),
+              subtitle: hasComment ? "Note enregistrée" : "Ajouter une note",
+              badge: Icon(
+                hasComment
+                    ? Icons.check_circle_rounded
+                    : Icons.add_circle_outline_rounded,
+                size: 20 * scaleFactor,
+                color: AppColors.mintDeep,
+              ),
               onTap: _showCommentDialog,
               scaleFactor: scaleFactor,
             ),
             SizedBox(width: 12 * scaleFactor),
             _buildQuickActionCard(
               icon: Icons.camera_alt_rounded,
-              iconColor: const Color(0xFF7C3AED),
-              iconBgColor: const Color(0xFFF3E8FF),
+              tone: Tone.indigo,
               title: "Prendre Photo",
               subtitle: _visitPhotos.isEmpty
                   ? "0 photo"
                   : "${_visitPhotos.length} photo${_visitPhotos.length > 1 ? 's' : ''}",
               badge: _isUploadingPhoto
-                  ? SizedBox(
-                      width: 14 * scaleFactor,
-                      height: 14 * scaleFactor,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? CapsuleLoader(size: 22 * scaleFactor)
                   : Icon(
                       Icons.add_a_photo_outlined,
-                      size: 16 * scaleFactor,
-                      color: const Color(0xFF7C3AED),
+                      size: 20 * scaleFactor,
+                      color: AppColors.indigo,
                     ),
               onTap: _isUploadingPhoto ? () {} : _takeAndPreviewPhoto,
               scaleFactor: scaleFactor,
@@ -3085,10 +2593,10 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
     );
   }
 
+  /// One glass tile of the visit's actions. [tone] is the feature's accent.
   Widget _buildQuickActionCard({
     required IconData icon,
-    required Color iconColor,
-    required Color iconBgColor,
+    required Tone tone,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
@@ -3096,233 +2604,171 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
     double scaleFactor = 1.0,
   }) {
     return Expanded(
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            height: 110 * scaleFactor,
-            padding: EdgeInsets.all(13 * scaleFactor),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: LightModeColors.lightOutlineVariant.withValues(alpha: 0.6),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: SoftCard(
+        onTap: onTap,
+        semanticLabel: title,
+        radius: 24,
+        padding: EdgeInsets.all(14 * scaleFactor),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(8 * scaleFactor),
-                      decoration: BoxDecoration(
-                        color: iconBgColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(icon, color: iconColor, size: 20 * scaleFactor),
+                TintIcon(icon: icon, tone: tone, size: 42 * scaleFactor),
+                if (badge != null)
+                  Flexible(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 6 * scaleFactor),
+                      child: FittedBox(fit: BoxFit.scaleDown, child: badge),
                     ),
-                    if (badge != null) badge,
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14 * scaleFactor,
-                        fontWeight: FontWeight.bold,
-                        color: LightModeColors.dashboardTextPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 2 * scaleFactor),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11 * scaleFactor,
-                        color: LightModeColors.novoPharmaGray,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
               ],
             ),
-          ),
+            SizedBox(height: 16 * scaleFactor),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.display(size: 16 * scaleFactor),
+            ),
+            SizedBox(height: 3 * scaleFactor),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label(size: 12.5 * scaleFactor, letterSpacing: 0),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildVisitCommentCard(double scaleFactor) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16 * scaleFactor),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF0D9488).withValues(alpha: 0.2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(child: SectionHeader(title: "Note de la visite")),
+            _buildSectionAction(
+              icon: Icons.edit_rounded,
+              label: "Modifier",
+              onTap: _showCommentDialog,
+              scaleFactor: scaleFactor,
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        SizedBox(height: 8 * scaleFactor),
+        SoftCard(
+          radius: 24,
+          padding: EdgeInsets.all(16 * scaleFactor),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(6 * scaleFactor),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCCFBF1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.rate_review_outlined,
-                      color: const Color(0xFF0D9488),
-                      size: 16 * scaleFactor,
-                    ),
-                  ),
-                  SizedBox(width: 8 * scaleFactor),
-                  Text(
-                    "Note de la visite",
-                    style: TextStyle(
-                      fontSize: 14 * scaleFactor,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                  ),
-                ],
+              TintIcon(
+                icon: Icons.rate_review_rounded,
+                tone: Tone.mint,
+                size: 40 * scaleFactor,
               ),
-              TextButton.icon(
-                onPressed: _showCommentDialog,
-                icon: Icon(
-                  Icons.edit_outlined,
-                  size: 14 * scaleFactor,
-                  color: LightModeColors.novoPharmaBlue,
-                ),
-                label: Text(
-                  "Modifier",
-                  style: TextStyle(
-                    fontSize: 12 * scaleFactor,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.novoPharmaBlue,
+              SizedBox(width: 12 * scaleFactor),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 2 * scaleFactor),
+                  child: Text(
+                    _visitComment!,
+                    style: AppText.body(size: 14.5 * scaleFactor, height: 1.45),
                   ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8 * scaleFactor,
-                    vertical: 4 * scaleFactor,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 10 * scaleFactor),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(12 * scaleFactor),
-            decoration: BoxDecoration(
-              color: LightModeColors.novoPharmaLightGray,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: LightModeColors.lightOutlineVariant.withValues(alpha: 0.5),
-              ),
-            ),
-            child: Text(
-              _visitComment!,
-              style: TextStyle(
-                fontSize: 13 * scaleFactor,
-                color: LightModeColors.dashboardTextPrimary,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildCheckOutCard(double scaleFactor) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16 * scaleFactor),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: LightModeColors.lightError.withValues(alpha: 0.25),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.lightError.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader(title: "Fin de visite"),
+        SizedBox(height: 10 * scaleFactor),
+        SoftCard(
+          padding: EdgeInsets.all(16 * scaleFactor),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  TintIcon(
+                    icon: Icons.flag_rounded,
+                    tone: Tone.coral,
+                    size: 42 * scaleFactor,
+                  ),
+                  SizedBox(width: 12 * scaleFactor),
+                  Expanded(
+                    child: Text(
+                      "Enregistrez votre départ et clôturez le rapport",
+                      style: AppText.body(
+                        size: 14 * scaleFactor,
+                        color: AppColors.textMuted,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16 * scaleFactor),
+              AnimatedSwitcher(
+                duration: AppMotion.fast,
+                child: _isCheckingOut
+                    ? _buildBusyRow("Clôture en cours...", scaleFactor)
+                    : PrimaryButton.coral(
+                        key: const ValueKey('check-out'),
+                        label: "Effectuer le Check-out",
+                        icon: Icons.logout_rounded,
+                        height: 56 * scaleFactor,
+                        onPressed: _handleCheckOut,
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckInCard(double scaleFactor) {
+    return SoftCard(
+      padding: EdgeInsets.all(20 * scaleFactor),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.all(10 * scaleFactor),
-                decoration: const BoxDecoration(
-                  color: LightModeColors.lightErrorContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.flag_rounded,
-                  color: LightModeColors.lightError,
-                  size: 20 * scaleFactor,
-                ),
+              BlisterIcon(
+                icon: Icons.location_on_rounded,
+                tone: Tone.mint,
+                size: 54 * scaleFactor,
               ),
-              SizedBox(width: 12 * scaleFactor),
+              SizedBox(width: 14 * scaleFactor),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Fin de visite",
-                      style: TextStyle(
-                        fontSize: 14 * scaleFactor,
-                        fontWeight: FontWeight.bold,
-                        color: LightModeColors.dashboardTextPrimary,
-                      ),
+                      "Démarrer votre visite",
+                      style: AppText.display(size: 20 * scaleFactor),
                     ),
-                    SizedBox(height: 2 * scaleFactor),
+                    SizedBox(height: 6 * scaleFactor),
                     Text(
-                      "Enregistrez votre départ et clôturez le rapport",
-                      style: TextStyle(
-                        fontSize: 11 * scaleFactor,
-                        color: LightModeColors.novoPharmaGray,
+                      "Validez votre arrivée pour débloquer l'audit de stock, la saisie des ventes et la prise de photos.",
+                      style: AppText.body(
+                        size: 13.5 * scaleFactor,
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -3330,129 +2776,44 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
               ),
             ],
           ),
-          SizedBox(height: 14 * scaleFactor),
-          SizedBox(
-            width: double.infinity,
-            height: 48 * scaleFactor,
-            child: ElevatedButton.icon(
-              onPressed: _isCheckingOut ? null : _handleCheckOut,
-              icon: _isCheckingOut
-                  ? SizedBox(
-                      width: 18 * scaleFactor,
-                      height: 18 * scaleFactor,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(Icons.logout_rounded, size: 18 * scaleFactor),
-              label: Text(
-                _isCheckingOut ? "Clôture en cours..." : "Effectuer le Check-out",
-                style: TextStyle(
-                  fontSize: 14 * scaleFactor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LightModeColors.lightError,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
+          SizedBox(height: 18 * scaleFactor),
+          AnimatedSwitcher(
+            duration: AppMotion.fast,
+            child: _isCheckingIn
+                ? _buildBusyRow("Vérification GPS & Check-in...", scaleFactor)
+                : PrimaryButton.mint(
+                    key: const ValueKey('check-in'),
+                    label: "Effectuer le Check-in",
+                    icon: Icons.login_rounded,
+                    height: 56 * scaleFactor,
+                    onPressed: _handleCheckIn,
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCheckInCard(double scaleFactor) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20 * scaleFactor),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
+  /// What a check-in / check-out button turns into while it runs: the
+  /// capsule loader beside the words that say what is happening.
+  Widget _buildBusyRow(String label, double scaleFactor) {
+    return SizedBox(
+      key: ValueKey(label),
+      height: 56 * scaleFactor,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: EdgeInsets.all(14 * scaleFactor),
-            decoration: BoxDecoration(
-              color: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.35),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.location_on_rounded,
-              color: LightModeColors.novoPharmaBlue,
-              size: 32 * scaleFactor,
-            ),
-          ),
-          SizedBox(height: 14 * scaleFactor),
-          Text(
-            "Démarrer votre visite",
-            style: TextStyle(
-              fontSize: 17 * scaleFactor,
-              fontWeight: FontWeight.bold,
-              color: LightModeColors.dashboardTextPrimary,
-            ),
-          ),
-          SizedBox(height: 6 * scaleFactor),
-          Text(
-            "Validez votre arrivée pour débloquer l'audit de stock, la saisie des ventes et la prise de photos.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12 * scaleFactor,
-              color: LightModeColors.novoPharmaGray,
-              height: 1.4,
-            ),
-          ),
-          SizedBox(height: 18 * scaleFactor),
-          SizedBox(
-            width: double.infinity,
-            height: 50 * scaleFactor,
-            child: ElevatedButton.icon(
-              onPressed: _isCheckingIn ? null : _handleCheckIn,
-              icon: _isCheckingIn
-                  ? SizedBox(
-                      width: 18 * scaleFactor,
-                      height: 18 * scaleFactor,
-                      child: const CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Icon(
-                      Icons.login_rounded,
-                      color: Colors.white,
-                      size: 20 * scaleFactor,
-                    ),
-              label: Text(
-                _isCheckingIn ? "Vérification GPS & Check-in..." : "Effectuer le Check-in",
-                style: TextStyle(
-                  fontSize: 15 * scaleFactor,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LightModeColors.novoPharmaBlue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
+          CapsuleLoader(size: 30 * scaleFactor),
+          SizedBox(width: 12 * scaleFactor),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body(
+                size: 15 * scaleFactor,
+                weight: FontWeight.w700,
+                height: 1.2,
               ),
             ),
           ),
@@ -3462,21 +2823,18 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
   }
 
   Widget _buildActiveElsewhereWarning(double scaleFactor) {
-    return Container(
+    return SoftCard(
+      tint: AppColors.coralTint,
+      radius: 24,
       padding: EdgeInsets.all(16 * scaleFactor),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightErrorContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: LightModeColors.lightError.withValues(alpha: 0.3),
-        ),
-      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: LightModeColors.lightError,
-            size: 28 * scaleFactor,
+          BlisterIcon(
+            icon: Icons.warning_amber_rounded,
+            tone: Tone.coral,
+            size: 42 * scaleFactor,
+            glow: false,
           ),
           SizedBox(width: 12 * scaleFactor),
           Expanded(
@@ -3485,20 +2843,16 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
               children: [
                 Text(
                   "Visite déjà en cours ailleurs",
-                  style: TextStyle(
-                    fontSize: 13 * scaleFactor,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.lightError,
+                  style: AppText.display(
+                    size: 16 * scaleFactor,
+                    color: AppColors.coralDeep,
+                    height: 1.15,
                   ),
                 ),
-                SizedBox(height: 3 * scaleFactor),
+                SizedBox(height: 4 * scaleFactor),
                 Text(
                   "Vous êtes actuellement en visite à \"$_globalActivePharmacyName\". Effectuez d'abord votre check-out là-bas pour démarrer une visite ici.",
-                  style: TextStyle(
-                    fontSize: 12 * scaleFactor,
-                    color: LightModeColors.lightOnErrorContainer,
-                    height: 1.3,
-                  ),
+                  style: AppText.body(size: 13.5 * scaleFactor, height: 1.35),
                 ),
               ],
             ),
@@ -3509,70 +2863,14 @@ class _PharmacyProfileScreenState extends State<PharmacyProfileScreen>
   }
 
   Widget _buildGPSBlocker() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: LightModeColors.lightError.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.location_off_rounded,
-                color: LightModeColors.lightError,
-                size: 56,
-              ),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              "Localisation GPS Requise",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "L'accès à la position GPS de votre téléphone est requis pour afficher le profil de la pharmacie et effectuer le Check-out.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: LightModeColors.novoPharmaGray,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 36),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _loadData,
-                icon: const Icon(Icons.settings, color: Colors.white, size: 18),
-                label: const Text(
-                  "Autoriser / Réessayer",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: LightModeColors.novoPharmaBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyState(
+      icon: Icons.location_off_rounded,
+      tone: Tone.coral,
+      title: "Localisation GPS Requise",
+      message:
+          "L'accès à la position GPS de votre téléphone est requis pour afficher le profil de la pharmacie et effectuer le Check-out.",
+      actionLabel: "Autoriser / Réessayer",
+      onAction: _loadData,
     );
   }
 }

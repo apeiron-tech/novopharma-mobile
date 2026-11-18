@@ -6,7 +6,7 @@ import 'package:novopharma/models/product.dart';
 import 'package:novopharma/models/stock_models.dart';
 import 'package:novopharma/services/product_service.dart';
 import 'package:novopharma/widgets/expiration_dialog.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class BrandStockInputScreen extends StatefulWidget {
   final String pharmacyId;
@@ -142,359 +142,376 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
     );
   }
 
+  // Presentation only: the first screenful of rows arrives once per visit.
+  // Rows built later (scrolling back up, searching) appear in place.
+  bool _rowsArrived = false;
+
+  Widget _arrive(int index, Widget child) {
+    if (index >= 6) return child;
+    final play = !_rowsArrived;
+    if (play) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _rowsArrived = true);
+    }
+    return Entrance(
+      delay: play ? Duration(milliseconds: 50 * index) : Duration.zero,
+      duration: play ? AppMotion.slow : Duration.zero,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: LightModeColors.novoPharmaLightGray,
-      appBar: AppBar(
-        title: Text(widget.brand, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: LightModeColors.dashboardTextPrimary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-          onPressed: () => Navigator.pop(context),
+      backgroundColor: AppColors.canvas,
+      appBar: InkAppBar(
+        // The brand shares the bar with the save action: shrink a long name
+        // before cutting it.
+        titleWidget: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                widget.brand,
+                maxLines: 1,
+                style: AppText.display(size: 22, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              widget.pharmacyName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body(
+                size: 13,
+                color: Colors.white.withValues(alpha: 0.72),
+              ),
+            ),
+          ],
+        ),
+        leading: GlassIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onTap: () => Navigator.pop(context),
         ),
         actions: [
-          TextButton(
+          PrimaryButton.mint(
+            label: "Enregistrer",
             onPressed: _isLoading ? null : _saveProgress,
-            child: const Text(
-              "Enregistrer",
-              style: TextStyle(fontWeight: FontWeight.bold, color: LightModeColors.novoPharmaBlue, fontSize: 15),
-            ),
-          )
+            height: 44,
+            expand: false,
+          ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Info Banner
-                Container(
-                  width: double.infinity,
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.pharmacyName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: LightModeColors.dashboardTextPrimary),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "Saisissez la quantité totale ou ajoutez des lots avec dates d'expiration.",
-                        style: TextStyle(fontSize: 12, color: LightModeColors.novoPharmaGray),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Search bar
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: LightModeColors.novoPharmaLightGray,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      decoration: InputDecoration(
-                        hintText: "Rechercher par nom ou SKU...",
-                        hintStyle: const TextStyle(color: LightModeColors.novoPharmaGray, fontSize: 13, fontWeight: FontWeight.normal),
-                        prefixIcon: const Icon(Icons.search, color: LightModeColors.novoPharmaBlue, size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, color: LightModeColors.novoPharmaGray, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      ),
+      body: AppBackground(
+        child: _isLoading
+            ? const SkeletonList(
+                count: 4,
+                itemHeight: 148,
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
+              )
+            : Column(
+                children: [
+                  // Info Banner + Search bar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Saisissez la quantité totale ou ajoutez des lots avec dates d'expiration.",
+                          style: AppText.body(
+                            size: 13.5,
+                            color: AppColors.textMuted,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        AppSearchField(
+                          controller: _searchController,
+                          hintText: "Rechercher par nom ou SKU...",
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                
-                // Products List
-                Expanded(
-                  child: () {
-                    final filteredProducts = _brandProducts.where((product) {
-                      final query = _searchQuery.toLowerCase().trim();
-                      return product.name.toLowerCase().contains(query) ||
-                          product.sku.toLowerCase().contains(query);
-                    }).toList();
 
-                    return filteredProducts.isEmpty
-                        ? const Center(child: Text("Aucun produit trouvé", style: TextStyle(color: LightModeColors.novoPharmaGray)))
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            itemCount: filteredProducts.length,
-                            itemBuilder: (context, index) {
-                              final product = filteredProducts[index];
-                              final draftItem = _draftProducts[product.id];
-                              final hasExpirations = draftItem?.expirations.isNotEmpty ?? false;
+                  // Products List
+                  Expanded(
+                    child: () {
+                      final filteredProducts = _brandProducts.where((product) {
+                        final query = _searchQuery.toLowerCase().trim();
+                        return product.name.toLowerCase().contains(query) ||
+                            product.sku.toLowerCase().contains(query);
+                      }).toList();
 
-                              final hasQty = draftItem != null;
-
-                              return GestureDetector(
-                                onTap: () => _openExpirationDialog(product),
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: hasQty ? const Color(0xFFF7F8FF) : Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: hasQty 
-                                        ? LightModeColors.novoPharmaBlue 
-                                        : LightModeColors.lightOutlineVariant,
-                                    width: hasQty ? 1.5 : 1.0,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4)),
-                                  ],
+                      return filteredProducts.isEmpty
+                          // Scrolls so it never overflows above the keyboard.
+                          ? const Align(
+                              alignment: Alignment.topCenter,
+                              child: SingleChildScrollView(
+                                child: EmptyState(
+                                  icon: Icons.search_off_rounded,
+                                  title: "Aucun produit trouvé",
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Product Image
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          margin: const EdgeInsets.only(right: 12),
-                                          decoration: BoxDecoration(
-                                            color: LightModeColors.novoPharmaLightGray,
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: LightModeColors.lightOutlineVariant),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(10),
-                                            child: product.imageUrl.isNotEmpty
-                                                ? CachedNetworkImage(
-                                                    imageUrl: product.imageUrl,
-                                                    fit: BoxFit.contain,
-                                                    placeholder: (context, url) => const Center(
-                                                      child: SizedBox(
-                                                        width: 16,
-                                                        height: 16,
-                                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                                      ),
-                                                    ),
-                                                    errorWidget: (context, url, error) => const Icon(
-                                                      Icons.image_not_supported_outlined,
-                                                      size: 20,
-                                                      color: LightModeColors.novoPharmaGray,
-                                                    ),
-                                                  )
-                                                : const Icon(
-                                                    Icons.image_not_supported_outlined,
-                                                    size: 20,
-                                                    color: LightModeColors.novoPharmaGray,
-                                                  ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: Column(
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.fromLTRB(
+                                20,
+                                6,
+                                20,
+                                MediaQuery.paddingOf(context).bottom + 24,
+                              ),
+                              itemCount: filteredProducts.length,
+                              itemBuilder: (context, index) {
+                                final product = filteredProducts[index];
+                                final draftItem = _draftProducts[product.id];
+                                final hasExpirations = draftItem?.expirations.isNotEmpty ?? false;
+
+                                final hasQty = draftItem != null;
+
+                                // The whole row opens the entry dialog; a
+                                // mint wash marks the products already counted.
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _arrive(
+                                    index,
+                                    SoftCard(
+                                      onTap: () => _openExpirationDialog(product),
+                                      tint: hasQty ? AppColors.mintTint : null,
+                                      padding: const EdgeInsets.all(14),
+                                      radius: 24,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      product.name,
-                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: LightModeColors.dashboardTextPrimary),
+                                              // Product Image
+                                              Container(
+                                                width: 60,
+                                                height: 60,
+                                                margin: const EdgeInsets.only(right: 12),
+                                                clipBehavior: Clip.antiAlias,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.surface,
+                                                  borderRadius: BorderRadius.circular(16),
+                                                ),
+                                                child: product.imageUrl.isNotEmpty
+                                                    ? CachedNetworkImage(
+                                                        imageUrl: product.imageUrl,
+                                                        fit: BoxFit.contain,
+                                                        placeholder: (context, url) => const SizedBox.expand(),
+                                                        errorWidget: (context, url, error) => const Icon(
+                                                          Icons.image_not_supported_outlined,
+                                                          size: 22,
+                                                          color: AppColors.textFaint,
+                                                        ),
+                                                      )
+                                                    : const Icon(
+                                                        Icons.image_not_supported_outlined,
+                                                        size: 22,
+                                                        color: AppColors.textFaint,
+                                                      ),
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            product.name,
+                                                            style: AppText.body(size: 15, weight: FontWeight.w700, height: 1.25),
+                                                          ),
+                                                        ),
+                                                        if (hasQty) ...[
+                                                          const SizedBox(width: 8),
+                                                          Icon(
+                                                            (draftItem.isPriceOnly || draftItem.totalQuantity == null)
+                                                                ? Icons.price_check_rounded
+                                                                : Icons.check_circle_rounded,
+                                                            color: AppColors.mint,
+                                                            size: 22,
+                                                          ),
+                                                        ],
+                                                      ],
                                                     ),
-                                                  ),
-                                                  if (hasQty) ...[
-                                                    const SizedBox(width: 6),
-                                                    Icon(
-                                                      (draftItem.isPriceOnly || draftItem.totalQuantity == null)
-                                                          ? Icons.price_check_rounded
-                                                          : Icons.check_circle_rounded,
-                                                      color: LightModeColors.novoPharmaBlue,
-                                                      size: 18,
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      "SKU: ${product.sku}",
+                                                      style: AppText.label(size: 12.5, letterSpacing: 0),
                                                     ),
                                                   ],
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text("SKU: ${product.sku}", style: const TextStyle(fontSize: 12, color: LightModeColors.novoPharmaGray)),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  const Divider(height: 24),
-                                  if (draftItem != null && (draftItem.isPriceOnly || draftItem.totalQuantity == null)) ...[
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            color: draftItem.respectsPrice 
-                                                ? LightModeColors.success.withValues(alpha: 0.1) 
-                                                : LightModeColors.novoPharmaLightBlue,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(
-                                              color: draftItem.respectsPrice 
-                                                  ? LightModeColors.success.withValues(alpha: 0.3) 
-                                                  : LightModeColors.novoPharmaBlue.withValues(alpha: 0.3),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                draftItem.respectsPrice ? Icons.check_circle_outline : Icons.sell_outlined, 
-                                                size: 14, 
-                                                color: draftItem.respectsPrice ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                              ),
-                                              const SizedBox(width: 5),
-                                              Text(
-                                                draftItem.respectsPrice 
-                                                    ? "Prix respecté (${product.price.toStringAsFixed(2)} DT)" 
-                                                    : "Prix: ${draftItem.sellingPrice?.toStringAsFixed(2) ?? '-'} DT",
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: draftItem.respectsPrice ? LightModeColors.success : LightModeColors.novoPharmaBlue,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                        const Spacer(),
-                                        GestureDetector(
-                                          onTap: () => _openExpirationDialog(product),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: LightModeColors.novoPharmaLightGray,
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: LightModeColors.lightOutlineVariant),
+                                          const SizedBox(height: 14),
+                                          if (draftItem != null && (draftItem.isPriceOnly || draftItem.totalQuantity == null)) ...[
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Align(
+                                                    alignment: Alignment.centerLeft,
+                                                    child: _FlexPill(
+                                                      icon: draftItem.respectsPrice ? Icons.check_circle_outline : Icons.sell_outlined,
+                                                      tone: draftItem.respectsPrice ? Tone.mint : Tone.indigo,
+                                                      label: draftItem.respectsPrice
+                                                          ? "Prix respecté (${product.price.toStringAsFixed(2)} DT)"
+                                                          : "Prix: ${draftItem.sellingPrice?.toStringAsFixed(2) ?? '-'} DT",
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const _FlexPill(label: "Prix seul", tone: _quietTone),
+                                              ],
                                             ),
-                                            child: const Text(
-                                              "Prix seul",
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: LightModeColors.novoPharmaBlue,
+                                          ] else ...[
+                                            Row(
+                                              children: [
+                                                // Expiration lots
+                                                Expanded(
+                                                  child: Align(
+                                                    alignment: Alignment.centerLeft,
+                                                    child: _FlexPill(
+                                                      icon: hasExpirations ? Icons.check_circle : Icons.calendar_today_rounded,
+                                                      tone: hasExpirations ? Tone.mint : Tone.indigo,
+                                                      label: hasExpirations
+                                                          ? "${draftItem!.expirations.length} Lot(s) d'exp."
+                                                          : "Lots d'exp.",
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+
+                                                // Quantity, large enough to read at arm's length
+                                                Text(
+                                                  "Qté: ",
+                                                  style: AppText.label(size: 13.5, weight: FontWeight.w700, color: AppColors.text),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  constraints: const BoxConstraints(minWidth: 84),
+                                                  height: 52,
+                                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                                  alignment: Alignment.center,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.surface,
+                                                    borderRadius: BorderRadius.circular(16),
+                                                    border: Border.all(
+                                                      color: hasQty ? AppColors.mint : AppColors.lineStrong,
+                                                      width: 1.4,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    _controllers[product.id]?.text.isNotEmpty == true
+                                                        ? _controllers[product.id]!.text
+                                                        : "0",
+                                                    style: AppText.display(size: 24, color: AppColors.indigoDeep),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            if (hasExpirations) ...[
+                                              const SizedBox(height: 12),
+                                              Wrap(
+                                                spacing: 6,
+                                                runSpacing: 6,
+                                                children: draftItem!.expirations.map((exp) {
+                                                  return Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.indigoTint,
+                                                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                                                    ),
+                                                    child: Text(
+                                                      "${exp.expirationDate}: ${exp.quantity}",
+                                                      style: AppText.label(
+                                                        size: 12,
+                                                        weight: FontWeight.w700,
+                                                        color: AppColors.indigoDeep,
+                                                        letterSpacing: 0,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }).toList(),
                                               ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ] else ...[
-                                    Row(
-                                      children: [
-                                        // Expiration details trigger
-                                        OutlinedButton.icon(
-                                          onPressed: () => _openExpirationDialog(product),
-                                          icon: Icon(
-                                            hasExpirations ? Icons.check_circle : Icons.calendar_today_rounded,
-                                            size: 16,
-                                            color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                          ),
-                                          label: Text(
-                                            hasExpirations
-                                                ? "${draftItem!.expirations.length} Lot(s) d'exp."
-                                                : "Lots d'exp.",
-                                            style: TextStyle(
-                                              color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          style: OutlinedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                            side: BorderSide(
-                                              color: hasExpirations ? LightModeColors.success : LightModeColors.novoPharmaBlue,
-                                            ),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        
-                                        // Quantity display badge (tapping opens dialog)
-                                        const Text("Qté: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                        const SizedBox(width: 8),
-                                        GestureDetector(
-                                          onTap: () => _openExpirationDialog(product),
-                                          child: Container(
-                                            width: 80,
-                                            height: 40,
-                                            alignment: Alignment.center,
-                                            decoration: BoxDecoration(
-                                              color: LightModeColors.novoPharmaLightGray,
-                                              borderRadius: BorderRadius.circular(10),
-                                              border: Border.all(color: LightModeColors.lightOutlineVariant),
-                                            ),
-                                            child: Text(
-                                              _controllers[product.id]?.text.isNotEmpty == true
-                                                  ? _controllers[product.id]!.text
-                                                  : "0",
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: LightModeColors.novoPharmaBlue,
+                                            ],
+                                            if (draftItem != null && !draftItem.respectsPrice && draftItem.sellingPrice != null) ...[
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                "Prix réel: ${draftItem.sellingPrice!.toStringAsFixed(2)} DT (Conseillé: ${product.price.toStringAsFixed(2)} DT)",
+                                                style: AppText.label(size: 12.5, letterSpacing: 0),
                                               ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                            ],
+                                          ],
+                                        ],
+                                      ),
                                     ),
-                                    if (hasExpirations) ...[
-                                      const SizedBox(height: 10),
-                                      Wrap(
-                                        spacing: 6,
-                                        runSpacing: 4,
-                                        children: draftItem!.expirations.map((exp) {
-                                          return Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: LightModeColors.novoPharmaLightBlue,
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              "${exp.expirationDate}: ${exp.quantity}",
-                                              style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.bold),
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
-                                    if (draftItem != null && !draftItem.respectsPrice && draftItem.sellingPrice != null) ...[
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Prix réel: ${draftItem.sellingPrice!.toStringAsFixed(2)} DT (Conseillé: ${product.price.toStringAsFixed(2)} DT)",
-                                        style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaGray, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        );
-                  }(),
-                ),
-              ],
+                                  ),
+                                );
+                              },
+                            );
+                    }(),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+/// The quiet tone for labels that describe rather than signal.
+const Tone _quietTone = Tone(
+  AppColors.textFaint,
+  AppColors.textMuted,
+  AppColors.line,
+);
+
+/// A [TonePill] whose label gives way instead of overflowing — prices and
+/// lot counts vary in length.
+class _FlexPill extends StatelessWidget {
+  final String label;
+  final Tone tone;
+  final IconData? icon;
+
+  const _FlexPill({required this.label, this.tone = Tone.indigo, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tone.tint,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: tone.deep),
+            const SizedBox(width: 5),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label(
+                size: 12,
+                weight: FontWeight.w700,
+                color: tone.deep,
+                letterSpacing: 0,
+              ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }

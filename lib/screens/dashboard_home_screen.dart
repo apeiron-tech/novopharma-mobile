@@ -16,7 +16,7 @@ import 'package:novopharma/widgets/dashboard_header.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/services/popup_service.dart';
 import 'package:novopharma/widgets/popup_dialog.dart';
 import 'package:novopharma/widgets/birthday_popup_dialog.dart';
@@ -354,986 +354,665 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('🎨 [DASHBOARD] Build method called');
-    final buildStartTime = DateTime.now();
-
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      body: Stack(
-        children: [
-          BottomNavigationScaffoldWrapper(
-            currentIndex: _selectedIndex,
-            onTap: (index) => setState(() => _selectedIndex = index),
-            child:
-                Consumer6<
-                  AuthProvider,
-                  LeaderboardProvider,
-                  GoalProvider,
-                  BadgeProvider,
-                  RedeemedRewardsProvider,
-                  NotificationProvider
-                >(
-                  builder:
-                      (
-                        context,
-                        auth,
-                        leaderboard,
-                        goal,
-                        badge,
-                        redeemedRewards,
-                        notification,
-                        child,
-                      ) {
-                        print('🔍 [DASHBOARD] Consumer6 builder executing...');
-                        print(
-                          '   └─ AuthProvider: ${auth.userProfile != null ? "✓" : "✗"}',
-                        );
-                        print(
-                          '   └─ LeaderboardProvider: ${leaderboard.isLoading ? "⏳ Loading" : "✓ Ready"}',
-                        );
-                        print(
-                          '   └─ GoalProvider: ${goal.isLoading ? "⏳ Loading" : "✓ Ready"}',
-                        );
-                        print(
-                          '   └─ BadgeProvider: ${badge.isLoading ? "⏳ Loading" : "✓ Ready"}',
-                        );
-                        print(
-                          '   └─ RedeemedRewardsProvider: ${redeemedRewards.isLoading ? "⏳ Loading" : "✓ Ready"}',
-                        );
-
-                        final user = auth.userProfile;
-                        if (user == null) {
-                          print(
-                            '⏳ [DASHBOARD] Showing loading indicator - waiting for user profile',
-                          );
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        final buildDuration = DateTime.now().difference(
-                          buildStartTime,
-                        );
-                        print(
-                          '✅ [DASHBOARD] All providers ready! Building UI (took ${buildDuration.inMilliseconds}ms)',
-                        );
-
-                        return Container(
-                          color: Colors.white,
-                          child: SafeArea(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
-                              child: Column(
-                                children: [
-                                  DashboardHeader(
-                                    user: user,
-                                    unreadNotifications:
-                                        notification.unreadCount,
-                                    onNotificationTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const NotificationsScreen(),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Consumer<PluxeeRedemptionProvider>(
-                                    builder: (context, pluxee, _) =>
-                                        _buildPointsCard(
-                                          user,
-                                          l10n,
-                                          redeemedRewards,
-                                          pluxee,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 28),
-                                  _buildDashboardGrid(
-                                    context,
-                                    l10n,
-                                    user,
-                                    leaderboard,
-                                    goal,
-                                    badge,
-                                    redeemedRewards,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPointsCard(
-    UserModel? user,
-    AppLocalizations l10n,
-    RedeemedRewardsProvider redeemedRewards,
-    PluxeeRedemptionProvider pluxeeRedemption,
-  ) {
-    final num totalPointsUtilisables = user?.points ?? 0;
-    final num totalPointsValidated = user?.totalPointsValidated ?? 0;
-    final pendingPoints = pluxeeRedemption.totalPendingPoints;
-
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                LightModeColors.lightPrimary,
-                LightModeColors.lightSecondary,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: LightModeColors.lightPrimary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Decorative circles in background
-              Positioned(
-                right: -20,
-                top: -20,
-                child: Container(
-                  width: 100 * scaleFactor,
-                  height: 100 * scaleFactor,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: -30,
-                bottom: -30,
-                child: Container(
-                  width: 120 * scaleFactor,
-                  height: 120 * scaleFactor,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-              // Main content
-              Padding(
-                padding: EdgeInsets.all(24 * scaleFactor),
-                child: Row(
-                  children: [
-                    // Total points cumules section (left side)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'TOTAL POINTS CUMULÉS ',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11 * scaleFactor,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16 * scaleFactor),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                _formatPoints(totalPointsValidated),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32 * scaleFactor,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -1,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Text(
-                                  'pts',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 16 * scaleFactor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Vertical divider
-                    Container(
-                      width: 1,
-                      height: 80 * scaleFactor,
-                      margin: EdgeInsets.symmetric(horizontal: 16 * scaleFactor),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0),
-                            Colors.white.withValues(alpha: 0.3),
-                            Colors.white.withValues(alpha: 0),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Current balance section (right side)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              l10n.currentPointsBalance.toUpperCase(),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11 * scaleFactor,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16 * scaleFactor),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                _formatPoints(totalPointsUtilisables),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32 * scaleFactor,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -1,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Text(
-                                  'pts',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 16 * scaleFactor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (pendingPoints > 0) ...[
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: LightModeColors.lightOutlineVariant),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.hourglass_empty_rounded,
-                    color: Color(0xFFD97706),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Points en attente',
-                        style: TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$pendingPoints points',
-                        style: const TextStyle(
-                          color: LightModeColors.dashboardTextPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-        if (user?.role != 'Dermo-conseiller') ...[
-          const SizedBox(height: 16),
-          _buildRedeemButton(context, l10n),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildRedeemButton(BuildContext context, AppLocalizations l10n) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: LightModeColors.lightError,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, '/rewards');
+      backgroundColor: AppColors.canvas,
+      body: BottomNavigationScaffoldWrapper(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        child: Consumer6<
+          AuthProvider,
+          LeaderboardProvider,
+          GoalProvider,
+          BadgeProvider,
+          RedeemedRewardsProvider,
+          NotificationProvider
+        >(
+          builder: (
+            context,
+            auth,
+            leaderboard,
+            goal,
+            badge,
+            redeemedRewards,
+            notification,
+            child,
+          ) {
+            final user = auth.userProfile;
+            if (user == null) {
+              return const Center(child: CapsuleLoader());
+            }
+            return _buildHome(context, l10n, user, goal, badge, notification);
           },
-          borderRadius: BorderRadius.circular(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.card_giftcard_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                l10n.redeemYourPoints,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildDashboardGrid(
+  // ---------------------------------------------------------------------
+  // Layout
+  // ---------------------------------------------------------------------
+
+  static const double _capsuleHeight = 132;
+
+  Widget _buildHome(
     BuildContext context,
     AppLocalizations l10n,
     UserModel user,
-    LeaderboardProvider leaderboard,
     GoalProvider goal,
     BadgeProvider badge,
-    RedeemedRewardsProvider redeemedRewards,
+    NotificationProvider notification,
   ) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.0,
-      children: [
-        if (user.role == 'Dermo-conseiller') _buildCheckInCard(context),
-        if (user.role != 'Dermo-conseiller')
-          _buildManualSaleCard(context, l10n),
-        _buildLeaderboardCard(context, l10n),
-        _buildGoalsCard(context, l10n),
-        if (user.role != 'Dermo-conseiller')
-          _buildBadgesCard(context, l10n),
-        _buildChallengesCard(context, l10n),
-      ],
-    );
-  }
+    final media = MediaQuery.of(context);
+    final isWide = media.size.width > 600;
+    final maxWidth = isWide ? 640.0 : double.infinity;
+    final isDermo = user.role == 'Dermo-conseiller';
 
-  Widget _buildManualSaleCard(BuildContext context, AppLocalizations l10n) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-    final double iconSize = 40 * scaleFactor;
-    final double paddingVal = 16 * scaleFactor;
-    final double fontSizeVal = 14 * scaleFactor;
-    final double spacingVal = 12 * scaleFactor;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.lightOutlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    Widget centered(Widget child) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, '/manual-sale');
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(paddingVal),
-                  decoration: const BoxDecoration(
-                    color: LightModeColors.warning,
-                    shape: BoxShape.circle,
+        );
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: media.padding.bottom + 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Ink hero: who you are, what you have, what you can do with it.
+          InkHero(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpace.page,
+              10,
+              AppSpace.page,
+              26,
+            ),
+            child: centered(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Entrance(
+                    offset: const Offset(0, -12),
+                    child: DashboardHeader(
+                      user: user,
+                      unreadNotifications: notification.unreadCount,
+                      onNotificationTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  child: Icon(
-                    Icons.shopping_cart,
-                    color: Colors.white,
-                    size: iconSize,
+                  const SizedBox(height: 24),
+                  Entrance(
+                    delay: const Duration(milliseconds: 120),
+                    scaleFrom: 0.94,
+                    child: _buildPointsCapsule(user, l10n),
                   ),
-                ),
-                SizedBox(height: spacingVal),
-                Text(
-                  l10n.manualSale,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSizeVal,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
+                  Consumer<PluxeeRedemptionProvider>(
+                    builder: (context, pluxee, _) {
+                      final pending = pluxee.totalPendingPoints;
+                      if (pending <= 0) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Entrance(
+                          delay: const Duration(milliseconds: 200),
+                          child: _buildPendingRow(pending),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ],
+                  if (!isDermo) ...[
+                    const SizedBox(height: 16),
+                    Entrance(
+                      delay: const Duration(milliseconds: 240),
+                      child: PrimaryButton.coral(
+                        label: l10n.redeemYourPoints,
+                        icon: Icons.card_giftcard_rounded,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/rewards'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLeaderboardCard(BuildContext context, AppLocalizations l10n) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-    final double iconSize = 40 * scaleFactor;
-    final double paddingVal = 16 * scaleFactor;
-    final double fontSizeVal = 14 * scaleFactor;
-    final double spacingVal = 12 * scaleFactor;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.lightOutlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
-          ),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(paddingVal),
-                  decoration: const BoxDecoration(
-                    color: LightModeColors.success,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.white,
-                    size: iconSize,
-                  ),
-                ),
-                SizedBox(height: spacingVal),
-                Text(
-                  l10n.performanceTracking,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSizeVal,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpace.page,
+              22,
+              AppSpace.page,
+              0,
             ),
+            child: centered(_buildShortcuts(context, l10n, user, goal, badge)),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildGoalsCard(BuildContext context, AppLocalizations l10n) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-    final double iconSize = 40 * scaleFactor;
-    final double paddingVal = 16 * scaleFactor;
-    final double fontSizeVal = 14 * scaleFactor;
-    final double spacingVal = 12 * scaleFactor;
+  // ---------------------------------------------------------------------
+  // The points capsule — a glass gélule floating on the aurora. The indigo
+  // half holds what you can spend, the clear half what you have earned.
+  // ---------------------------------------------------------------------
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.lightOutlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const GoalsScreen()),
-          ),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(paddingVal),
+  Widget _buildPointsCapsule(UserModel user, AppLocalizations l10n) {
+    final num usable = user.points;
+    final num cumulative = user.totalPointsValidated;
+    const radius = BorderRadius.all(Radius.circular(_capsuleHeight / 2));
+    final muted = Colors.white.withValues(alpha: 0.78);
+
+    return Sheen(
+      borderRadius: radius,
+      delay: const Duration(milliseconds: 900),
+      period: const Duration(seconds: 7),
+      intensity: 0.2,
+      child: Glass(
+        style: GlassStyle.dark,
+        blur: Glass.frost,
+        height: _capsuleHeight,
+        borderRadius: radius,
+        child: Stack(
+          children: [
+            // The tinted half.
+            Positioned.fill(
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                alignment: Alignment.centerLeft,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: LightModeColors.lightError,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.flag_circle,
-                    color: Colors.white,
-                    size: iconSize,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.indigoBright.withValues(alpha: 0.85),
+                        AppColors.indigo.withValues(alpha: 0.62),
+                      ],
+                    ),
                   ),
                 ),
-                SizedBox(height: spacingVal),
-                Text(
-                  l10n.objectives,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSizeVal,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
+              ),
+            ),
+            // The seam where the two halves of the capsule meet.
+            Align(
+              child: Container(
+                width: 1.2,
+                color: Colors.white.withValues(alpha: 0.28),
+              ),
+            ),
+            // Gloss along the top, the way a capsule catches light.
+            Positioned(
+              top: 7,
+              left: 52,
+              right: 52,
+              height: 12,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.16),
+                        Colors.white.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _capsuleHalf(
+                    label: l10n.currentPointsBalance.replaceAll('\n', ' '),
+                    value: usable,
+                    foreground: Colors.white,
+                    muted: muted,
+                    padding: const EdgeInsets.only(left: 30, right: 12),
+                  ),
+                ),
+                Expanded(
+                  child: _capsuleHalf(
+                    label: 'Total points cumulés',
+                    value: cumulative,
+                    foreground: Colors.white,
+                    muted: muted,
+                    padding: const EdgeInsets.only(left: 20, right: 24),
                   ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildBadgesCard(BuildContext context, AppLocalizations l10n) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-    final double iconSize = 40 * scaleFactor;
-    final double paddingVal = 16 * scaleFactor;
-    final double fontSizeVal = 14 * scaleFactor;
-    final double spacingVal = 12 * scaleFactor;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.lightOutlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+  Widget _capsuleHalf({
+    required String label,
+    required num value,
+    required Color foreground,
+    required Color muted,
+    required EdgeInsets padding,
+  }) {
+    return Padding(
+      padding: padding,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.label(size: 12.5, color: muted, letterSpacing: 0),
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                CountUp(
+                  value: value,
+                  style: AppText.display(size: 32, color: foreground),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  'pts',
+                  style: AppText.label(size: 14, color: muted),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+    );
+  }
+
+  Widget _buildPendingRow(num pendingPoints) {
+    return SoftCard(
+      style: GlassStyle.dark,
+      radius: AppRadii.md,
+      shadow: false,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.hourglass_top_rounded,
+            color: AppColors.amber,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Points en attente',
+              style: AppText.body(
+                size: 14.5,
+                weight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.82),
+              ),
+            ),
+          ),
+          Text(
+            '${_formatPoints(pendingPoints)} pts',
+            style: AppText.display(size: 18, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Shortcuts — the day's main action first and wide, the rest in pairs.
+  // ---------------------------------------------------------------------
+
+  Widget _buildShortcuts(
+    BuildContext context,
+    AppLocalizations l10n,
+    UserModel user,
+    GoalProvider goal,
+    BadgeProvider badge,
+  ) {
+    final isDermo = user.role == 'Dermo-conseiller';
+    final awarded = badge.badges.where((b) => b.isAwarded).length;
+
+    final featured = isDermo
+        ? _Shortcut(
+            title: 'Check-in / Check-out',
+            icon: Icons.pin_drop_rounded,
+            tone: Tone.peach,
+            onTap: () => _handleCheckIn(context),
+          )
+        : _Shortcut(
+            title: l10n.manualSale,
+            icon: Icons.shopping_cart_rounded,
+            tone: Tone.peach,
+            onTap: () => Navigator.pushNamed(context, '/manual-sale'),
+          );
+
+    final rest = <_Shortcut>[
+      _Shortcut(
+        title: l10n.performanceTracking,
+        icon: Icons.leaderboard_rounded,
+        tone: Tone.mint,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+        ),
+      ),
+      _Shortcut(
+        title: l10n.objectives,
+        icon: Icons.flag_rounded,
+        tone: Tone.coral,
+        chip: goal.goals.isEmpty ? null : '${goal.goals.length}',
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const GoalsScreen()),
+        ),
+      ),
+      if (!isDermo)
+        _Shortcut(
+          title: l10n.lastBadge,
+          icon: Icons.military_tech_rounded,
+          tone: Tone.amber,
+          chip: badge.badges.isEmpty ? null : '$awarded/${badge.badges.length}',
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const BadgesScreen()),
           ),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      _Shortcut(
+        title: 'Challenges',
+        icon: Icons.emoji_events_rounded,
+        tone: Tone.indigo,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ChallengesListScreen()),
+        ),
+      ),
+    ];
+
+    const gap = 14.0;
+    const base = Duration(milliseconds: 320);
+    final rows = <Widget>[
+      Entrance(delay: base, child: _WideShortcutTile(shortcut: featured)),
+    ];
+    var order = 1;
+    for (var i = 0; i < rest.length; i += 2) {
+      final pair = rest.skip(i).take(2).toList();
+      rows.add(const SizedBox(height: gap));
+      if (pair.length == 1) {
+        rows.add(
+          Entrance.staggered(
+            index: order++,
+            base: base,
+            child: _WideShortcutTile(shortcut: pair.first),
+          ),
+        );
+      } else {
+        rows.add(
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: EdgeInsets.all(paddingVal),
-                  decoration: const BoxDecoration(
-                    color: LightModeColors.lightwarning,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.military_tech,
-                    color: Colors.white,
-                    size: iconSize,
+                Expanded(
+                  child: Entrance.staggered(
+                    index: order++,
+                    base: base,
+                    child: _ShortcutTile(shortcut: pair[0]),
                   ),
                 ),
-                SizedBox(height: spacingVal),
-                Text(
-                  l10n.lastBadge,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSizeVal,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
+                const SizedBox(width: gap),
+                Expanded(
+                  child: Entrance.staggered(
+                    index: order++,
+                    base: base,
+                    child: _ShortcutTile(shortcut: pair[1]),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
+        );
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
     );
   }
 
-  Widget _buildChallengesCard(BuildContext context, AppLocalizations l10n) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-    final double iconSize = 40 * scaleFactor;
-    final double paddingVal = 16 * scaleFactor;
-    final double fontSizeVal = 14 * scaleFactor;
-    final double spacingVal = 12 * scaleFactor;
+  // ---------------------------------------------------------------------
+  // Check-in (dermo-conseiller) — unchanged behaviour.
+  // ---------------------------------------------------------------------
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.lightOutlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChallengesListScreen()),
-          ),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(paddingVal),
-                  decoration: const BoxDecoration(
-                    color: LightModeColors.lightPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.emoji_events_rounded,
-                    color: Colors.white,
-                    size: iconSize,
-                  ),
-                ),
-                SizedBox(height: spacingVal),
-                Text(
-                  "Challenges",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSizeVal,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                ),
-              ],
+  Future<void> _handleCheckIn(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final activeVisitId = prefs.getString('active_visit_id');
+    final activePharId = prefs.getString('active_pharmacy_id');
+    final activePharName = prefs.getString('active_pharmacy_name');
+
+    if (activeVisitId != null &&
+        activePharId != null &&
+        activePharName != null) {
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PharmacyProfileScreen(
+              pharmacyId: activePharId,
+              pharmacyName: activePharName,
             ),
           ),
-        ),
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.userProfile;
+    if (user != null) {
+      try {
+        final activeVisitsQuery = await FirebaseFirestore.instance
+            .collection('visits_history')
+            .where('dermoId', isEqualTo: user.uid)
+            .where('status', isEqualTo: 'active')
+            .get();
+
+        final activeDocs = activeVisitsQuery.docs;
+
+        if (activeDocs.length == 1) {
+          final visitData = activeDocs.first.data();
+          final visitId = visitData['visitId'] ?? activeDocs.first.id;
+          final pharmacyId = visitData['pharmacyId'] ?? '';
+          final pharmacyName = visitData['pharmacyName'] ?? '';
+          final pointOfSale = visitData['pointOfSale'];
+
+          await prefs.setString('active_visit_id', visitId.toString());
+          await prefs.setString('active_pharmacy_id', pharmacyId.toString());
+          await prefs.setString(
+            'active_pharmacy_name',
+            pharmacyName.toString(),
+          );
+          if (pointOfSale != null && pointOfSale.toString().isNotEmpty) {
+            await prefs.setString(
+              'active_point_of_sale',
+              pointOfSale.toString(),
+            );
+          } else {
+            await prefs.remove('active_point_of_sale');
+          }
+
+          if (context.mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PharmacyProfileScreen(
+                  pharmacyId: pharmacyId.toString(),
+                  pharmacyName: pharmacyName.toString(),
+                ),
+              ),
+            );
+          }
+          return;
+        } else if (activeDocs.length > 1) {
+          if (context.mounted) {
+            showGlassDialog<void>(
+              context: context,
+              child: Builder(
+                builder: (context) => ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(
+                        child: BlisterIcon(
+                          icon: Icons.error_outline_rounded,
+                          tone: Tone.coral,
+                          size: 64,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Visites actives multiples",
+                        textAlign: TextAlign.center,
+                        style: AppText.display(size: 21),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Vous avez plusieurs visites actives enregistrées. Veuillez fermer vos anciennes visites ou contacter votre responsable pour les fermer.",
+                        textAlign: TextAlign.center,
+                        style: AppText.body(
+                          size: 14.5,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      PrimaryButton(
+                        label: "OK",
+                        height: 50,
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
+        debugPrint("Error checking active visits: $e");
+      }
+    }
+
+    if (context.mounted) {
+      Navigator.pushNamed(context, '/pharmacy_selection');
+    }
+  }
+}
+
+class _Shortcut {
+  final String title;
+  final IconData icon;
+  final Tone tone;
+  final String? chip;
+  final VoidCallback onTap;
+
+  const _Shortcut({
+    required this.title,
+    required this.icon,
+    required this.tone,
+    required this.onTap,
+    this.chip,
+  });
+}
+
+/// The full-width tile for the action people open the app to do.
+class _WideShortcutTile extends StatelessWidget {
+  final _Shortcut shortcut;
+  const _WideShortcutTile({required this.shortcut});
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      onTap: shortcut.onTap,
+      semanticLabel: shortcut.title,
+      padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
+      child: Row(
+        children: [
+          BlisterIcon(icon: shortcut.icon, tone: shortcut.tone, size: 56),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              shortcut.title.replaceAll('\n', ' '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.display(size: 19),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: shortcut.tone.tint,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 20,
+              color: shortcut.tone.deep,
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildCheckInCard(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double scaleFactor = (screenWidth > 600) ? 1.4 : 1.0;
-    final double iconSize = 40 * scaleFactor;
-    final double paddingVal = 16 * scaleFactor;
-    final double fontSizeVal = 14 * scaleFactor;
-    final double spacingVal = 12 * scaleFactor;
+class _ShortcutTile extends StatelessWidget {
+  final _Shortcut shortcut;
+  const _ShortcutTile({required this.shortcut});
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.lightOutlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      onTap: shortcut.onTap,
+      semanticLabel: shortcut.title.replaceAll('\n', ' '),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              BlisterIcon(icon: shortcut.icon, tone: shortcut.tone),
+              const Spacer(),
+              if (shortcut.chip != null)
+                TonePill(label: shortcut.chip!, tone: shortcut.tone),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text(
+            shortcut.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.display(size: 17, height: 1.15),
           ),
         ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () async {
-            final prefs = await SharedPreferences.getInstance();
-            final activeVisitId = prefs.getString('active_visit_id');
-            final activePharId = prefs.getString('active_pharmacy_id');
-            final activePharName = prefs.getString('active_pharmacy_name');
-
-            if (activeVisitId != null &&
-                activePharId != null &&
-                activePharName != null) {
-              if (context.mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PharmacyProfileScreen(
-                      pharmacyId: activePharId,
-                      pharmacyName: activePharName,
-                    ),
-                  ),
-                );
-              }
-              return;
-            }
-
-            final authProvider = Provider.of<AuthProvider>(context, listen: false);
-            final user = authProvider.userProfile;
-            if (user != null) {
-              try {
-                final activeVisitsQuery = await FirebaseFirestore.instance
-                    .collection('visits_history')
-                    .where('dermoId', isEqualTo: user.uid)
-                    .where('status', isEqualTo: 'active')
-                    .get();
-
-                final activeDocs = activeVisitsQuery.docs;
-
-                if (activeDocs.length == 1) {
-                  final visitData = activeDocs.first.data();
-                  final visitId = visitData['visitId'] ?? activeDocs.first.id;
-                  final pharmacyId = visitData['pharmacyId'] ?? '';
-                  final pharmacyName = visitData['pharmacyName'] ?? '';
-                  final pointOfSale = visitData['pointOfSale'];
-
-                  await prefs.setString('active_visit_id', visitId.toString());
-                  await prefs.setString('active_pharmacy_id', pharmacyId.toString());
-                  await prefs.setString('active_pharmacy_name', pharmacyName.toString());
-                  if (pointOfSale != null && pointOfSale.toString().isNotEmpty) {
-                    await prefs.setString('active_point_of_sale', pointOfSale.toString());
-                  } else {
-                    await prefs.remove('active_point_of_sale');
-                  }
-
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PharmacyProfileScreen(
-                          pharmacyId: pharmacyId.toString(),
-                          pharmacyName: pharmacyName.toString(),
-                        ),
-                      ),
-                    );
-                  }
-                  return;
-                } else if (activeDocs.length > 1) {
-                  if (context.mounted) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        backgroundColor: Colors.white,
-                        surfaceTintColor: Colors.white,
-                        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                        title: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: const BoxDecoration(
-                                color: LightModeColors.lightErrorContainer,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.error_outline_rounded,
-                                color: LightModeColors.lightError,
-                                size: 36,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Visites actives multiples",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: LightModeColors.lightError,
-                              ),
-                            ),
-                          ],
-                        ),
-                        content: const Text(
-                          "Vous avez plusieurs visites actives enregistrées. Veuillez fermer vos anciennes visites ou contacter votre responsable pour les fermer.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.4,
-                            color: LightModeColors.novoPharmaGray,
-                          ),
-                        ),
-                        actionsPadding: const EdgeInsets.only(right: 16, bottom: 12),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              "OK",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: LightModeColors.lightError,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return;
-                }
-              } catch (e) {
-                debugPrint("Error checking active visits: $e");
-              }
-            }
-
-            if (context.mounted) {
-              Navigator.pushNamed(context, '/pharmacy_selection');
-            }
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(paddingVal),
-                  decoration: const BoxDecoration(
-                    color: LightModeColors.warning,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.pin_drop_rounded,
-                    color: Colors.white,
-                    size: iconSize,
-                  ),
-                ),
-                SizedBox(height: spacingVal),
-                Text(
-                  "Check-in / Check-out",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSizeVal,
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

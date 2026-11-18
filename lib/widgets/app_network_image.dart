@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:novopharma/design/design.dart';
 
 /// Robust image loader for products and banners.
 /// Handles:
@@ -47,15 +48,16 @@ class AppNetworkImage extends StatelessWidget {
     if (errorWidget != null && url != null) {
       return errorWidget!(context, url, error);
     }
+    // A quiet tile: the icon says what is missing without shouting about it.
     return Container(
       width: width,
       height: height,
-      color: backgroundColor ?? Colors.grey.shade50,
+      color: backgroundColor ?? AppColors.surfaceSunken,
       alignment: Alignment.center,
       child: Icon(
         errorIcon,
         size: errorIconSize,
-        color: errorIconColor ?? Colors.grey.shade300,
+        color: errorIconColor ?? AppColors.lineStrong,
       ),
     );
   }
@@ -64,27 +66,30 @@ class AppNetworkImage extends StatelessWidget {
     if (placeholder != null) {
       return placeholder!(context, url);
     }
-    return Container(
-      width: width,
-      height: height,
-      color: backgroundColor ?? Colors.transparent,
-      alignment: Alignment.center,
-      child: const SizedBox(
-        width: 18,
-        height: 18,
-        child: CircularProgressIndicator(strokeWidth: 2),
+    // The shimmer paints over whatever is opaque, so the fill only has to
+    // mark out the image's box.
+    return Shimmer(
+      child: Container(
+        width: width,
+        height: height,
+        color: AppColors.line,
       ),
     );
+  }
+
+  Widget _clip(Widget child) {
+    if (borderRadius == null) return child;
+    return ClipRRect(borderRadius: borderRadius!, child: child);
   }
 
   @override
   Widget build(BuildContext context) {
     final cleanUrl = imageUrl?.trim() ?? '';
     if (cleanUrl.isEmpty || !cleanUrl.startsWith('http')) {
-      return _buildFallback(context);
+      return _clip(_buildFallback(context));
     }
 
-    Widget imageWidget = CachedNetworkImage(
+    final Widget imageWidget = CachedNetworkImage(
       imageUrl: cleanUrl,
       width: width,
       height: height,
@@ -119,13 +124,6 @@ class AppNetworkImage extends StatelessWidget {
       },
     );
 
-    if (borderRadius != null) {
-      imageWidget = ClipRRect(
-        borderRadius: borderRadius!,
-        child: imageWidget,
-      );
-    }
-
-    return imageWidget;
+    return _clip(imageWidget);
   }
 }

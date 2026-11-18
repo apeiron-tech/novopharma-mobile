@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:novopharma/controllers/badge_provider.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/models/badge.dart' as models;
 import 'package:novopharma/models/reward.dart' as models_reward;
 import 'package:novopharma/widgets/badge_card.dart';
@@ -52,6 +52,12 @@ class _BadgesScreenState extends State<BadgesScreen> {
     }
   }
 
+  /// "BADGES" -> "Badges". Leaves mixed-case strings alone.
+  String _sentenceCase(String value) {
+    if (value.isEmpty || value != value.toUpperCase()) return value;
+    return value[0] + value.substring(1).toLowerCase();
+  }
+
   void _showBadgeDetails(BuildContext context, BadgeDisplayInfo badgeInfo) {
     final l10n = AppLocalizations.of(context)!;
     final models.Badge badge = badgeInfo.badge;
@@ -70,36 +76,20 @@ class _BadgesScreenState extends State<BadgesScreen> {
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (context, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
+            return _SheetGlass(
               child: Column(
                 children: [
                   // Handle
-                  Container(
-                    margin: const EdgeInsets.only(top: 16, bottom: 12),
-                    width: 48,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
+                  const _SheetHandle(),
                   Expanded(
                     child: SingleChildScrollView(
                       controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                      padding: EdgeInsets.fromLTRB(
+                        22,
+                        8,
+                        22,
+                        24 + MediaQuery.paddingOf(context).bottom,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -107,67 +97,31 @@ class _BadgesScreenState extends State<BadgesScreen> {
                           Center(
                             child: Column(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: badgeInfo.isAwarded
-                                          ? [
-                                              const Color(0xFFF59E0B),
-                                              const Color(0xFFD97706),
-                                            ]
-                                          : [
-                                              Colors.grey.shade200,
-                                              Colors.grey.shade300,
-                                            ],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            (badgeInfo.isAwarded
-                                                    ? const Color(0xFFF59E0B)
-                                                    : Colors.grey)
-                                                .withValues(alpha: 0.3),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Image.network(
-                                    badge.imageUrl,
-                                    height: 80,
-                                    width: 80,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
-                                              Icons.shield_rounded,
-                                              size: 80,
-                                              color: Colors.white,
-                                            ),
+                                Entrance(
+                                  offset: Offset.zero,
+                                  scaleFrom: 0.82,
+                                  child: BadgeDome(
+                                    imageUrl: badge.imageUrl,
+                                    earned: badgeInfo.isAwarded,
+                                    size: 132,
+                                    progress:
+                                        !badgeInfo.isAwarded &&
+                                            badgeInfo.progress > 0 &&
+                                            badgeInfo.progress < 1
+                                        ? badgeInfo.progress
+                                        : null,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 18),
                                 Text(
                                   badge.name,
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF1F2937),
-                                    letterSpacing: -0.5,
-                                  ),
+                                  style: AppText.display(size: 24),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   badge.description,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    color: Colors.grey.shade600,
-                                    height: 1.5,
-                                  ),
+                                  style: AppText.body(size: 15, height: 1.5),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -205,47 +159,35 @@ class _BadgesScreenState extends State<BadgesScreen> {
 
   Widget _buildAwardedStatus(BadgeDisplayInfo badgeInfo, BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF22C55E).withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+    return SoftCard(
+      gradient: AppGradients.mint,
+      radius: AppRadii.md,
+      padding: const EdgeInsets.all(18),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 32),
-          const SizedBox(width: 16),
+          const Icon(
+            Icons.check_circle_rounded,
+            color: AppColors.ink,
+            size: 32,
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n.badgeEarned,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                  style: AppText.display(size: 18, color: AppColors.ink),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   l10n.awardedOn(
                     DateFormat.yMMMd().format(badgeInfo.userBadge!.awardedAt),
                   ),
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.9),
+                  style: AppText.body(
+                    size: 14,
+                    weight: FontWeight.w500,
+                    color: AppColors.ink.withValues(alpha: 0.82),
                   ),
                 ),
               ],
@@ -268,62 +210,30 @@ class _BadgesScreenState extends State<BadgesScreen> {
     return Builder(
       builder: (context) {
         final l10n = AppLocalizations.of(context)!;
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.grey.shade50, Colors.white],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
+        return SoftCard(
+          radius: AppRadii.md,
+          padding: const EdgeInsets.all(18),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Text(l10n.progress, style: AppText.display(size: 16)),
                   Text(
-                    l10n.progress,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1F2937),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${progressPercent.toStringAsFixed(0)}%',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                    '${progressPercent.toStringAsFixed(0)}%',
+                    style: AppText.display(
+                      size: 20,
+                      color: AppColors.amberDeep,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
+              SizedBox(
+                width: double.infinity,
+                child: CapsuleProgress(
                   value: badgeInfo.progress,
-                  minHeight: 12,
-                  backgroundColor: Colors.grey.shade200,
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF1F9BD1),
-                  ),
+                  tone: Tone.amber,
                 ),
               ),
               const SizedBox(height: 12),
@@ -332,18 +242,13 @@ class _BadgesScreenState extends State<BadgesScreen> {
                 children: [
                   Text(
                     _formatValue(currentValue, rules.metric),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: AppText.display(size: 14),
                   ),
                   Text(
                     _formatValue(rules.targetValue, rules.metric),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
+                    style: AppText.display(
+                      size: 14,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
@@ -379,26 +284,29 @@ class _BadgesScreenState extends State<BadgesScreen> {
 
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
-                Icons.emoji_events_rounded,
-                l10n.badgesLeft,
-                badgesLeft > 0 || badgesLeft == 0 ? '$badgesLeft' : '∞',
-                const Color(0xFFF59E0B),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  Icons.emoji_events_rounded,
+                  l10n.badgesLeft,
+                  badgesLeft > 0 || badgesLeft == 0 ? '$badgesLeft' : '∞',
+                  Tone.amber,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildInfoCard(
-                Icons.flag_rounded,
-                l10n.target,
-                _formatValue(rules.targetValue, rules.metric),
-                const Color(0xFF1F9BD1),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildInfoCard(
+                  Icons.flag_rounded,
+                  l10n.target,
+                  _formatValue(rules.targetValue, rules.metric),
+                  Tone.indigo,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         // Reward Card - handles different reward types
@@ -412,35 +320,30 @@ class _BadgesScreenState extends State<BadgesScreen> {
     IconData icon,
     String label,
     String value,
-    Color color,
+    Tone tone,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    return SoftCard(
+      radius: AppRadii.md,
+      shadow: false,
+      tint: tone.tint,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 28),
+          Icon(icon, color: tone.deep, size: 28),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: AppText.display(size: 20),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
-            ),
+            style: AppText.label(size: 12.5, letterSpacing: 0),
             textAlign: TextAlign.center,
           ),
         ],
@@ -461,8 +364,8 @@ class _BadgesScreenState extends State<BadgesScreen> {
           if (snapshot.hasData && snapshot.data != null) {
             final reward = snapshot.data!;
             return _buildRewardCardContent(
-              const Color(0xFF4CAF50), // Green color for rewards
-              Icons.card_giftcard_outlined,
+              Tone.mint, // Mint for rewards
+              Icons.card_giftcard_rounded,
               l10n.rewardLabel,
               reward.name, // Display the reward name
               context,
@@ -470,8 +373,8 @@ class _BadgesScreenState extends State<BadgesScreen> {
           } else {
             // If reward data is not available, show a loading state or fallback
             return _buildRewardCardContent(
-              const Color(0xFF4CAF50), // Green color for rewards
-              Icons.card_giftcard_outlined,
+              Tone.mint, // Mint for rewards
+              Icons.card_giftcard_rounded,
               l10n.rewardLabel,
               'Loading...',
               context,
@@ -481,7 +384,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
       );
     } else {
       // For 'points' and 'custom' types, use the direct approach
-      Color cardColor;
+      Tone cardTone;
       IconData iconData;
       String title;
       String value;
@@ -489,7 +392,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
       switch (badge.rewardType) {
         case 'points':
           if (badge.points != null && badge.points! > 0) {
-            cardColor = const Color(0xFF8B5CF6);
+            cardTone = Tone.amber;
             iconData = Icons.stars_rounded;
             title = l10n.pointsLabel;
             value = '+${badge.points} pts';
@@ -499,10 +402,8 @@ class _BadgesScreenState extends State<BadgesScreen> {
           }
           break;
         case 'custom':
-          cardColor = const Color(
-            0xFFFF9800,
-          ); // Orange color for custom rewards
-          iconData = Icons.card_giftcard_outlined;
+          cardTone = Tone.peach; // Peach for custom rewards
+          iconData = Icons.card_giftcard_rounded;
           title = l10n.customRewardLabel;
           value = badge.customReward ?? 'Custom Reward';
           break;
@@ -512,7 +413,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
       }
 
       return _buildRewardCardContent(
-        cardColor,
+        cardTone,
         iconData,
         title,
         value,
@@ -522,7 +423,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
   }
 
   Widget _buildRewardCardContent(
-    Color cardColor,
+    Tone cardTone,
     IconData iconData,
     String title,
     String value,
@@ -530,72 +431,28 @@ class _BadgesScreenState extends State<BadgesScreen> {
   ) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [cardColor, cardColor.withValues(alpha: 0.8)],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: cardColor.withValues(alpha: 0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        SoftCard(
+          radius: AppRadii.md,
+          tint: cardTone.tint,
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(iconData, color: Colors.white, size: 32),
-              ),
-              const SizedBox(width: 16),
+              BlisterIcon(icon: iconData, tone: cardTone, size: 48),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
+                      style: AppText.label(size: 13, letterSpacing: 0),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       value,
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        height: 1,
-                      ),
+                      style: AppText.display(size: 19, height: 1.15),
                     ),
                   ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(
-                  Icons.emoji_events_rounded,
-                  color: Colors.white,
-                  size: 24,
                 ),
               ),
             ],
@@ -630,30 +487,15 @@ class _BadgesScreenState extends State<BadgesScreen> {
     BuildContext context,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
+    return SoftCard(
+      radius: AppRadii.md,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.purple.shade50, Colors.blue.shade50],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.purple.shade200),
-      ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.calendar_month_rounded,
-              color: Colors.purple.shade700,
-              size: 24,
-            ),
+          const TintIcon(
+            icon: Icons.calendar_month_rounded,
+            tone: Tone.indigo,
+            size: 44,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -662,20 +504,12 @@ class _BadgesScreenState extends State<BadgesScreen> {
               children: [
                 Text(
                   l10n.eventPeriod,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: AppText.label(size: 12.5, letterSpacing: 0),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$startDate - $endDate',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.purple.shade900,
-                  ),
+                  style: AppText.display(size: 15, height: 1.2),
                 ),
               ],
             ),
@@ -691,56 +525,16 @@ class _BadgesScreenState extends State<BadgesScreen> {
     models.AcquisitionRules? rules,
     AppLocalizations l10n,
   ) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1F9BD1).withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-            _showBadgeRules(context, badge, rules);
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  l10n.viewRules,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      label: l10n.viewRules,
+      icon: Icons.arrow_forward_rounded,
+      gradient: AppGradients.amber,
+      glowColor: AppColors.amber,
+      foreground: AppColors.ink,
+      onPressed: () {
+        Navigator.pop(context);
+        _showBadgeRules(context, badge, rules);
+      },
     );
   }
 
@@ -759,57 +553,227 @@ class _BadgesScreenState extends State<BadgesScreen> {
     );
   }
 
+  // The blister pack: three domes across on a phone, more on a tablet.
+  static const _gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: 140,
+    crossAxisSpacing: 12.0,
+    mainAxisSpacing: 12.0,
+    childAspectRatio: 0.68,
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.badges,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+      backgroundColor: AppColors.canvas,
+      body: AppBackground(
+        accent: Tone.amber,
+        child: Consumer<BadgeProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return _buildPage(
+                context,
+                l10n,
+                scrollable: false,
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      26,
+                      AppSpace.page,
+                      0,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Shimmer(
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: _gridDelegate,
+                          itemCount: 9,
+                          itemBuilder: (context, index) =>
+                              const SkeletonBox(radius: AppRadii.md),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            // Check for initial badge detail trigger
+            if (widget.initialBadgeId != null && !_initialBadgeHandled) {
+              _checkInitialBadge(provider);
+            }
+
+            if (provider.badges.isEmpty) {
+              return _buildPage(
+                context,
+                l10n,
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      icon: Icons.military_tech_rounded,
+                      title: l10n.noBadgesAvailable,
+                      tone: Tone.amber,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            final awardedBadges = provider.badges
+                .where((b) => b.isAwarded)
+                .toList();
+            final lockedBadges = provider.badges
+                .where((b) => !b.isAwarded)
+                .toList();
+
+            return _buildPage(
+              context,
+              l10n,
+              awardedCount: awardedBadges.length,
+              totalCount: provider.badges.length,
+              slivers: [
+                _buildSectionHeader(
+                  '${l10n.badgeAwarded} (${awardedBadges.length})',
+                ),
+                _buildGrid(awardedBadges, context),
+                _buildSectionHeader(
+                  '${l10n.badgeLocked} (${lockedBadges.length})',
+                ),
+                _buildGrid(lockedBadges, context),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: MediaQuery.paddingOf(context).bottom + 28,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: const Color(0xFFF9FAFB),
-        foregroundColor: Colors.black,
       ),
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: Consumer<BadgeProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    );
+  }
 
-          // Check for initial badge detail trigger
-          if (widget.initialBadgeId != null && !_initialBadgeHandled) {
-            _checkInitialBadge(provider);
-          }
+  /// The ink hero followed by [slivers]. Every state of the screen goes
+  /// through here so the hero stays put while the content below changes.
+  Widget _buildPage(
+    BuildContext context,
+    AppLocalizations l10n, {
+    required List<Widget> slivers,
+    int? awardedCount,
+    int? totalCount,
+    bool scrollable = true,
+  }) {
+    return CustomScrollView(
+      physics: scrollable ? null : const NeverScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _buildHero(context, l10n, awardedCount, totalCount),
+        ),
+        ...slivers,
+      ],
+    );
+  }
 
-          if (provider.badges.isEmpty) {
-            return Center(child: Text(l10n.noBadgesAvailable));
-          }
+  Widget _buildHero(
+    BuildContext context,
+    AppLocalizations l10n,
+    int? awardedCount,
+    int? totalCount,
+  ) {
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
+    final muted = Colors.white.withValues(alpha: 0.78);
 
-          final awardedBadges = provider.badges
-              .where((b) => b.isAwarded)
-              .toList();
-          final lockedBadges = provider.badges
-              .where((b) => !b.isAwarded)
-              .toList();
-
-          return CustomScrollView(
-            slivers: [
-              _buildSectionHeader(
-                '${l10n.badgeAwarded} (${awardedBadges.length})',
+    return InkHero(
+      padding: const EdgeInsets.fromLTRB(AppSpace.page, 10, AppSpace.page, 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              if (canPop) ...[
+                GlassIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  onTap: () => Navigator.maybePop(context),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Text(
+                  _sentenceCase(l10n.badges),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.display(size: 26, color: Colors.white),
+                ),
               ),
-              _buildGrid(awardedBadges, context),
-              _buildSectionHeader(
-                '${l10n.badgeLocked} (${lockedBadges.length})',
+              const SizedBox(width: 12),
+              const BlisterIcon(
+                icon: Icons.military_tech_rounded,
+                tone: Tone.amber,
+                size: 44,
               ),
-              _buildGrid(lockedBadges, context),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
-          );
-        },
+          ),
+          if (awardedCount != null && totalCount != null) ...[
+            const SizedBox(height: 20),
+            Entrance(
+              delay: const Duration(milliseconds: 100),
+              scaleFrom: 0.96,
+              child: SoftCard(
+                style: GlassStyle.dark,
+                blur: Glass.frost,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.badgeAwarded,
+                      style: AppText.label(
+                        size: 12.5,
+                        color: muted,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        CountUp(
+                          value: awardedCount,
+                          style: AppText.display(
+                            size: 44,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '/ $totalCount',
+                          style: AppText.display(size: 22, color: muted),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: CapsuleProgress(
+                        value: totalCount > 0 ? awardedCount / totalCount : 0.0,
+                        tone: Tone.amber,
+                        height: 10,
+                        trackColor: Colors.white.withValues(alpha: 0.16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -817,15 +781,13 @@ class _BadgesScreenState extends State<BadgesScreen> {
   Widget _buildSectionHeader(String title) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF374151),
-          ),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpace.page,
+          26,
+          AppSpace.page,
+          14,
         ),
+        child: Text(title, style: AppText.display(size: 20)),
       ),
     );
   }
@@ -835,30 +797,89 @@ class _BadgesScreenState extends State<BadgesScreen> {
     if (badges.isEmpty) {
       return SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            l10n.noBadgesInCategory,
-            style: const TextStyle(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.page),
+          child: SoftCard(
+            radius: AppRadii.md,
+            shadow: false,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const TintIcon(
+                  icon: Icons.military_tech_rounded,
+                  tone: Tone.amber,
+                  size: 40,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    l10n.noBadgesInCategory,
+                    style: AppText.body(
+                      size: 14.5,
+                      color: AppColors.textMuted,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.page),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 12.0,
-          mainAxisSpacing: 12.0,
-          childAspectRatio: 0.85,
-        ),
+        gridDelegate: _gridDelegate,
         delegate: SliverChildBuilderDelegate((context, index) {
           final badgeInfo = badges[index];
-          return GestureDetector(
+          return Pressable(
             onTap: () => _showBadgeDetails(context, badgeInfo),
+            semanticLabel: badgeInfo.badge.name,
             child: BadgeCard(badgeInfo: badgeInfo),
           );
         }, childCount: badges.length),
+      ),
+    );
+  }
+}
+
+/// The frosted pane of a draggable sheet: [GlassSheet]'s glass, without its
+/// own layout, so a `DraggableScrollableSheet` can drive the scroll inside.
+class _SheetGlass extends StatelessWidget {
+  final Widget child;
+  const _SheetGlass({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Glass(
+      blur: Glass.frost,
+      shadow: false,
+      tint: Colors.white,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadii.xl),
+      ),
+      // A light wash over the glass keeps long reading text legible when
+      // the page behind the sheet is dimmed.
+      child: ColoredBox(
+        color: Colors.white.withValues(alpha: 0.5),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 5,
+      margin: const EdgeInsets.only(top: 12, bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.ink.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(5),
       ),
     );
   }
@@ -874,11 +895,7 @@ class _BadgeRulesSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return _SheetGlass(
       child: DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.4,
@@ -887,69 +904,52 @@ class _BadgeRulesSheet extends StatelessWidget {
         builder: (context, scrollController) {
           return Column(
             children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
+              const _SheetHandle(),
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(
+                    22,
+                    10,
+                    22,
+                    24 + MediaQuery.paddingOf(context).bottom,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF1F9BD1), Color(0xFF1887B8)],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.rule_rounded,
-                              color: Colors.white,
-                              size: 28,
-                            ),
+                          const BlisterIcon(
+                            icon: Icons.rule_rounded,
+                            tone: Tone.amber,
+                            size: 48,
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Text(
                               l10n.viewRules,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF1F2937),
-                              ),
+                              style: AppText.display(size: 22),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
                       _buildRuleSection(
                         Icons.track_changes_rounded,
                         l10n.metric,
                         _getMetricText(rules.metric, l10n),
-                        const Color(0xFF1F9BD1),
+                        Tone.indigo,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _buildRuleSection(
                         Icons.flag_rounded,
                         l10n.target,
                         _formatValue(rules.targetValue, rules.metric),
-                        const Color(0xFFF59E0B),
+                        Tone.amber,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _buildScopeSection(l10n),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _buildTimeframeSection(l10n),
                     ],
                   ),
@@ -966,40 +966,22 @@ class _BadgeRulesSheet extends StatelessWidget {
     IconData icon,
     String title,
     String value,
-    Color color,
+    Tone tone,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    return SoftCard(
+      radius: AppRadii.md,
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(width: 16),
+          TintIcon(icon: icon, tone: tone, size: 44),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
+                Text(title, style: AppText.label(size: 13, letterSpacing: 0)),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
+                Text(value, style: AppText.display(size: 18, height: 1.15)),
               ],
             ),
           ),
@@ -1009,35 +991,22 @@ class _BadgeRulesSheet extends StatelessWidget {
   }
 
   Widget _buildScopeSection(AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.green.shade50, Colors.teal.shade50],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.shade200),
-      ),
+    return SoftCard(
+      radius: AppRadii.md,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.shopping_bag_rounded,
-                color: Colors.green.shade700,
-                size: 28,
+              const TintIcon(
+                icon: Icons.shopping_bag_rounded,
+                tone: Tone.mint,
+                size: 44,
               ),
-              const SizedBox(width: 12),
-              Text(
-                l10n.scope,
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1F2937),
-                ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(l10n.scope, style: AppText.display(size: 18)),
               ),
             ],
           ),
@@ -1061,23 +1030,9 @@ class _BadgeRulesSheet extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-          ),
-        ),
+        Text(label, style: AppText.label(size: 13, letterSpacing: 0)),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1F2937),
-          ),
-        ),
+        Text(value, style: AppText.body(size: 15, weight: FontWeight.w600)),
       ],
     );
   }
@@ -1086,87 +1041,50 @@ class _BadgeRulesSheet extends StatelessWidget {
     final startDate = DateFormat.yMMMd().format(rules.timeframe.startDate);
     final endDate = DateFormat.yMMMd().format(rules.timeframe.endDate);
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.purple.shade50, Colors.blue.shade50],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.purple.shade200),
-      ),
+    return SoftCard(
+      radius: AppRadii.md,
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.calendar_month_rounded,
-              color: Colors.purple.shade700,
-              size: 28,
-            ),
+          const TintIcon(
+            icon: Icons.calendar_month_rounded,
+            tone: Tone.indigo,
+            size: 44,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n.eventPeriod,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: AppText.label(size: 13, letterSpacing: 0),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  startDate,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.purple.shade900,
-                  ),
-                ),
+                Text(startDate, style: AppText.display(size: 16)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
                       width: 30,
                       height: 2,
-                      color: Colors.purple.shade300,
+                      color: AppColors.lineStrong,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       l10n.to,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade600,
-                      ),
+                      style: AppText.label(size: 12, letterSpacing: 0),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       width: 30,
                       height: 2,
-                      color: Colors.purple.shade300,
+                      color: AppColors.lineStrong,
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  endDate,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.purple.shade900,
-                  ),
-                ),
+                Text(endDate, style: AppText.display(size: 16)),
               ],
             ),
           ),
@@ -1263,20 +1181,10 @@ class _ProductChipsWidgetState extends State<_ProductChipsWidget> {
         children: [
           Text(
             l10n.products,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
-            ),
+            style: AppText.label(size: 13, letterSpacing: 0),
           ),
           const SizedBox(height: 8),
-          const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
+          const Center(child: CapsuleLoader(size: 28)),
         ],
       );
     }
@@ -1289,18 +1197,12 @@ class _ProductChipsWidgetState extends State<_ProductChipsWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.products,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-          ),
-        ),
+        Text(l10n.products, style: AppText.label(size: 13, letterSpacing: 0)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             ...displayedProducts.map((productId) {
               final productName = _productNames[productId] ?? productId;
@@ -1310,28 +1212,25 @@ class _ProductChipsWidgetState extends State<_ProductChipsWidget> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade50, Colors.indigo.shade50],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.blue.shade200, width: 1),
+                  color: AppColors.indigoTint,
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.inventory_2_outlined,
+                    const Icon(
+                      Icons.inventory_2_rounded,
                       size: 16,
-                      color: Colors.blue.shade700,
+                      color: AppColors.indigoDeep,
                     ),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         productName,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade900,
+                        style: AppText.label(
+                          size: 13,
+                          color: AppColors.text,
+                          letterSpacing: 0,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1342,47 +1241,48 @@ class _ProductChipsWidgetState extends State<_ProductChipsWidget> {
               );
             }),
             if (hasMore)
-              InkWell(
+              Pressable(
                 onTap: () {
                   setState(() {
                     _isExpanded = !_isExpanded;
                   });
                 },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.purple.shade50, Colors.pink.shade50],
+                // Padded so the tap target reaches 44pt around a 33pt chip.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.purple.shade300, width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isExpanded
-                            ? Icons.expand_less_rounded
-                            : Icons.more_horiz_rounded,
-                        size: 18,
-                        color: Colors.purple.shade700,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isExpanded
-                            ? l10n.showLess
-                            : '+${widget.productIds.length - 3}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.purple.shade900,
+                    decoration: BoxDecoration(
+                      color: AppColors.amberTint,
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isExpanded
+                              ? Icons.expand_less_rounded
+                              : Icons.more_horiz_rounded,
+                          size: 18,
+                          color: AppColors.amberDeep,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          _isExpanded
+                              ? l10n.showLess
+                              : '+${widget.productIds.length - 3}',
+                          style: AppText.label(
+                            size: 13,
+                            weight: FontWeight.w700,
+                            color: AppColors.text,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

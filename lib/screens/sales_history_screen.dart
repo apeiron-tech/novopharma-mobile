@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/sales_history_provider.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:novopharma/models/basket.dart';
 import 'package:novopharma/models/basket_item.dart';
@@ -11,7 +12,6 @@ import 'package:novopharma/screens/product_screen.dart';
 import 'package:novopharma/services/basket_service.dart';
 import 'package:novopharma/services/gift_service.dart';
 import 'package:novopharma/services/product_service.dart';
-import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/app_network_image.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
@@ -53,6 +53,14 @@ class BasketEntry extends HistoryEntry {
   DateTime get date => basketDate;
 }
 
+/// The quiet tone for states that are neither a gain nor a problem
+/// (cancelled sales and baskets).
+const Tone _neutralTone = Tone(
+  AppColors.textFaint,
+  AppColors.textMuted,
+  AppColors.line,
+);
+
 class _SaleGiftInfo {
   final String title;
   final int quantity;
@@ -82,6 +90,23 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   final Map<String, Future<Gift?>> _giftByIdFutures = {};
 
   bool _isFilterExpanded = true;
+
+  // Presentation only: the first screenful of rows arrives once per visit.
+  // Rows built later (scrolling back up, a new period) appear in place.
+  bool _rowsArrived = false;
+
+  Widget _arrive(int index, Widget child) {
+    if (index >= 6) return child;
+    final play = !_rowsArrived;
+    if (play) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _rowsArrived = true);
+    }
+    return Entrance(
+      delay: play ? Duration(milliseconds: 60 * index) : Duration.zero,
+      duration: play ? AppMotion.slow : Duration.zero,
+      child: child,
+    );
+  }
 
   @override
   void initState() {
@@ -202,17 +227,22 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       firstDate: minBound,
       lastDate: maxBound,
       builder: (ctx, child) {
+        final theme = Theme.of(ctx);
         return Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: LightModeColors.lightPrimary,
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
+              primary: AppColors.indigo,
               onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: LightModeColors.dashboardTextPrimary,
+              surface: AppColors.surface,
+              onSurface: AppColors.text,
             ),
-            dialogTheme: DialogThemeData(
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: AppColors.surface,
+              surfaceTintColor: Colors.transparent,
+              headerBackgroundColor: AppColors.ink,
+              headerForegroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadii.lg),
               ),
             ),
           ),
@@ -233,178 +263,110 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   void _showDeleteConfirmationDialog(BuildContext context, Sale sale) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    showGlassDialog(
       context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          title: Row(
+      child: Builder(
+        builder: (BuildContext ctx) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Color(0xFFDC2626),
-                  size: 22,
+              Row(
+                children: [
+                  const TintIcon(
+                    icon: Icons.delete_outline_rounded,
+                    tone: Tone.coral,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      l10n.confirmDeletion,
+                      style: AppText.display(size: 20),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                l10n.confirmDeletionMessage,
+                style: AppText.body(
+                  size: 15,
+                  color: AppColors.textMuted,
+                  height: 1.5,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.confirmDeletion,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: LightModeColors.dashboardTextPrimary,
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SecondaryButton(
+                      label: l10n.cancel,
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: PrimaryButton.coral(
+                      label: l10n.delete,
+                      height: 52,
+                      onPressed: () {
+                        Provider.of<SalesHistoryProvider>(
+                          context,
+                          listen: false,
+                        ).deleteSale(sale);
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-          content: Text(
-            l10n.confirmDeletionMessage,
-            style: const TextStyle(
-              fontSize: 14.5,
-              height: 1.5,
-              color: LightModeColors.dashboardTextSecondary,
-            ),
-          ),
-          actions: <Widget>[
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: LightModeColors.dashboardTextSecondary,
-                      side: const BorderSide(color: LightModeColors.cardBorder),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(
-                      l10n.cancel,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      side: BorderSide.none,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () {
-                      Provider.of<SalesHistoryProvider>(
-                        context,
-                        listen: false,
-                      ).deleteSale(sale);
-                      Navigator.of(ctx).pop();
-                    },
-                    child: Text(
-                      l10n.delete,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   void _showInfoDialog(BuildContext context) {
-    showDialog(
+    showGlassDialog(
       context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          title: Row(
+      child: Builder(
+        builder: (BuildContext ctx) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: LightModeColors.novoPharmaLightBlue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.info_outline_rounded,
-                  color: LightModeColors.lightPrimary,
-                  size: 22,
+              Row(
+                children: [
+                  const TintIcon(icon: Icons.info_outline_rounded),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Information',
+                      style: AppText.display(size: 20),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Après validation, vos points sont automatiquement ajoutés à votre solde de points utilisables et peuvent être échangés en crédits Pluxee.',
+                style: AppText.body(
+                  size: 15,
+                  color: AppColors.textMuted,
+                  height: 1.55,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                ),
+              const SizedBox(height: 22),
+              PrimaryButton(
+                label: 'Fermer',
+                height: 52,
+                onPressed: () => Navigator.of(ctx).pop(),
               ),
             ],
-          ),
-          content: const Text(
-            'Après validation, vos points sont automatiquement ajoutés à votre solde de points utilisables et peuvent être échangés en crédits Pluxee.',
-            style: TextStyle(
-              fontSize: 14.5,
-              height: 1.55,
-              color: LightModeColors.dashboardTextSecondary,
-            ),
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: LightModeColors.lightPrimary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(
-                  'Fermer',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -429,15 +391,36 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       currentIndex: 4, // History tab index
       onTap: (index) {},
       child: Scaffold(
-        backgroundColor: LightModeColors.lightBackground,
+        // The wrapper paints the pastel canvas; this page stays clear so the
+        // glass cards pick it up.
+        backgroundColor: Colors.transparent,
         body: SafeArea(
+          top: false,
+          bottom: false,
           child: Column(
             children: [
-              // 1. Modern Header
-              _buildHeader(context, l10n),
+              // 1. Ink hero: title, period summary and the date filter
+              InkHero(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.page,
+                  10,
+                  AppSpace.page,
+                  18,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(context, l10n),
+                    const SizedBox(height: 14),
 
-              // 2. Date Filter Section
-              _buildFilterSection(l10n),
+                    // 2. Date Filter Section
+                    Entrance(
+                      delay: const Duration(milliseconds: 180),
+                      child: _buildFilterSection(l10n),
+                    ),
+                  ],
+                ),
+              ),
 
               // 3. History Entries List
               Expanded(
@@ -457,21 +440,33 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     }
 
                     return RefreshIndicator(
-                      color: LightModeColors.lightPrimary,
-                      backgroundColor: Colors.white,
+                      color: AppColors.indigo,
+                      backgroundColor: AppColors.surface,
                       onRefresh: _refreshSalesHistory,
                       child: ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(
                           parent: BouncingScrollPhysics(),
                         ),
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 108),
+                        // The list runs under the glass dock.
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          14,
+                          16,
+                          MediaQuery.paddingOf(context).bottom + 20,
+                        ),
                         itemCount: entries.length,
                         itemBuilder: (context, index) {
                           final entry = entries[index];
                           if (entry is BasketEntry) {
-                            return _buildBasketCard(entry, l10n);
+                            return _arrive(
+                              index,
+                              _buildBasketCard(entry, l10n),
+                            );
                           } else if (entry is SingleSaleEntry) {
-                            return _buildSingleSaleCard(entry.sale, l10n);
+                            return _arrive(
+                              index,
+                              _buildSingleSaleCard(entry.sale, l10n),
+                            );
                           }
                           return const SizedBox.shrink();
                         },
@@ -488,132 +483,176 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }
 
   Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(
-        color: LightModeColors.lightSurface,
-        border: Border(
-          bottom: BorderSide(color: LightModeColors.cardBorder, width: 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Entrance(
+          offset: const Offset(0, -12),
+          child: Row(
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.salesHistory,
+                    maxLines: 1,
+                    style: AppText.display(size: 25, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              GlassIconButton(
+                icon: Icons.info_outline_rounded,
+                tooltip: 'Information',
+                onTap: () => _showInfoDialog(context),
+              ),
+            ],
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x080F172A),
-            blurRadius: 12,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  LightModeColors.lightPrimary,
-                  LightModeColors.lightTertiary,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: LightModeColors.lightPrimary.withValues(alpha: 0.28),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.receipt_long_rounded,
-              color: LightModeColors.lightOnPrimary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              l10n.salesHistory,
-              style: const TextStyle(
-                color: LightModeColors.dashboardTextPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Material(
-            color: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.65),
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () => _showInfoDialog(context),
-              borderRadius: BorderRadius.circular(12),
-              child: const SizedBox(
-                width: 40,
-                height: 40,
-                child: Icon(
-                  Icons.info_outline_rounded,
-                  color: LightModeColors.lightPrimary,
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 12),
+        Entrance(
+          delay: const Duration(milliseconds: 90),
+          child: _buildPeriodSummary(l10n),
+        ),
+      ],
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String errorMessage) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  /// What the selected period adds up to, read from the list already on
+  /// screen: how many sales, the points that are validated and the points
+  /// still waiting.
+  Widget _buildPeriodSummary(AppLocalizations l10n) {
+    return Consumer<SalesHistoryProvider>(
+      builder: (context, provider, child) {
+        final sales = provider.salesHistory;
+        double validatedPoints = 0;
+        double pendingPoints = 0;
+        for (final sale in sales) {
+          if (sale.status == 'approved') {
+            validatedPoints += sale.pointsEarned;
+          } else if (sale.status == 'pending') {
+            pendingPoints += sale.pointsEarned;
+          }
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEF2F2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.error_outline_rounded,
-                color: Color(0xFFDC2626),
-                size: 34,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              errorMessage,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: _refreshSalesHistory,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Réessayer'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: LightModeColors.lightPrimary,
-                side: const BorderSide(color: LightModeColors.lightPrimary),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            AnimatedOpacity(
+              duration: AppMotion.fast,
+              opacity: provider.isLoading ? 0 : 1,
+              child: Text(
+                l10n.salesRecorded(sales.length),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body(
+                  size: 14,
+                  weight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.82),
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildHeroStat(
+                    icon: Icons.check_circle_rounded,
+                    iconColor: AppColors.mintBright,
+                    label: 'Validé',
+                    value: validatedPoints,
+                    valueColor: AppColors.mintBright,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildHeroStat(
+                    icon: Icons.schedule_rounded,
+                    iconColor: AppColors.amber,
+                    label: 'En attente',
+                    value: pendingPoints,
+                    valueColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeroStat({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required double value,
+    required Color valueColor,
+  }) {
+    final muted = Colors.white.withValues(alpha: 0.78);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 15, color: iconColor),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.label(size: 12.5, color: muted, letterSpacing: 0),
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              CountUp(
+                value: value,
+                style: AppText.display(size: 30, color: valueColor),
+              ),
+              const SizedBox(width: 5),
+              Text('pts', style: AppText.label(size: 14, color: muted)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String errorMessage) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Centre in what is visible above the glass dock.
+        final dock = MediaQuery.paddingOf(context).bottom;
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: dock),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight:
+                  (constraints.maxHeight - dock).clamp(0.0, double.infinity),
+            ),
+            child: EmptyState(
+              icon: Icons.error_outline_rounded,
+              tone: Tone.coral,
+              title: errorMessage,
+              actionLabel: 'Réessayer',
+              onAction: _refreshSalesHistory,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -626,85 +665,38 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return RefreshIndicator(
-      color: LightModeColors.lightPrimary,
-      backgroundColor: Colors.white,
+      color: AppColors.indigo,
+      backgroundColor: AppColors.surface,
       onRefresh: _refreshSalesHistory,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // Centre in what is visible above the glass dock.
+          final dock = MediaQuery.paddingOf(context).bottom;
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(bottom: dock),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 76,
-                        height: 76,
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.6),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.receipt_long_outlined,
-                          size: 36,
-                          color: LightModeColors.lightPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        l10n.noSalesRecorded,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: LightModeColors.dashboardTextPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        hasFilter
-                            ? 'Essayez d\'élargir ou de réinitialiser la période sélectionnée.'
-                            : 'Vos ventes directes et paniers validés apparaîtront ici.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          height: 1.45,
-                          color: LightModeColors.dashboardTextSecondary,
-                        ),
-                      ),
-                      if (hasFilter) ...[
-                        const SizedBox(height: 18),
-                        TextButton.icon(
-                          onPressed: () {
-                            final userId = authProvider.firebaseUser?.uid;
-                            if (userId != null) {
-                              provider.clearFilters();
-                              provider.fetchSalesHistory(userId);
-                            }
-                          },
-                          icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
-                          label: Text(l10n.clear),
-                          style: TextButton.styleFrom(
-                            foregroundColor: LightModeColors.lightPrimary,
-                            backgroundColor:
-                                LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+              constraints: BoxConstraints(
+                minHeight:
+                    (constraints.maxHeight - dock).clamp(0.0, double.infinity),
+              ),
+              child: EmptyState(
+                icon: Icons.receipt_long_rounded,
+                tone: Tone.peach,
+                title: l10n.noSalesRecorded,
+                message: hasFilter
+                    ? 'Essayez d\'élargir ou de réinitialiser la période sélectionnée.'
+                    : 'Vos ventes directes et paniers validés apparaîtront ici.',
+                actionLabel: hasFilter ? l10n.clear : null,
+                onAction: hasFilter
+                    ? () {
+                        final userId = authProvider.firebaseUser?.uid;
+                        if (userId != null) {
+                          provider.clearFilters();
+                          provider.fetchSalesHistory(userId);
+                        }
+                      }
+                    : null,
               ),
             ),
           );
@@ -778,238 +770,108 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         ? entry.basketId.substring(0, 8)
         : entry.basketId;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: LightModeColors.cardBorder,
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080F172A),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: () => _showBasketDetailsDialog(context, entry.basketId),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SoftCard(
+        onTap: () => _showBasketDetailsDialog(context, entry.basketId),
+        semanticLabel: 'Panier #$shortId',
+        padding: const EdgeInsets.all(14),
+        radius: 24,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // When it happened + where it stands
+            _buildCardTopLine(entry.basketDate, entry.status),
+            const SizedBox(height: 12),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Basket Icon Badge
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFECFDF5),
-                            Color(0xFFD1FAE5),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: const Color(0xFFA7F3D0),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.shopping_basket_rounded,
-                        color: Color(0xFF059669),
-                        size: 25,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
+                // Basket Icon Badge
+                const TintIcon(
+                  icon: Icons.shopping_basket_rounded,
+                  tone: Tone.peach,
+                  size: 56,
+                ),
+                const SizedBox(width: 12),
 
-                    // Title + Preview + Chips
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // Title + Preview
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
                         children: [
-                          Row(
-                            children: [
-                              const Text(
-                                'Panier',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15.5,
-                                  color: LightModeColors.dashboardTextPrimary,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: const Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    '#$shortId',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (previewText.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              previewText,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                color: LightModeColors.dashboardTextSecondary,
-                                fontWeight: FontWeight.w500,
-                                height: 1.3,
-                              ),
+                          Text('Panier', style: AppText.display(size: 17)),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              '#$shortId',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildMetricPill(
-                                  icon: Icons.inventory_2_outlined,
-                                  label:
-                                      '${entry.totalQuantity} article${entry.totalQuantity > 1 ? 's' : ''}',
-                                  bgColor: const Color(0xFFEFF6FF),
-                                  borderColor: const Color(0xFFBFDBFE),
-                                  fgColor: const Color(0xFF1D4ED8),
-                                ),
-                                const SizedBox(width: 6),
-                                _buildMetricPill(
-                                  icon: Icons.stars_rounded,
-                                  label: '+${_formatPoints(entry.totalPoints)} pts',
-                                  bgColor: const Color(0xFFFFFBEB),
-                                  borderColor: const Color(0xFFFDE68A),
-                                  fgColor: const Color(0xFFB45309),
-                                ),
-                              ],
+                              style: AppText.label(size: 12.5),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 10),
-
-                    // Right Price & Status
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              entry.totalAmount.toStringAsFixed(3),
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: LightModeColors.dashboardTextPrimary,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            const Text(
-                              'TND',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: LightModeColors.dashboardTextSecondary,
-                              ),
-                            ),
-                          ],
+                      if (previewText.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          previewText,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.body(
+                            size: 13,
+                            color: AppColors.textMuted,
+                            height: 1.3,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        _buildStatusPill(entry.status),
                       ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 10),
 
-                const SizedBox(height: 10),
-                Container(
-                  height: 1,
-                  color: LightModeColors.lightSurfaceVariant,
-                ),
-                const SizedBox(height: 8),
-
-                // Card Footer: Date + Details CTA
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.schedule_rounded,
-                      size: 13.5,
-                      color: LightModeColors.dashboardTextTertiary,
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        _formatLocalizedDate(
-                          context,
-                          entry.basketDate,
-                          includeTime: true,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: LightModeColors.dashboardTextSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      'Voir détails',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF059669),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      size: 17,
-                      color: Color(0xFF059669),
-                    ),
-                  ],
+                // Points earned + basket total
+                _buildAmounts(
+                  points: entry.totalPoints,
+                  showPoints: true,
+                  price: entry.totalAmount,
+                  showPrice: true,
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 12),
+
+            // Card Footer: Items + Details CTA
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricPill(
+                    icon: Icons.inventory_2_outlined,
+                    label:
+                        '${entry.totalQuantity} article${entry.totalQuantity > 1 ? 's' : ''}',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Voir détails',
+                  style: AppText.label(
+                    size: 13,
+                    weight: FontWeight.w700,
+                    color: AppColors.indigo,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.indigo,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1021,28 +883,17 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         sale.productBrandSnapshot!.trim().isNotEmpty;
     final qtyPrefix = Localizations.localeOf(context).languageCode == 'en' ? 'Qty' : 'Qté';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: LightModeColors.cardBorder,
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080F172A),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SoftCard(
         padding: const EdgeInsets.all(14),
+        radius: 24,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // When it happened + where it stands
+            _buildCardTopLine(sale.saleDate, sale.status),
+            const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1055,12 +906,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: LightModeColors.lightBackground,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: LightModeColors.cardBorder,
-                          width: 1,
-                        ),
+                        color: AppColors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: imageUrl != null && imageUrl.isNotEmpty
                           ? AppNetworkImage(
@@ -1069,16 +916,16 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               height: 56,
                               fit: BoxFit.cover,
                               memCacheWidth: 180,
-                              borderRadius: BorderRadius.circular(13),
-                              backgroundColor: LightModeColors.lightBackground,
+                              borderRadius: BorderRadius.circular(16),
+                              backgroundColor: AppColors.surfaceSunken,
+                              placeholder: (context, url) =>
+                                  const SizedBox(width: 56, height: 56),
                               errorIcon: Icons.shopping_bag_outlined,
-                              errorIconColor: LightModeColors.lightPrimary
-                                  .withValues(alpha: 0.45),
+                              errorIconColor: AppColors.textFaint,
                             )
-                          : Icon(
+                          : const Icon(
                               Icons.shopping_bag_rounded,
-                              color: LightModeColors.lightPrimary
-                                  .withValues(alpha: 0.7),
+                              color: AppColors.peach,
                               size: 26,
                             ),
                     );
@@ -1086,102 +933,46 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 ),
                 const SizedBox(width: 12),
 
-                // Product Info & Chips
+                // Product Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (hasBrand) ...[
                         Text(
-                          sale.productBrandSnapshot!.trim().toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                            color: LightModeColors.lightPrimary,
-                          ),
+                          sale.productBrandSnapshot!.trim(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          style: AppText.label(size: 12, letterSpacing: 0),
                         ),
                         const SizedBox(height: 2),
                       ],
                       Text(
                         sale.productNameSnapshot,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: LightModeColors.dashboardTextPrimary,
-                          height: 1.25,
-                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildMetricPill(
-                              icon: Icons.layers_outlined,
-                              label: '$qtyPrefix: ${sale.quantity}',
-                              bgColor: const Color(0xFFEFF6FF),
-                              borderColor: const Color(0xFFBFDBFE),
-                              fgColor: const Color(0xFF1D4ED8),
-                            ),
-                            if (sale.pointsEarned > 0) ...[
-                              const SizedBox(width: 6),
-                              _buildMetricPill(
-                                icon: Icons.stars_rounded,
-                                label: '+${_formatPoints(sale.pointsEarned)} pts',
-                                bgColor: const Color(0xFFFFFBEB),
-                                borderColor: const Color(0xFFFDE68A),
-                                fgColor: const Color(0xFFB45309),
-                              ),
-                            ],
-                          ],
+                        style: AppText.body(
+                          size: 15,
+                          weight: FontWeight.w700,
+                          height: 1.25,
                         ),
+                      ),
+                      const SizedBox(height: 6),
+                      _buildMetricPill(
+                        icon: Icons.layers_outlined,
+                        label: '$qtyPrefix: ${sale.quantity}',
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
 
-                // Right Price & Status Badge
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (sale.totalPrice > 0) ...[
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            sale.totalPrice.toStringAsFixed(3),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: LightModeColors.dashboardTextPrimary,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          const Text(
-                            'TND',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: LightModeColors.dashboardTextSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    _buildStatusPill(sale.status),
-                  ],
+                // Points earned + amount
+                _buildAmounts(
+                  points: sale.pointsEarned,
+                  showPoints: sale.pointsEarned > 0,
+                  price: sale.totalPrice,
+                  showPrice: sale.totalPrice > 0,
                 ),
               ],
             ),
@@ -1194,37 +985,33 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 if (giftInfo == null) return const SizedBox.shrink();
 
                 return Container(
-                  margin: const EdgeInsets.only(top: 10),
+                  margin: const EdgeInsets.only(top: 12),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
+                    horizontal: 12,
+                    vertical: 9,
                   ),
                   decoration: BoxDecoration(
-                    color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color:
-                          LightModeColors.novoPharmaBlue.withValues(alpha: 0.18),
-                    ),
+                    color: AppColors.amberTint,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.card_giftcard_rounded,
-                        size: 15,
-                        color: LightModeColors.novoPharmaBlue,
+                        size: 16,
+                        color: AppColors.amberDeep,
                       ),
-                      const SizedBox(width: 7),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           '${giftInfo.title} (x${giftInfo.quantity})',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: LightModeColors.novoPharmaBlue,
-                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          style: AppText.label(
+                            size: 12.5,
+                            weight: FontWeight.w700,
+                            color: AppColors.text,
+                          ),
                         ),
                       ),
                       if (giftInfo.operationId.isNotEmpty) ...[
@@ -1232,13 +1019,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         Flexible(
                           child: Text(
                             'ID Offre Cadeau: ${giftInfo.operationId}',
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w500,
-                              color: LightModeColors.dashboardTextSecondary,
-                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: AppText.label(
+                              size: 11,
+                              weight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
@@ -1248,195 +1034,182 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               },
             ),
 
-            const SizedBox(height: 10),
-            Container(
-              height: 1,
-              color: LightModeColors.lightSurfaceVariant,
-            ),
-            const SizedBox(height: 8),
-
-            // Footer Row: Date + Pending Edit/Delete Actions
-            Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  size: 13,
-                  color: LightModeColors.dashboardTextTertiary,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _formatLocalizedDate(
-                      context,
-                      sale.saleDate,
-                      includeTime: true,
+            // Pending sales can still be edited or deleted
+            if (isPending) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildCompactActionButton(
+                      icon: Icons.edit_rounded,
+                      label: 'Modifier',
+                      tone: Tone.indigo,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ProductScreen(sale: sale),
+                          ),
+                        );
+                      },
                     ),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: LightModeColors.dashboardTextSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (isPending) ...[
-                  _buildCompactActionButton(
-                    icon: Icons.edit_rounded,
-                    label: 'Modifier',
-                    bgColor: const Color(0xFFFFFBEB),
-                    borderColor: const Color(0xFFFDE68A),
-                    fgColor: const Color(0xFFB45309),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ProductScreen(sale: sale),
-                        ),
-                      );
-                    },
                   ),
                   const SizedBox(width: 8),
                   _buildCompactActionButton(
                     icon: Icons.delete_outline_rounded,
-                    bgColor: const Color(0xFFFEF2F2),
-                    borderColor: const Color(0xFFFECACA),
-                    fgColor: const Color(0xFFDC2626),
+                    tooltip: l10n.delete,
+                    tone: Tone.coral,
                     onTap: () => _showDeleteConfirmationDialog(context, sale),
                   ),
                 ],
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
+  /// The line every history card opens with: when it happened, as a muted
+  /// label, and where it stands.
+  Widget _buildCardTopLine(DateTime date, String status) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            _formatLocalizedDate(context, date, includeTime: true),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.label(size: 12.5),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _buildStatusPill(status),
+      ],
+    );
+  }
+
+  /// Points earned as the figure that leads, the amount underneath.
+  Widget _buildAmounts({
+    required double points,
+    required bool showPoints,
+    required double price,
+    required bool showPrice,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (showPoints)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '+${_formatPoints(points)}',
+                style: AppText.display(size: 20, color: AppColors.mintDeep),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                'pts',
+                style: AppText.label(size: 12, color: AppColors.mintDeep),
+              ),
+            ],
+          ),
+        if (showPoints && showPrice) const SizedBox(height: 5),
+        if (showPrice)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                price.toStringAsFixed(3),
+                style: AppText.display(size: 14, weight: FontWeight.w600),
+              ),
+              const SizedBox(width: 3),
+              Text('TND', style: AppText.label(size: 10.5)),
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// A quiet metric: small icon, muted label.
   Widget _buildMetricPill({
     required IconData icon,
     required String label,
-    required Color bgColor,
-    required Color borderColor,
-    required Color fgColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11.5, color: fgColor),
-          const SizedBox(width: 4),
-          Text(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: fgColor,
-            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.label(size: 12.5),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildCompactActionButton({
     required IconData icon,
     String? label,
-    required Color bgColor,
-    required Color borderColor,
-    required Color fgColor,
+    String? tooltip,
+    required Tone tone,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: label != null ? 10 : 8,
-            vertical: 6,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: fgColor),
-              if (label != null) ...[
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: fgColor,
-                  ),
-                ),
-              ],
-            ],
-          ),
+    if (label != null) {
+      return SecondaryButton(
+        label: label,
+        icon: icon,
+        tone: tone,
+        height: 44,
+        onPressed: onTap,
+      );
+    }
+
+    final button = Pressable(
+      onTap: onTap,
+      pressedScale: 0.9,
+      semanticLabel: tooltip,
+      child: Container(
+        width: 52,
+        height: 44,
+        decoration: BoxDecoration(
+          color: tone.tint,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
         ),
+        child: Icon(icon, size: 21, color: tone.deep),
       ),
     );
+    return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 
   Widget _buildStatusPill(String status) {
-    Color bg = const Color(0xFFFFFBEB);
-    Color border = const Color(0xFFFDE68A);
-    Color fg = const Color(0xFFB45309);
+    Tone tone = Tone.amber;
     IconData icon = Icons.schedule_rounded;
     String label = 'En attente';
 
     if (status == 'approved') {
-      bg = const Color(0xFFECFDF5);
-      border = const Color(0xFFA7F3D0);
-      fg = const Color(0xFF047857);
+      tone = Tone.mint;
       icon = Icons.check_circle_rounded;
       label = 'Validé';
     } else if (status == 'rejected') {
-      bg = const Color(0xFFFEF2F2);
-      border = const Color(0xFFFECACA);
-      fg = const Color(0xFFB91C1C);
+      tone = Tone.coral;
       icon = Icons.cancel_rounded;
       label = 'Rejeté';
     } else if (status == 'cancelled') {
-      bg = const Color(0xFFF1F5F9);
-      border = const Color(0xFFE2E8F0);
-      fg = const Color(0xFF475569);
+      tone = _neutralTone;
       icon = Icons.remove_circle_outline_rounded;
       label = 'Annulé';
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: border, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11.5, color: fg),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              color: fg,
-            ),
-          ),
-        ],
-      ),
-    );
+    return TonePill(label: label, tone: tone, icon: icon);
   }
 
   Widget _buildFilterSection(AppLocalizations l10n) {
@@ -1446,109 +1219,99 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         final hasActiveFilter =
             provider.startDate != null || provider.endDate != null;
 
-        return Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-          decoration: BoxDecoration(
-            color: LightModeColors.lightSurface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: hasActiveFilter
-                  ? LightModeColors.lightPrimary.withValues(alpha: 0.3)
-                  : LightModeColors.cardBorder,
-              width: 1,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x060F172A),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
+        // Dark glass on the aurora: the one frosted pane of the hero.
+        return SoftCard(
+          style: GlassStyle.dark,
+          blur: Glass.frost,
+          radius: AppRadii.md,
+          shadow: false,
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Tappable Header Row (allows collapsing filter card while scrolling)
-              InkWell(
+              Pressable(
+                pressedScale: 0.98,
                 onTap: () {
                   setState(() {
                     _isFilterExpanded = !_isFilterExpanded;
                   });
                 },
-                borderRadius: BorderRadius.vertical(
-                  top: const Radius.circular(16),
-                  bottom: Radius.circular(_isFilterExpanded ? 0 : 16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 9, 12, 9),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(5.5),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightBlue
-                              .withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
+                child: SizedBox(
+                  height: 48,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
+                    child: Row(
+                      children: [
+                        const Icon(
                           Icons.tune_rounded,
-                          color: LightModeColors.lightPrimary,
-                          size: 16,
+                          color: Colors.white,
+                          size: 19,
                         ),
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                l10n.dateFilter,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: LightModeColors.dashboardTextPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (hasActiveFilter) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: LightModeColors.novoPharmaLightBlue,
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
                                 child: Text(
-                                  !_isFilterExpanded
-                                      ? _buildCompactFilterSummary(
-                                          context,
-                                          provider.startDate,
-                                          provider.endDate,
-                                        )
-                                      : 'Actif',
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: LightModeColors.lightPrimary,
+                                  l10n.dateFilter,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppText.body(
+                                    size: 14.5,
+                                    weight: FontWeight.w600,
+                                    color: Colors.white,
+                                    height: 1.2,
                                   ),
                                 ),
                               ),
+                              if (hasActiveFilter) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 190,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 9,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.pill,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    !_isFilterExpanded
+                                        ? _buildCompactFilterSummary(
+                                            context,
+                                            provider.startDate,
+                                            provider.endDate,
+                                          )
+                                        : 'Actif',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppText.label(
+                                      size: 11.5,
+                                      weight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 0,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      Icon(
-                        _isFilterExpanded
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
-                        color: LightModeColors.dashboardTextSecondary,
-                        size: 20,
-                      ),
-                    ],
+                        Icon(
+                          _isFilterExpanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1561,7 +1324,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     ? CrossFadeState.showFirst
                     : CrossFadeState.showSecond,
                 firstChild: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                   child: Column(
                     children: [
                       Row(
@@ -1574,12 +1337,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               onPressed: () => _selectDate(context, true),
                             ),
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 5),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Icon(
                               Icons.arrow_forward_rounded,
-                              size: 14,
-                              color: LightModeColors.dashboardTextTertiary,
+                              size: 16,
+                              color: Colors.white.withValues(alpha: 0.78),
                             ),
                           ),
                           Expanded(
@@ -1592,74 +1355,37 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton.icon(
-                            icon: const Icon(Icons.restart_alt_rounded, size: 15),
-                            label: Text(
-                              l10n.clear,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          Expanded(
+                            child: SecondaryButton(
+                              label: l10n.clear,
+                              icon: Icons.restart_alt_rounded,
+                              onDark: true,
+                              height: 44,
+                              onPressed: () {
+                                final userId = authProvider.firebaseUser?.uid;
+                                if (userId != null) {
+                                  provider.clearFilters();
+                                  provider.fetchSalesHistory(userId);
+                                }
+                              },
                             ),
-                            style: TextButton.styleFrom(
-                              foregroundColor: hasActiveFilter
-                                  ? const Color(0xFFDC2626)
-                                  : LightModeColors.dashboardTextTertiary,
-                              backgroundColor: hasActiveFilter
-                                  ? const Color(0xFFFEF2F2)
-                                  : Colors.transparent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(9),
-                              ),
-                            ),
-                            onPressed: () {
-                              final userId = authProvider.firebaseUser?.uid;
-                              if (userId != null) {
-                                provider.clearFilters();
-                                provider.fetchSalesHistory(userId);
-                              }
-                            },
                           ),
-                          const SizedBox(width: 8),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.search_rounded, size: 15),
-                            label: Text(
-                              l10n.filter,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: PrimaryButton.mint(
+                              label: l10n.filter,
+                              icon: Icons.search_rounded,
+                              height: 44,
+                              onPressed: () {
+                                final userId = authProvider.firebaseUser?.uid;
+                                if (userId != null) {
+                                  provider.fetchSalesHistory(userId);
+                                }
+                              },
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: LightModeColors.lightPrimary,
-                              foregroundColor: LightModeColors.lightOnPrimary,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 7,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(9),
-                              ),
-                            ),
-                            onPressed: () {
-                              final userId = authProvider.firebaseUser?.uid;
-                              if (userId != null) {
-                                provider.fetchSalesHistory(userId);
-                              }
-                            },
                           ),
                         ],
                       ),
@@ -1693,69 +1419,61 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }) {
     final l10n = AppLocalizations.of(context)!;
     final isSelected = date != null;
+    final soft = Colors.white.withValues(alpha: 0.78);
 
-    return Material(
-      color: isSelected
-          ? LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.35)
-          : LightModeColors.lightBackground,
-      borderRadius: BorderRadius.circular(11),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(11),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(
-              color: isSelected
-                  ? LightModeColors.lightPrimary.withValues(alpha: 0.45)
-                  : LightModeColors.cardBorder,
-              width: 1.1,
-            ),
+    // A field on dark glass: translucent fill, mint rim once a date is set.
+    return Pressable(
+      onTap: onPressed,
+      pressedScale: 0.97,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 50),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: isSelected ? 0.18 : 0.10),
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.mintBright.withValues(alpha: 0.85)
+                : Colors.white.withValues(alpha: 0.22),
+            width: 1.2,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected
-                      ? LightModeColors.lightPrimary
-                      : LightModeColors.dashboardTextSecondary,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label(size: 11.5, color: soft, letterSpacing: 0),
+            ),
+            const SizedBox(height: 3),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: isSelected ? AppColors.mintBright : soft,
+                  size: 14,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    color: isSelected
-                        ? LightModeColors.lightPrimary
-                        : LightModeColors.dashboardTextTertiary,
-                    size: 13,
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      isSelected ? _formatLocalizedDate(context, date) : l10n.select,
-                      style: TextStyle(
-                        color: isSelected
-                            ? LightModeColors.dashboardTextPrimary
-                            : LightModeColors.dashboardTextTertiary,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                        fontSize: 12.5,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    isSelected ? _formatLocalizedDate(context, date) : l10n.select,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(
+                      size: 13.5,
+                      weight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? Colors.white : soft,
+                      height: 1.2,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1763,154 +1481,78 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Smooth pulsing skeleton loader while fetching sales history
+// Shimmering skeleton, shaped like the history cards, while fetching sales
 // ---------------------------------------------------------------------------
-class _HistoryLoadingSkeleton extends StatefulWidget {
+class _HistoryLoadingSkeleton extends StatelessWidget {
   const _HistoryLoadingSkeleton();
 
   @override
-  State<_HistoryLoadingSkeleton> createState() =>
-      _HistoryLoadingSkeletonState();
-}
-
-class _HistoryLoadingSkeletonState extends State<_HistoryLoadingSkeleton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final opacity = 0.4 + (_controller.value * 0.45);
-        return Opacity(
-          opacity: opacity,
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 4,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: LightModeColors.cardBorder),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE2E8F0),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 14,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE2E8F0),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 11,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Container(
-                                    height: 20,
-                                    width: 68,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    height: 20,
-                                    width: 58,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+    return ListView.builder(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        14,
+        16,
+        MediaQuery.paddingOf(context).bottom + 20,
+      ),
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: SoftCard(
+            padding: const EdgeInsets.all(14),
+            radius: 24,
+            child: Shimmer(
+              child: Column(
+                children: [
+                  // Date + status
+                  const Row(
+                    children: [
+                      SkeletonBox(width: 124, height: 12, radius: 6),
+                      Spacer(),
+                      SkeletonBox(
+                        width: 84,
+                        height: 24,
+                        radius: AppRadii.pill,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SkeletonBox(width: 56, height: 56, radius: 16),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              height: 15,
-                              width: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE2E8F0),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
+                            const SkeletonBox(width: 72, height: 11, radius: 6),
+                            const SizedBox(height: 8),
+                            FractionallySizedBox(
+                              widthFactor: index.isEven ? 0.92 : 0.7,
+                              child: const SkeletonBox(height: 15, radius: 6),
                             ),
                             const SizedBox(height: 10),
-                            Container(
-                              height: 20,
-                              width: 62,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                            const SkeletonBox(width: 58, height: 11, radius: 6),
                           ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 11,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                      const SizedBox(width: 12),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          SkeletonBox(width: 58, height: 20, radius: 6),
+                          SizedBox(height: 8),
+                          SkeletonBox(width: 66, height: 12, radius: 6),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -1965,446 +1607,287 @@ class _BasketDetailsSheetState extends State<_BasketDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 44,
-              height: 4.5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-          Expanded(
-            child: FutureBuilder<Map<String, dynamic>>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF059669),
-                      ),
-                    ),
-                  );
-                }
+    final media = MediaQuery.of(context);
+    return GlassSheet(
+      padding: EdgeInsets.zero,
+      child: ConstrainedBox(
+        // Same overall height as before: 88% of the screen, handle and
+        // bottom inset included.
+        constraints: BoxConstraints(
+          maxHeight: media.size.height * 0.88 - media.padding.bottom - 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: FutureBuilder<Map<String, dynamic>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CapsuleLoader());
+                  }
 
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                  if (snapshot.hasError || !snapshot.hasData) {
+                    return const EmptyState(
+                      icon: Icons.error_outline_rounded,
+                      tone: Tone.coral,
+                      title: 'Erreur de chargement du panier',
+                    );
+                  }
+
+                  final basket = snapshot.data!['basket'] as Basket?;
+                  final sales = (snapshot.data!['sales'] as List<Sale>?) ?? [];
+
+                  if (basket == null && sales.isEmpty) {
+                    return const EmptyState(
+                      icon: Icons.shopping_basket_outlined,
+                      tone: Tone.peach,
+                      title: 'Panier introuvable ou supprimé.',
+                    );
+                  }
+
+                  final totalAmount = basket?.totalAmount ??
+                      sales.fold<double>(0.0, (sum, s) => sum + s.totalPrice);
+                  final totalItems = basket?.itemsCount ??
+                      sales.fold<int>(0, (sum, s) => sum + s.quantity);
+                  final totalPoints = basket?.totalPoints ??
+                      sales.fold<double>(0.0, (sum, s) => sum + s.pointsEarned);
+
+                  final status = basket?.status ?? 'closed';
+                  final isClosed = status == 'closed';
+                  final isOpen = status == 'open';
+
+                  final date = basket?.closedAt ??
+                      basket?.openedAt ??
+                      (sales.isNotEmpty ? sales.first.saleDate : DateTime.now());
+                  final pharmacyName = basket?.pharmacyNameSnapshot ??
+                      (sales.isNotEmpty ? sales.first.pharmacyId : '');
+                  final pointOfSale = basket?.pointOfSaleSnapshot;
+                  final shortId = widget.basketId.length > 8
+                      ? widget.basketId.substring(0, 8)
+                      : widget.basketId;
+
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                    children: [
+                      // Header Row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFEF2F2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.error_outline_rounded,
-                              size: 36,
-                              color: Color(0xFFDC2626),
-                            ),
+                          const TintIcon(
+                            icon: Icons.shopping_basket_rounded,
+                            tone: Tone.peach,
+                            size: 52,
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Erreur de chargement du panier',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: LightModeColors.dashboardTextPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final basket = snapshot.data!['basket'] as Basket?;
-                final sales = (snapshot.data!['sales'] as List<Sale>?) ?? [];
-
-                if (basket == null && sales.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                        'Panier introuvable ou supprimé.',
-                        style: TextStyle(
-                          color: LightModeColors.dashboardTextSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                final totalAmount = basket?.totalAmount ??
-                    sales.fold<double>(0.0, (sum, s) => sum + s.totalPrice);
-                final totalItems = basket?.itemsCount ??
-                    sales.fold<int>(0, (sum, s) => sum + s.quantity);
-                final totalPoints = basket?.totalPoints ??
-                    sales.fold<double>(0.0, (sum, s) => sum + s.pointsEarned);
-
-                final status = basket?.status ?? 'closed';
-                final isClosed = status == 'closed';
-                final isOpen = status == 'open';
-
-                final date = basket?.closedAt ??
-                    basket?.openedAt ??
-                    (sales.isNotEmpty ? sales.first.saleDate : DateTime.now());
-                final pharmacyName = basket?.pharmacyNameSnapshot ??
-                    (sales.isNotEmpty ? sales.first.pharmacyId : '');
-                final pointOfSale = basket?.pointOfSaleSnapshot;
-                final shortId = widget.basketId.length > 8
-                    ? widget.basketId.substring(0, 8)
-                    : widget.basketId;
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                  children: [
-                    // Header Row
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFECFDF5),
-                                Color(0xFFD1FAE5),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFA7F3D0)),
-                          ),
-                          child: const Icon(
-                            Icons.shopping_basket_rounded,
-                            color: Color(0xFF059669),
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Panier #$shortId',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: LightModeColors
-                                            .dashboardTextPrimary,
-                                        letterSpacing: -0.3,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Panier #$shortId',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppText.display(size: 20),
                                       ),
                                     ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isClosed
-                                          ? const Color(0xFFECFDF5)
-                                          : isOpen
-                                              ? const Color(0xFFFFFBEB)
-                                              : const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: isClosed
-                                            ? const Color(0xFFA7F3D0)
-                                            : isOpen
-                                                ? const Color(0xFFFDE68A)
-                                                : const Color(0xFFE2E8F0),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      isClosed
+                                    const SizedBox(width: 8),
+                                    TonePill(
+                                      label: isClosed
                                           ? 'Clôturé'
                                           : isOpen
                                               ? 'En cours'
                                               : 'Annulé',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: isClosed
-                                            ? const Color(0xFF047857)
-                                            : isOpen
-                                                ? const Color(0xFFB45309)
-                                                : const Color(0xFF475569),
-                                      ),
+                                      tone: isClosed
+                                          ? Tone.mint
+                                          : isOpen
+                                              ? Tone.amber
+                                              : _neutralTone,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.schedule_rounded,
-                                    size: 13,
-                                    color: LightModeColors.dashboardTextTertiary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    DateFormat('dd/MM/yyyy à HH:mm').format(date),
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: LightModeColors
-                                          .dashboardTextSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (pharmacyName.isNotEmpty) ...[
-                                const SizedBox(height: 3),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
                                 Row(
                                   children: [
                                     const Icon(
-                                      Icons.storefront_outlined,
-                                      size: 13.5,
-                                      color:
-                                          LightModeColors.dashboardTextTertiary,
+                                      Icons.schedule_rounded,
+                                      size: 14,
+                                      color: AppColors.textMuted,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
+                                    const SizedBox(width: 5),
+                                    Flexible(
                                       child: Text(
-                                        pharmacyName +
-                                            (pointOfSale != null &&
-                                                    pointOfSale.isNotEmpty
-                                                ? ' • $pointOfSale'
-                                                : ''),
-                                        style: const TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w600,
-                                          color: LightModeColors
-                                              .dashboardTextSecondary,
-                                        ),
+                                        DateFormat('dd/MM/yyyy à HH:mm').format(date),
+                                        maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
+                                        style: AppText.label(size: 12.5),
                                       ),
                                     ),
                                   ],
                                 ),
+                                if (pharmacyName.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.storefront_outlined,
+                                        size: 14,
+                                        color: AppColors.textMuted,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Expanded(
+                                        child: Text(
+                                          pharmacyName +
+                                              (pointOfSale != null &&
+                                                      pointOfSale.isNotEmpty
+                                                  ? ' • $pointOfSale'
+                                                  : ''),
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppText.label(size: 12.5),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // KPI Summary Cards
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKpiBox(
-                            label: 'Total Panier',
-                            value: totalAmount.toStringAsFixed(3),
-                            unit: 'TND',
-                            bgColor: const Color(0xFFECFDF5),
-                            borderColor: const Color(0xFFA7F3D0),
-                            accentColor: const Color(0xFF059669),
-                            valueColor: const Color(0xFF065F46),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildKpiBox(
-                            label: 'Articles',
-                            value: '$totalItems',
-                            unit: basket?.items != null
-                                ? '${basket!.items.length} réf.'
-                                : 'produits',
-                            bgColor: const Color(0xFFEFF6FF),
-                            borderColor: const Color(0xFFBFDBFE),
-                            accentColor: const Color(0xFF2563EB),
-                            valueColor: const Color(0xFF1E3A8A),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildKpiBox(
-                            label: 'Points',
-                            value: '+${_formatPoints(totalPoints)}',
-                            unit: 'pts',
-                            bgColor: const Color(0xFFFFFBEB),
-                            borderColor: const Color(0xFFFDE68A),
-                            accentColor: const Color(0xFFD97706),
-                            valueColor: const Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Gift Banner if available
-                    if (basket != null &&
-                        basket.hasGift &&
-                        basket.giftsGiven.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFFFFBEB),
-                              Color(0xFFFEF3C7),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFFCD34D)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.card_giftcard_rounded,
-                                color: Color(0xFFD97706),
-                                size: 20,
-                              ),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Cadeau offert : ${basket.giftsGiven.map((g) => '${g['title'] ?? g['giftTitle'] ?? 'Cadeau'} (x${g['quantity'] ?? 1})').join(', ')}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF92400E),
-                                  height: 1.35,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // KPI Summary Cards
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildKpiBox(
+                              label: 'Total Panier',
+                              value: totalAmount.toStringAsFixed(3),
+                              unit: 'TND',
+                              tone: Tone.peach,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildKpiBox(
+                              label: 'Articles',
+                              value: '$totalItems',
+                              unit: basket?.items != null
+                                  ? '${basket!.items.length} réf.'
+                                  : 'produits',
+                              tone: Tone.indigo,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildKpiBox(
+                              label: 'Points',
+                              value: '+${_formatPoints(totalPoints)}',
+                              unit: 'pts',
+                              tone: Tone.mint,
+                              valueColor: AppColors.mintDeep,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Gift Banner if available
+                      if (basket != null &&
+                          basket.hasGift &&
+                          basket.giftsGiven.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.amberTint,
+                            borderRadius: BorderRadius.circular(AppRadii.md),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.card_giftcard_rounded,
+                                  color: AppColors.amberDeep,
+                                  size: 20,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 20),
-
-                    // Section: Articles in this basket
-                    Row(
-                      children: [
-                        const Text(
-                          'Articles de ce panier',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: LightModeColors.dashboardTextPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 2.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.novoPharmaLightBlue,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${sales.isNotEmpty ? sales.length : (basket?.items.length ?? 0)}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: LightModeColors.lightPrimary,
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Cadeau offert : ${basket.giftsGiven.map((g) => '${g['title'] ?? g['giftTitle'] ?? 'Cadeau'} (x${g['quantity'] ?? 1})').join(', ')}',
+                                  style: AppText.body(
+                                    size: 13.5,
+                                    weight: FontWeight.w700,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
 
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 22),
 
-                    // Articles list
-                    if (sales.isNotEmpty) ...[
-                      ...sales.map(_buildSaleItemTile),
-                    ] else if (basket != null && basket.items.isNotEmpty) ...[
-                      ...basket.items.map(_buildBasketItemTile),
-                    ] else ...[
-                      const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(
-                          child: Text(
-                            'Aucun article répertorié.',
-                            style: TextStyle(
-                              color: LightModeColors.dashboardTextSecondary,
+                      // Section: Articles in this basket
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Articles de ce panier',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppText.display(size: 17),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          TonePill(
+                            label:
+                                '${sales.isNotEmpty ? sales.length : (basket?.items.length ?? 0)}',
+                          ),
+                        ],
                       ),
-                    ],
-                  ],
-                );
-              },
-            ),
-          ),
 
-          // Sticky Bottom Close Action
-          SafeArea(
-            top: false,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: LightModeColors.cardBorder),
-                ),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: LightModeColors.dashboardTextPrimary,
-                    side: const BorderSide(color: LightModeColors.cardBorder),
-                    backgroundColor: LightModeColors.lightBackground,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Fermer',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
-                  ),
-                ),
+                      const SizedBox(height: 12),
+
+                      // Articles list
+                      if (sales.isNotEmpty) ...[
+                        ...sales.map(_buildSaleItemTile),
+                      ] else if (basket != null && basket.items.isNotEmpty) ...[
+                        ...basket.items.map(_buildBasketItemTile),
+                      ] else ...[
+                        const EmptyState(
+                          icon: Icons.inventory_2_outlined,
+                          tone: Tone.peach,
+                          title: 'Aucun article répertorié.',
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
-          ),
-        ],
+
+            // Sticky Bottom Close Action
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+              child: SecondaryButton(
+                label: 'Fermer',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2413,50 +1896,42 @@ class _BasketDetailsSheetState extends State<_BasketDetailsSheet> {
     required String label,
     required String value,
     required String unit,
-    required Color bgColor,
-    required Color borderColor,
-    required Color accentColor,
-    required Color valueColor,
+    required Tone tone,
+    Color valueColor = AppColors.text,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: borderColor),
+        color: tone.tint,
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              color: accentColor,
-              fontWeight: FontWeight.w700,
-            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            style: AppText.label(size: 11.5, letterSpacing: 0),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: 16.5,
-                fontWeight: FontWeight.w800,
-                color: valueColor,
-                letterSpacing: -0.3,
-              ),
+              style: AppText.display(size: 19, color: valueColor),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             unit,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: accentColor,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.label(
+              size: 11,
+              weight: FontWeight.w500,
+              letterSpacing: 0,
             ),
           ),
         ],
@@ -2468,159 +1943,70 @@ class _BasketDetailsSheetState extends State<_BasketDetailsSheet> {
     final hasBrand = sale.productBrandSnapshot != null &&
         sale.productBrandSnapshot!.trim().isNotEmpty;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x050F172A),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          FutureBuilder<String?>(
-            future: widget.getProductImage(sale.productId),
-            builder: (context, snap) {
-              if (snap.hasData && snap.data != null && snap.data!.isNotEmpty) {
-                return Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: LightModeColors.cardBorder),
-                  ),
-                  child: AppNetworkImage(
-                    imageUrl: snap.data!,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    memCacheWidth: 160,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                );
-              }
-              return _defaultImageWidget();
-            },
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasBrand) ...[
-                  Text(
-                    sale.productBrandSnapshot!.trim().toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                      color: LightModeColors.lightPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 1),
-                ],
-                Text(
-                  sale.productNameSnapshot,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: LightModeColors.dashboardTextPrimary,
-                    height: 1.25,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
-                      ),
-                      child: Text(
-                        'Qté: ${sale.quantity}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF047857),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFFDE68A)),
-                      ),
-                      child: Text(
-                        '+${_formatPoints(sale.pointsEarned)} pts',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFB45309),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SoftCard(
+        padding: const EdgeInsets.all(12),
+        radius: AppRadii.md,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            FutureBuilder<String?>(
+              future: widget.getProductImage(sale.productId),
+              builder: (context, snap) {
+                if (snap.hasData && snap.data != null && snap.data!.isNotEmpty) {
+                  return _buildThumbnail(snap.data!);
+                }
+                return _defaultImageWidget();
+              },
             ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (hasBrand) ...[
+                    Text(
+                      sale.productBrandSnapshot!.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label(size: 11.5, letterSpacing: 0),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
                   Text(
-                    sale.totalPrice.toStringAsFixed(3),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF065F46),
+                    sale.productNameSnapshot,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(
+                      size: 14,
+                      weight: FontWeight.w700,
+                      height: 1.25,
                     ),
                   ),
-                  const SizedBox(width: 2),
-                  const Text(
-                    'TND',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      color: LightModeColors.dashboardTextSecondary,
-                    ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Qté: ${sale.quantity}',
+                        style: AppText.label(size: 12.5),
+                      ),
+                      _buildStatusBadge(sale.status),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              _buildStatusBadge(sale.status),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(width: 8),
+            _buildLineAmounts(
+              points: sale.pointsEarned,
+              amount: sale.totalPrice,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2628,202 +2014,143 @@ class _BasketDetailsSheetState extends State<_BasketDetailsSheet> {
   Widget _buildBasketItemTile(BasketItem item) {
     final directImageUrl = item.imageUrl?.trim() ?? '';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LightModeColors.cardBorder),
-      ),
-      child: Row(
-        children: [
-          if (directImageUrl.isNotEmpty)
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: LightModeColors.cardBorder),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SoftCard(
+        padding: const EdgeInsets.all(12),
+        radius: AppRadii.md,
+        child: Row(
+          children: [
+            if (directImageUrl.isNotEmpty)
+              _buildThumbnail(directImageUrl)
+            else
+              FutureBuilder<String?>(
+                future: widget.getProductImage(item.productId),
+                builder: (context, snap) {
+                  if (snap.hasData &&
+                      snap.data != null &&
+                      snap.data!.isNotEmpty) {
+                    return _buildThumbnail(snap.data!);
+                  }
+                  return _defaultImageWidget();
+                },
               ),
-              child: AppNetworkImage(
-                imageUrl: directImageUrl,
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                memCacheWidth: 160,
-                borderRadius: BorderRadius.circular(11),
-              ),
-            )
-          else
-            FutureBuilder<String?>(
-              future: widget.getProductImage(item.productId),
-              builder: (context, snap) {
-                if (snap.hasData &&
-                    snap.data != null &&
-                    snap.data!.isNotEmpty) {
-                  return Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: LightModeColors.cardBorder),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item.marque != null && item.marque!.trim().isNotEmpty) ...[
+                    Text(
+                      item.marque!.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label(size: 11.5, letterSpacing: 0),
                     ),
-                    child: AppNetworkImage(
-                      imageUrl: snap.data!,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 160,
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                  );
-                }
-                return _defaultImageWidget();
-              },
-            ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (item.marque != null && item.marque!.trim().isNotEmpty) ...[
-                  Text(
-                    item.marque!.trim().toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                      color: LightModeColors.lightPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                ],
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
-                      ),
-                      child: Text(
-                        'Qté: ${item.quantity}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF047857),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFFDE68A)),
-                      ),
-                      child: Text(
-                        '+${_formatPoints(item.pointsEarned)} pts',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFB45309),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 2),
                   ],
-                ),
-              ],
+                  Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(
+                      size: 14,
+                      weight: FontWeight.w700,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Qté: ${item.quantity}',
+                    style: AppText.label(size: 12.5),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                item.lineTotal.toStringAsFixed(3),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF065F46),
-                ),
-              ),
-              const SizedBox(width: 2),
-              const Text(
-                'TND',
-                style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w700,
-                  color: LightModeColors.dashboardTextSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(width: 8),
+            _buildLineAmounts(
+              points: item.pointsEarned,
+              amount: item.lineTotal,
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  /// Points earned as the figure that leads, the line amount underneath.
+  Widget _buildLineAmounts({required double points, required double amount}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              '+${_formatPoints(points)}',
+              style: AppText.display(size: 17, color: AppColors.mintDeep),
+            ),
+            const SizedBox(width: 3),
+            Text(
+              'pts',
+              style: AppText.label(size: 11.5, color: AppColors.mintDeep),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              amount.toStringAsFixed(3),
+              style: AppText.display(size: 13.5, weight: FontWeight.w600),
+            ),
+            const SizedBox(width: 3),
+            Text('TND', style: AppText.label(size: 10.5)),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatusBadge(String status) {
-    Color bg = const Color(0xFFFFFBEB);
-    Color border = const Color(0xFFFDE68A);
-    Color fg = const Color(0xFFB45309);
+    Tone tone = Tone.amber;
     String label = 'En attente';
 
     if (status == 'approved') {
-      bg = const Color(0xFFECFDF5);
-      border = const Color(0xFFA7F3D0);
-      fg = const Color(0xFF047857);
+      tone = Tone.mint;
       label = 'Validé';
     } else if (status == 'rejected') {
-      bg = const Color(0xFFFEF2F2);
-      border = const Color(0xFFFECACA);
-      fg = const Color(0xFFB91C1C);
+      tone = Tone.coral;
       label = 'Rejeté';
     } else if (status == 'cancelled') {
-      bg = const Color(0xFFF1F5F9);
-      border = const Color(0xFFE2E8F0);
-      fg = const Color(0xFF475569);
+      tone = _neutralTone;
       label = 'Annulé';
     }
 
+    return TonePill(label: label, tone: tone);
+  }
+
+  Widget _buildThumbnail(String imageUrl) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      width: 50,
+      height: 50,
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: border),
+        color: AppColors.surfaceSunken,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: fg,
-        ),
+      child: AppNetworkImage(
+        imageUrl: imageUrl,
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+        memCacheWidth: 160,
+        borderRadius: BorderRadius.circular(14),
+        placeholder: (context, url) => const SizedBox(width: 50, height: 50),
       ),
     );
   }
@@ -2833,13 +2160,12 @@ class _BasketDetailsSheetState extends State<_BasketDetailsSheet> {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: LightModeColors.lightBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LightModeColors.cardBorder),
+        color: AppColors.surfaceSunken,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.shopping_bag_outlined,
-        color: LightModeColors.lightPrimary.withValues(alpha: 0.45),
+        color: AppColors.textFaint,
         size: 22,
       ),
     );

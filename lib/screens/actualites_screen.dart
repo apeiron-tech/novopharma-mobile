@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/actualite_provider.dart';
 import '../models/blog_post.dart';
-import '../theme.dart';
+import '../design/design.dart';
 import 'actualite_details_screen.dart';
 import 'custom_page_screen.dart';
 import '../widgets/bottom_navigation_bar.dart';
@@ -20,6 +20,27 @@ class _ActualitesScreenState extends State<ActualitesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+
+  // The category pills, in tab order.
+  static const List<String> _tabLabels = [
+    'Actualités Produits',
+    'Actualités Scientifiques',
+    'Vie de l\'entreprise – Événements',
+  ];
+  final List<GlobalKey> _pillKeys = List.generate(3, (_) => GlobalKey());
+  int _revealedTab = 0;
+
+  // How many cards take part in the arrival, and whether it has played.
+  static const int _staggeredItems = 6;
+  bool _arrivalScheduled = false;
+  bool _listArrived = false;
+
+  /// A neutral pill for metadata that should not carry a feature colour.
+  static const Tone _quietTone = Tone(
+    AppColors.textFaint,
+    AppColors.textMuted,
+    AppColors.line,
+  );
 
   @override
   void initState() {
@@ -48,54 +69,50 @@ class _ActualitesScreenState extends State<ActualitesScreen>
       onTap: (index) {},
       child: Consumer<ActualiteProvider>(
         builder: (context, actualiteProvider, child) {
+          // The wrapper paints the pastel canvas; this page only adds the
+          // ink hero and lets its lists run under the glass dock.
           return Scaffold(
-            body: Container(
-              decoration: BoxDecoration(
-                color: LightModeColors.lightSurfaceVariant,
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _buildHeader(),
-                    _buildTabBar(),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _ActualiteCategoryTabView(
-                            category: 'Actualités produits',
-                            cardBuilder: (actualite) =>
-                                _buildActualiteCard(actualite),
-                            errorBuilder: () =>
-                                _buildErrorState(actualiteProvider),
-                            emptyBuilder: () =>
-                                _buildEmptyState('Actualités produits'),
-                          ),
-                          _ActualiteCategoryTabView(
-                            category: 'Actualités scientifiques',
-                            cardBuilder: (actualite) =>
-                                _buildActualiteCard(actualite),
-                            errorBuilder: () =>
-                                _buildErrorState(actualiteProvider),
-                            emptyBuilder: () =>
-                                _buildEmptyState('Actualités scientifiques'),
-                          ),
-                          _ActualiteCategoryTabView(
-                            category: 'Vie de l\'entreprise - evenements',
-                            cardBuilder: (actualite) =>
-                                _buildActualiteCard(actualite),
-                            errorBuilder: () =>
-                                _buildErrorState(actualiteProvider),
-                            emptyBuilder: () => _buildEmptyState(
-                              'Vie de l\'entreprise - evenements',
-                            ),
-                          ),
-                        ],
+            backgroundColor: Colors.transparent,
+            body: Column(
+              children: [
+                _buildHeader(),
+                _buildTabBar(),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _ActualiteCategoryTabView(
+                        category: 'Actualités produits',
+                        cardBuilder: (actualite, index) =>
+                            _buildArrivingCard(actualite, index),
+                        errorBuilder: () =>
+                            _buildErrorState(actualiteProvider),
+                        emptyBuilder: () =>
+                            _buildEmptyState('Actualités produits'),
                       ),
-                    ),
-                  ],
+                      _ActualiteCategoryTabView(
+                        category: 'Actualités scientifiques',
+                        cardBuilder: (actualite, index) =>
+                            _buildArrivingCard(actualite, index),
+                        errorBuilder: () =>
+                            _buildErrorState(actualiteProvider),
+                        emptyBuilder: () =>
+                            _buildEmptyState('Actualités scientifiques'),
+                      ),
+                      _ActualiteCategoryTabView(
+                        category: 'Vie de l\'entreprise - evenements',
+                        cardBuilder: (actualite, index) =>
+                            _buildArrivingCard(actualite, index),
+                        errorBuilder: () =>
+                            _buildErrorState(actualiteProvider),
+                        emptyBuilder: () => _buildEmptyState(
+                          'Vie de l\'entreprise - evenements',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           );
         },
@@ -104,201 +121,46 @@ class _ActualitesScreenState extends State<ActualitesScreen>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LightModeColors.novoPharmaBlue,
-            LightModeColors.novoPharmaBlue.withValues(alpha: 0.8),
-            LightModeColors.lightSecondary,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Main content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return InkHero(
+      padding: const EdgeInsets.fromLTRB(AppSpace.page, 10, AppSpace.page, 22),
+      child: _centered(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Entrance(
+              offset: const Offset(0, -12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: LightModeColors.lightOnPrimary.withValues(
-                        alpha: 0.2,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.article_rounded,
-                      color: LightModeColors.lightOnPrimary,
-                      size: 24,
-                    ),
+                  Text(
+                    'Actualités',
+                    style: AppText.display(size: 30, color: Colors.white),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Actualités',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: LightModeColors.lightOnPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        Text(
-                          'Restez informé des dernières actualités',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: LightModeColors.lightOnPrimary.withValues(
-                              alpha: 0.7,
-                            ), // 70% opacity of white
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Restez informé des dernières actualités',
+                    style: AppText.body(
+                      size: 14.5,
+                      weight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.78),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(
-                    color: LightModeColors.lightOnPrimaryContainer,
-                  ),
-                  onChanged: (value) {
-                    Provider.of<ActualiteProvider>(
-                      context,
-                      listen: false,
-                    ).searchActualites(value);
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher une actualité...',
-                    hintStyle: TextStyle(
-                      color: LightModeColors.lightOnPrimaryContainer
-                          .withValues(alpha: 0.7), // 70% opacity of white
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: LightModeColors.lightOnPrimaryContainer
-                          .withValues(alpha: 0.8), // 80% opacity of white
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: TabBar(
-          controller: _tabController,
-          labelColor: LightModeColors.lightOnPrimary,
-          unselectedLabelColor: LightModeColors.lightError,
-          indicator: BoxDecoration(
-            color: LightModeColors.lightError,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          indicatorSize: TabBarIndicatorSize.tab,
-          dividerColor: Colors.transparent,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-          tabs: const [
-            Tab(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  'Actualités\nProduits',
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
             ),
-            Tab(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  'Actualités\nScientifiques',
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            Tab(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  'Vie de l\'entreprise\nÉvénements',
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+            const SizedBox(height: 16),
+            Entrance(
+              delay: const Duration(milliseconds: 80),
+              child: AppSearchField(
+                controller: _searchController,
+                onDark: true,
+                hintText: 'Rechercher une actualité...',
+                onChanged: (value) {
+                  Provider.of<ActualiteProvider>(
+                    context,
+                    listen: false,
+                  ).searchActualites(value);
+                },
               ),
             ),
           ],
@@ -307,28 +169,97 @@ class _ActualitesScreenState extends State<ActualitesScreen>
     );
   }
 
-  Widget _buildActualiteCard(BlogPost actualite) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+  /// The three categories as filter pills on the canvas. They share the
+  /// controller the pages swipe with, so a swipe selects its pill and
+  /// brings it into view.
+  Widget _buildTabBar() {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        final selected = _tabController.index;
+        if (selected != _revealedTab) {
+          _revealedTab = selected;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final pill = _pillKeys[selected].currentContext;
+            if (pill == null) return;
+            Scrollable.ensureVisible(
+              pill,
+              alignment: 0.5,
+              duration: AppMotion.medium,
+              curve: AppMotion.emphasized,
+            );
+          });
+        }
+        return Entrance(
+          delay: const Duration(milliseconds: 140),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpace.page,
+              14,
+              AppSpace.page,
+              10,
+            ),
+            child: Row(
+              children: [
+                for (var i = 0; i < _tabLabels.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  SelectPill(
+                    key: _pillKeys[i],
+                    label: _tabLabels[i],
+                    selected: i == selected,
+                    onTap: () => _tabController.animateTo(i),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  /// Keeps content at a readable width on tablets.
+  Widget _centered(Widget child) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: child,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+    );
+  }
+
+  /// The first screenful lifts into place once, when the first list shows.
+  /// Cards built later (scrolling, paging, the other categories) appear in
+  /// place.
+  Widget _buildArrivingCard(BlogPost actualite, int index) {
+    // Newest first, so the latest story leads with a taller cover.
+    final card = _buildActualiteCard(actualite, featured: index == 0);
+    if (!_listArrived && !_arrivalScheduled) {
+      _arrivalScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _listArrived = true);
+    }
+    if (index >= _staggeredItems) return card;
+    final settled = _listArrived;
+    return Entrance(
+      delay: settled
+          ? Duration.zero
+          : Duration(milliseconds: 200 + 70 * index),
+      duration: settled ? Duration.zero : AppMotion.slow,
+      child: card,
+    );
+  }
+
+  Widget _buildActualiteCard(BlogPost actualite, {bool featured = false}) {
+    final excerpt = actualite.excerpt;
+    final date = _formatDate(actualite.createdAt);
+
+    return _centered(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: SoftCard(
+          padding: EdgeInsets.zero,
+          semanticLabel: actualite.title,
           onTap: () {
             if (actualite.isCustomPage) {
               Navigator.push(
@@ -349,165 +280,113 @@ class _ActualitesScreenState extends State<ActualitesScreen>
             }
           },
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image Section
+              // Image Section, clipped by the card's own top corners.
               if (actualite.coverImageUrl != null &&
                   actualite.coverImageUrl!.isNotEmpty)
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                  child: Container(
-                    height: 250,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          LightModeColors.lightPrimary.withValues(alpha: 0.1),
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: actualite.coverImageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: LightModeColors.lightSurfaceVariant,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: LightModeColors.lightPrimary,
-                            strokeWidth: 2,
-                          ),
+                SizedBox(
+                  height: featured ? 208 : 156,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: actualite.coverImageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const SizedBox.expand(
+                          child: Shimmer(child: SkeletonBox(radius: 0)),
                         ),
+                        errorWidget: (context, url, error) =>
+                            const ColoredBox(
+                              color: AppColors.indigoTint,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported_rounded,
+                                  color: AppColors.lineStrong,
+                                  size: 32,
+                                ),
+                              ),
+                            ),
                       ),
-                      errorWidget: (context, url, error) => Container(
-                        color: LightModeColors.lightSurfaceVariant,
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: LightModeColors.dashboardTextTertiary,
-                          size: 40,
+                      if (actualite.hasVideo)
+                        const Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _PlayBadge(),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
 
               // Content Section
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Category Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            LightModeColors.success.withValues(alpha: 0.1),
-                            LightModeColors.success.withValues(alpha: 0.05),
-                          ],
+                    // Category and date
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        TonePill(
+                          label: actualite.actualiteCategory ?? 'Actualité',
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: LightModeColors.success.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        actualite.actualiteCategory ?? 'Actualité',
-                        style: const TextStyle(
-                          color: LightModeColors.success,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                        if (date.isNotEmpty)
+                          TonePill(
+                            label: date,
+                            tone: _quietTone,
+                            icon: Icons.schedule_rounded,
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
                     // Title
                     Text(
                       actualite.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: LightModeColors.dashboardTextPrimary,
-                        height: 1.3,
+                      style: AppText.display(
+                        size: featured ? 21 : 18,
+                        height: 1.15,
                       ),
-                      maxLines: 2,
+                      maxLines: featured ? 3 : 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
 
                     // Excerpt
-                    if (actualite.excerpt != null &&
-                        actualite.excerpt!.isNotEmpty)
+                    if (excerpt != null && excerpt.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       Text(
-                        actualite.excerpt!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: LightModeColors.dashboardTextSecondary,
-                          height: 1.4,
+                        excerpt,
+                        style: AppText.body(
+                          size: 14.5,
+                          color: AppColors.textMuted,
                         ),
-                        maxLines: 3,
+                        maxLines: featured ? 3 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-
-                    const SizedBox(height: 16),
+                    ],
 
                     // Action buttons - only show if media is available
                     _buildActionButtonsSection(actualite),
+
+                    const SizedBox(height: 12),
+
                     // Meta Information
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.warning.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.person_outline,
-                            size: 14,
-                            color: LightModeColors.warning,
-                          ),
+                        const Icon(
+                          Icons.person_rounded,
+                          size: 16,
+                          color: AppColors.textFaint,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          actualite.author ?? 'Admin',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: LightModeColors.warning,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.lightSurfaceVariant
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.access_time_rounded,
-                            size: 14,
-                            color: LightModeColors.dashboardTextSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatDate(actualite.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: LightModeColors.dashboardTextSecondary,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            actualite.author ?? 'Admin',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.label(letterSpacing: 0),
                           ),
                         ),
                       ],
@@ -522,153 +401,51 @@ class _ActualitesScreenState extends State<ActualitesScreen>
     );
   }
 
+  /// Centres a message in the space above the dock, and lets it scroll
+  /// when the keyboard leaves too little room for it.
+  Widget _buildStateArea(Widget child) {
+    final dock = MediaQuery.paddingOf(context).bottom;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final room = constraints.maxHeight - dock;
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: dock),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: room > 0 ? room : 0),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildErrorState(ActualiteProvider provider) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(32),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: LightModeColors.lightSurface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: LightModeColors.lightError.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: LightModeColors.lightError,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Oups ! Une erreur s\'est produite',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Impossible de charger les actualités.\nVeuillez réessayer.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: LightModeColors.dashboardTextSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: provider.refresh,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Réessayer'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LightModeColors.lightPrimary,
-                foregroundColor: LightModeColors.lightSecondary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
+    return _buildStateArea(
+      EmptyState(
+        icon: Icons.error_outline_rounded,
+        tone: Tone.coral,
+        title: 'Oups ! Une erreur s\'est produite',
+        message: 'Impossible de charger les actualités.\nVeuillez réessayer.',
+        actionLabel: 'Réessayer',
+        onAction: provider.refresh,
       ),
     );
   }
 
   Widget _buildEmptyState(String category) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(32),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: LightModeColors.lightSurface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: LightModeColors.warning.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Icon(
-                Icons.article_outlined,
-                size: 48,
-                color: LightModeColors.warning,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Aucune actualité disponible',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Il n\'y a pas encore d\'actualités\ndans la catégorie "$category".',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: LightModeColors.dashboardTextSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: () {
-                Provider.of<ActualiteProvider>(
-                  context,
-                  listen: false,
-                ).refresh();
-              },
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Actualiser'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: LightModeColors.warning,
-                side: const BorderSide(color: LightModeColors.warning),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
+    return _buildStateArea(
+      EmptyState(
+        icon: Icons.article_rounded,
+        title: 'Aucune actualité disponible',
+        message:
+            'Il n\'y a pas encore d\'actualités\ndans la catégorie "$category".',
+        actionLabel: 'Actualiser',
+        onAction: () {
+          Provider.of<ActualiteProvider>(
+            context,
+            listen: false,
+          ).refresh();
+        },
       ),
     );
   }
@@ -693,48 +470,64 @@ class _ActualitesScreenState extends State<ActualitesScreen>
 
   Widget _buildActionButtonsSection(BlogPost actualite) {
     // Collect available action buttons
-    List<Widget> topRowButtons = [];
-
-    // Video button (first priority - top row)
-    if (actualite.hasVideo) {
-      topRowButtons.add(
-        Expanded(
-          child: _buildActionButton(
-            'Regarder la vidéo',
-            Icons.play_circle_outline,
-            () => _showVideoDialog(actualite),
-          ),
+    final List<Widget> buttons = [
+      // Video button
+      if (actualite.hasVideo)
+        _buildActionButton(
+          'Regarder la vidéo',
+          Icons.play_circle_outline_rounded,
+          () => _showVideoDialog(actualite),
         ),
-      );
-    }
+    ];
 
     // If no buttons available, return empty container
-    if (topRowButtons.isEmpty) {
+    if (buttons.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      children: [
-        Row(children: topRowButtons),
-        const SizedBox(height: 16),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Wrap(spacing: 8, children: buttons),
     );
   }
 
+  /// A quiet glass pill for a card's secondary action: 36pt tall, in a
+  /// 44pt touch target.
   Widget _buildActionButton(
     String label,
     IconData icon,
     VoidCallback onPressed,
   ) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: LightModeColors.lightError,
-        side: BorderSide(color: LightModeColors.lightError),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return Pressable(
+      onTap: onPressed,
+      pressedScale: 0.94,
+      semanticLabel: label,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            border: Border.all(color: AppColors.lineStrong),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: AppColors.indigoDeep),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppText.label(
+                  weight: FontWeight.w700,
+                  color: AppColors.indigoDeep,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -773,8 +566,30 @@ class _ActualitesScreenState extends State<ActualitesScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: LightModeColors.novoPharmaBlue,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+/// A small smoked-glass disc that marks a cover as playable.
+class _PlayBadge extends StatelessWidget {
+  const _PlayBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.ink.withValues(alpha: 0.62),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.38)),
+      ),
+      child: const Icon(
+        Icons.play_arrow_rounded,
+        color: Colors.white,
+        size: 22,
       ),
     );
   }
@@ -782,7 +597,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
 
 class _ActualiteCategoryTabView extends StatefulWidget {
   final String category;
-  final Widget Function(BlogPost actualite) cardBuilder;
+  final Widget Function(BlogPost actualite, int index) cardBuilder;
   final Widget Function() errorBuilder;
   final Widget Function() emptyBuilder;
 
@@ -798,11 +613,8 @@ class _ActualiteCategoryTabView extends StatefulWidget {
       _ActualiteCategoryTabViewState();
 }
 
-class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView>
-    with SingleTickerProviderStateMixin {
+class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView> {
   late ScrollController _scrollController;
-  late AnimationController _bounceController;
-  late Animation<double> _bounceAnimation;
   bool _showScrollIndicator = true;
 
   @override
@@ -810,15 +622,6 @@ class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView>
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-
-    _bounceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-
-    _bounceAnimation = Tween<double>(begin: 0, end: 8).animate(
-      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
-    );
   }
 
   void _onScroll() {
@@ -859,19 +662,57 @@ class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView>
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    _bounceController.dispose();
     super.dispose();
+  }
+
+  /// Placeholders with the cards' own silhouette: cover, pills, title.
+  Widget _buildLoadingSkeleton(EdgeInsets padding) {
+    Widget card(double cover) => Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(height: cover, radius: AppRadii.lg),
+              const SizedBox(height: 14),
+              const SkeletonBox(width: 132, height: 24, radius: AppRadii.pill),
+              const SizedBox(height: 12),
+              const SkeletonBox(height: 20),
+              const SizedBox(height: 8),
+              const SkeletonBox(width: 190, height: 14),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Shimmer(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: padding,
+        children: [card(208), card(156)],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ActualiteProvider>(context);
 
+    // The list runs under the glass dock; this is the room it needs to clear.
+    final dock = MediaQuery.paddingOf(context).bottom;
+    final listPadding = EdgeInsets.fromLTRB(
+      AppSpace.page,
+      6,
+      AppSpace.page,
+      dock + 20,
+    );
+
     if (provider.isLoadingCategory(widget.category) &&
         provider.getActualitesByCategory(widget.category).isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: LightModeColors.lightPrimary),
-      );
+      return _buildLoadingSkeleton(listPadding);
     }
 
     if (provider.hasError) {
@@ -900,31 +741,28 @@ class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView>
           onRefresh: () async {
             await provider.loadInitialCategory(widget.category);
           },
-          color: LightModeColors.lightPrimary,
+          color: AppColors.indigo,
           child: ListView.builder(
             controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+            padding: listPadding,
             itemCount: actualites.length + (isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index < actualites.length) {
-                return widget.cardBuilder(actualites[index]);
+                return widget.cardBuilder(actualites[index], index);
               } else {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: LightModeColors.lightPrimary,
-                    ),
-                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: CapsuleLoader(size: 38)),
                 );
               }
             },
           ),
         ),
 
-        // Premium Animated scroll-down indicator
+        // Scroll-down hint: a smoked pill resting just above the dock. It
+        // fades with the same rule as before and no longer bounces.
         Positioned(
-          bottom: 24,
+          bottom: dock + 10,
           left: 0,
           right: 0,
           child: AnimatedOpacity(
@@ -934,70 +772,32 @@ class _ActualiteCategoryTabViewState extends State<_ActualiteCategoryTabView>
             child: IgnorePointer(
               ignoring: !canShowIndicator,
               child: Center(
-                child: AnimatedBuilder(
-                  animation: _bounceAnimation,
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: Offset(0, _bounceAnimation.value),
-                      child: child,
-                    );
-                  },
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _scrollToNext,
-                      borderRadius: BorderRadius.circular(30),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              LightModeColors.novoPharmaBlue,
-                              LightModeColors.lightPrimary,
-                            ],
+                child: Pressable(
+                  onTap: _scrollToNext,
+                  semanticLabel: 'Défiler vers le bas',
+                  child: Glass(
+                    style: GlassStyle.smoked,
+                    height: 44,
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Défiler vers le bas',
+                          style: AppText.label(
+                            weight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0,
                           ),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: LightModeColors.novoPharmaBlue.withValues(
-                                alpha: 0.4,
-                              ),
-                              blurRadius: 16,
-                              spreadRadius: 1,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text(
-                              'Défiler vers le bas',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(
-                              Icons.keyboard_double_arrow_down_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ],
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.keyboard_double_arrow_down_rounded,
+                          color: Colors.white,
+                          size: 20,
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),

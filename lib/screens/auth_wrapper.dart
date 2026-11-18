@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/screens/dashboard_home_screen.dart';
 import 'package:novopharma/screens/login_screen.dart';
@@ -29,7 +30,19 @@ class AuthWrapper extends StatelessWidget {
         return const LoginScreen();
       case AppAuthState.unknown:
       default:
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        // Continues the splash while the session resolves.
+        return const Scaffold(
+          backgroundColor: AppColors.ink,
+          body: AuroraBackground(
+            child: Center(
+              child: CapsuleLoader(
+                size: 56,
+                left: Colors.white,
+                right: AppColors.mint,
+              ),
+            ),
+          ),
+        );
     }
   }
 }

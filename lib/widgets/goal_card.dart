@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:novopharma/models/user_goal_progress.dart';
-import 'package:novopharma/widgets/progress_ring.dart';
 import '../models/goal.dart';
-import '../theme.dart';
 
+/// One objective: what it is, what it pays, and how far along you are.
+/// Coral while in progress, mint once it is done.
 class GoalCard extends StatelessWidget {
   final Goal goal;
   final UserGoalProgress? progress;
   final VoidCallback? onTap;
 
   const GoalCard({super.key, required this.goal, this.progress, this.onTap});
+
+  String _formatDate(DateTime date) {
+    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,213 +26,129 @@ class GoalCard extends StatelessWidget {
         ? (currentProgress / goal.targetValue).clamp(0.0, 1.0)
         : 0.0;
 
-    final Color progressColor = isCompleted
-        ? LightModeColors.success
-        : LightModeColors.warning;
+    final Tone tone = isCompleted ? Tone.mint : Tone.coral;
+    final IconData metricIcon = goal.metric == 'revenue'
+        ? Icons.payments_rounded
+        : Icons.inventory_2_rounded;
+    final String target = goal.metric == 'revenue'
+        ? '/ ${formatPoints(goal.targetValue.toInt())} TND'
+        : '/ ${formatPoints(goal.targetValue.toInt())}';
 
-    return GestureDetector(
+    return SoftCard(
       onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isCompleted
-                ? [
-                    LightModeColors.lightSurface,
-                    LightModeColors.success.withValues(alpha: 0.05),
-                  ]
-                : [Colors.white, LightModeColors.lightSurfaceVariant],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isCompleted
-                ? progressColor.withValues(alpha: 0.3)
-                : LightModeColors.lightOutline,
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isCompleted
-                  ? progressColor.withValues(alpha: 0.15)
-                  : LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Decorative background element
-            if (isCompleted)
-              Positioned(
-                right: -20,
-                top: -20,
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: progressColor.withValues(alpha: 0.05),
-                  ),
+      semanticLabel: goal.title,
+      tint: isCompleted ? AppColors.mintTint : null,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isCompleted)
+                const BlisterIcon(
+                  icon: Icons.check_rounded,
+                  tone: Tone.mint,
+                  size: 44,
+                  glow: false,
+                )
+              else
+                TintIcon(icon: metricIcon, tone: tone, size: 44),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      goal.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.display(size: 17, height: 1.18),
+                    ),
+                    const SizedBox(height: 8),
+                    TonePill(
+                      label: goal.rewardText,
+                      tone: Tone.amber,
+                      icon: Icons.star_rounded,
+                    ),
+                  ],
                 ),
               ),
-            // Main content
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                children: [
-                  // Left Column: Title, Icon, Progress Text
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon badge
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.lightError.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            goal.metric == 'revenue'
-                                ? Icons.monetization_on_rounded
-                                : Icons.inventory_2_rounded,
-                            color: isCompleted
-                                ? progressColor
-                                : LightModeColors.lightError,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Title
-                        Text(
-                          goal.title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: LightModeColors.dashboardTextPrimary,
-                            height: 1.3,
-                            letterSpacing: -0.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        // Progress Text
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: LightModeColors.lightOutline),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  goal.metric == 'revenue'
-                                      ? Icons.payments_rounded
-                                      : Icons.inventory_rounded,
-                                  size: 16,
-                                  color: LightModeColors.dashboardTextSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    goal.metric == 'revenue'
-                                        ? '$currentProgress / ${goal.targetValue.toInt()} TND'
-                                        : '$currentProgress / ${goal.targetValue.toInt()}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: LightModeColors.dashboardTextSecondary,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Time Remaining
-                        _buildChip(
-                          icon: Icons.schedule_rounded,
-                          text: goal.getTimeRemaining(l10n),
-                          color: isCompleted
-                              ? progressColor
-                              : LightModeColors.warning,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  // Right Column: Progress Ring
-                  ProgressRing(
-                    progress: progressPercent,
-                    size: 90,
-                    strokeWidth: 9,
-                    progressColor: progressColor,
-                    trackColor: LightModeColors.lightOutline,
-                    textStyle: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: progressColor,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                formatPoints(currentProgress),
+                style: AppText.display(size: 26),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  target,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.label(size: 13.5, letterSpacing: 0),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${(progressPercent * 100).round()}%',
+                style: AppText.display(size: 18, color: tone.deep),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: CapsuleProgress(value: progressPercent, tone: tone),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 14,
+            runSpacing: 6,
+            children: [
+              _buildMeta(
+                icon: Icons.schedule_rounded,
+                text: goal.getTimeRemaining(l10n),
+                color: tone.deep,
+              ),
+              _buildMeta(
+                icon: Icons.event_rounded,
+                text:
+                    '${_formatDate(goal.startDate)} – ${_formatDate(goal.endDate)}',
+                color: AppColors.textFaint,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildChip({
+  Widget _buildMeta({
     required IconData icon,
     required String text,
     required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-                letterSpacing: 0.2,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.label(size: 12.5, letterSpacing: 0),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

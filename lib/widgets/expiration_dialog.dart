@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:novopharma/models/product.dart';
 import 'package:novopharma/models/stock_models.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class ExpirationDialog extends StatefulWidget {
   final Product product;
@@ -87,9 +87,9 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: LightModeColors.novoPharmaBlue,
+              primary: AppColors.indigo,
               onPrimary: Colors.white,
-              onSurface: LightModeColors.dashboardTextPrimary,
+              onSurface: AppColors.text,
             ),
           ),
           child: child!,
@@ -108,7 +108,7 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Veuillez choisir une date d'expiration."),
-          backgroundColor: LightModeColors.lightError,
+          backgroundColor: AppColors.coralDeep,
         ),
       );
       return;
@@ -118,7 +118,7 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Veuillez entrer une quantité valide (> 0)."),
-          backgroundColor: LightModeColors.lightError,
+          backgroundColor: AppColors.coralDeep,
         ),
       );
       return;
@@ -186,7 +186,7 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
             content: Text(
               "Veuillez saisir un prix de vente réel valide (> 0).",
             ),
-            backgroundColor: LightModeColors.lightError,
+            backgroundColor: AppColors.coralDeep,
           ),
         );
         return;
@@ -222,7 +222,7 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
           content: Text(
             "La quantité globale ($totalQty) doit être supérieure ou égale à la somme des lots ($sum unités).",
           ),
-          backgroundColor: LightModeColors.lightError,
+          backgroundColor: AppColors.coralDeep,
         ),
       );
       return;
@@ -249,33 +249,123 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
     VoidCallback onTap, {
     bool isDanger = false,
   }) {
-    return InkWell(
+    return Pressable(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      semanticLabel: label,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isDanger
-              ? const Color(0xFFFEE2E2)
-              : LightModeColors.novoPharmaLightGray,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDanger
-                ? const Color(0xFFFCA5A5)
-                : LightModeColors.lightOutlineVariant,
-          ),
+          color: isDanger ? AppColors.coralTint : AppColors.indigoTint,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: isDanger
-                ? LightModeColors.lightError
-                : LightModeColors.novoPharmaBlue,
+          style: AppText.label(
+            size: 12.5,
+            weight: FontWeight.w700,
+            color: isDanger ? AppColors.coralDeep : AppColors.indigoDeep,
+            letterSpacing: 0,
           ),
         ),
       ),
+    );
+  }
+
+  /// A section's heading inside the dialog.
+  Widget _sectionTitle(String text) {
+    return Text(text, style: AppText.display(size: 15.5));
+  }
+
+  /// A small count or amount beside a heading.
+  Widget _miniPill(String text, {Tone tone = Tone.indigo}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: tone.tint,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Text(
+        text,
+        style: AppText.display(size: 12, color: tone.deep, letterSpacing: 0),
+      ),
+    );
+  }
+
+  /// The inset panels the form is grouped into. Tinted, never blurred: the
+  /// dialog behind them is already frosted.
+  BoxDecoration _panelDecoration({Color tint = Colors.white, Color? border}) {
+    return BoxDecoration(
+      color: tint.withValues(alpha: 0.7),
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      border: Border.all(color: border ?? Colors.white),
+    );
+  }
+
+  /// A square-ish control with a full-size tap target (stepper, add lot).
+  Widget _squareButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required String label,
+    bool filled = false,
+  }) {
+    return Pressable(
+      onTap: onTap,
+      pressedScale: 0.9,
+      semanticLabel: label,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          gradient: filled ? AppGradients.indigo : null,
+          color: filled ? null : Colors.white,
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          border: filled ? null : Border.all(color: AppColors.line),
+          boxShadow: filled
+              ? AppShadows.glow(AppColors.indigo, strength: 0.26)
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: 22,
+          color: filled ? Colors.white : AppColors.text,
+        ),
+      ),
+    );
+  }
+
+  /// The dialog's text inputs: white wells with a soft outline that turns to
+  /// [accent] on focus.
+  InputDecoration _fieldDecoration({
+    String? hintText,
+    String? suffixText,
+    Color accent = AppColors.indigo,
+    Color outline = AppColors.line,
+    EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
+      horizontal: 14,
+      vertical: 12,
+    ),
+  }) {
+    OutlineInputBorder border(Color color, [double width = 1]) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          borderSide: BorderSide(color: color, width: width),
+        );
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: AppText.body(size: 15, color: AppColors.textFaint),
+      suffixText: suffixText,
+      suffixStyle: AppText.label(
+        size: 14,
+        weight: FontWeight.w700,
+        color: AppColors.indigo,
+      ),
+      isDense: true,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: contentPadding,
+      border: border(outline),
+      enabledBorder: border(outline),
+      focusedBorder: border(accent, 1.6),
     );
   }
 
@@ -293,21 +383,26 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
     final int sumOfLots = _sumOfLots;
     final bool hasLots = _expirations.isNotEmpty;
 
+    final closeLabel = MaterialLocalizations.of(context).closeButtonTooltip;
+
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      elevation: 12,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 440),
-          color: Colors.white,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Glass(
+          blur: Glass.frost,
+          borderRadius: BorderRadius.circular(AppRadii.xl),
           child: GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             behavior: HitTestBehavior.opaque,
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              child: Padding(
+              child: Container(
+                // A veil of white over the frost: this is a dense form, and
+                // its figures have to stay crisp whatever shows through.
+                color: Colors.white.withValues(alpha: 0.42),
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -318,40 +413,32 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: 52,
-                          height: 52,
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
-                            color: LightModeColors.novoPharmaLightGray,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: LightModeColors.lightOutlineVariant,
-                            ),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(AppRadii.sm),
+                            boxShadow: AppShadows.card,
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadii.sm),
                             child: widget.product.imageUrl.isNotEmpty
                                 ? CachedNetworkImage(
                                     imageUrl: widget.product.imageUrl,
                                     fit: BoxFit.contain,
                                     placeholder: (_, __) => const Center(
-                                      child: SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
+                                      child: CapsuleLoader(size: 22),
                                     ),
                                     errorWidget: (_, __, ___) => const Icon(
                                       Icons.medication_liquid_rounded,
-                                      size: 22,
-                                      color: LightModeColors.novoPharmaBlue,
+                                      size: 24,
+                                      color: AppColors.indigo,
                                     ),
                                   )
                                 : const Icon(
                                     Icons.medication_liquid_rounded,
-                                    size: 22,
-                                    color: LightModeColors.novoPharmaBlue,
+                                    size: 24,
+                                    color: AppColors.indigo,
                                   ),
                           ),
                         ),
@@ -362,46 +449,23 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                             children: [
                               Text(
                                 widget.product.name,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.dashboardTextPrimary,
-                                  height: 1.25,
-                                ),
+                                style: AppText.display(size: 16.5, height: 1.2),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               Wrap(
-                                spacing: 6,
+                                spacing: 8,
                                 runSpacing: 4,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   if (widget.product.marque.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 1.5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            LightModeColors.novoPharmaLightBlue,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        widget.product.marque,
-                                        style: const TextStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: LightModeColors.novoPharmaBlue,
-                                        ),
-                                      ),
-                                    ),
+                                    TonePill(label: widget.product.marque),
                                   Text(
                                     "SKU: ${widget.product.sku}",
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: LightModeColors.novoPharmaGray,
+                                    style: AppText.label(
+                                      size: 12,
+                                      letterSpacing: 0,
                                     ),
                                   ),
                                 ],
@@ -409,454 +473,318 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                             ],
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            size: 22,
-                            color: LightModeColors.novoPharmaGray,
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: closeLabel,
+                          child: Pressable(
+                            onTap: () => Navigator.pop(context),
+                            pressedScale: 0.9,
+                            semanticLabel: closeLabel,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.ink.withValues(alpha: 0.07),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 22,
+                                color: AppColors.text,
+                              ),
+                            ),
                           ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          splashRadius: 18,
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
                     // Mode Selector: Segmented Pill Control
-                    Container(
-                      padding: const EdgeInsets.all(3.5),
-                      decoration: BoxDecoration(
-                        color: LightModeColors.novoPharmaLightGray,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => setState(() => _isPriceOnly = false),
-                              borderRadius: BorderRadius.circular(11),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: !_isPriceOnly
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(11),
-                                  boxShadow: !_isPriceOnly
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.05,
-                                            ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 1.5),
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.inventory_2_rounded,
-                                      size: 15,
-                                      color: !_isPriceOnly
-                                          ? LightModeColors.novoPharmaBlue
-                                          : LightModeColors.novoPharmaGray,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Stock & Prix",
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: !_isPriceOnly
-                                            ? FontWeight.bold
-                                            : FontWeight.w600,
-                                        color: !_isPriceOnly
-                                            ? LightModeColors.novoPharmaBlue
-                                            : LightModeColors.novoPharmaGray,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => setState(() => _isPriceOnly = true),
-                              borderRadius: BorderRadius.circular(11),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _isPriceOnly
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(11),
-                                  boxShadow: _isPriceOnly
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.05,
-                                            ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 1.5),
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.sell_rounded,
-                                      size: 15,
-                                      color: _isPriceOnly
-                                          ? LightModeColors.novoPharmaBlue
-                                          : LightModeColors.novoPharmaGray,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Prix seul",
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: _isPriceOnly
-                                            ? FontWeight.bold
-                                            : FontWeight.w600,
-                                        color: _isPriceOnly
-                                            ? LightModeColors.novoPharmaBlue
-                                            : LightModeColors.novoPharmaGray,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedTabs(
+                        labels: const ["Stock & prix", "Prix seul"],
+                        selectedIndex: _isPriceOnly ? 1 : 0,
+                        onChanged: (index) => index == 0
+                            ? setState(() => _isPriceOnly = false)
+                            : setState(() => _isPriceOnly = true),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // Section: Quantité Globale (Only if !isPriceOnly)
                     if (!_isPriceOnly) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            "Quantité en stock",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: LightModeColors.dashboardTextPrimary,
-                            ),
-                          ),
-                          if (hasLots)
-                            Text(
-                              "Min. $sumOfLots (lots)",
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: LightModeColors.novoPharmaBlue,
-                              ),
-                            ),
+                          Flexible(child: _sectionTitle("Quantité en stock")),
+                          if (hasLots) _miniPill("Min. $sumOfLots (lots)"),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
 
-                      // Modern Stepper with Large Buttons (Compact & Centered)
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.novoPharmaLightGray,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: LightModeColors.lightOutlineVariant,
+                      // Stepper with large buttons
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: _panelDecoration(),
+                        child: Row(
+                          children: [
+                            _squareButton(
+                              icon: Icons.remove_rounded,
+                              label: '-1',
+                              onTap: () => _adjustQuantity(-1),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Material(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                elevation: 0,
-                                child: InkWell(
-                                  onTap: () => _adjustQuantity(-1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: const SizedBox(
-                                    width: 44,
-                                    height: 44,
-                                    child: Icon(
-                                      Icons.remove_rounded,
-                                      size: 22,
-                                      color:
-                                          LightModeColors.dashboardTextPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 180,
-                                height: 44,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                height: 46,
+                                alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: LightModeColors.lightOutlineVariant,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.sm,
                                   ),
+                                  border: Border.all(color: AppColors.line),
                                 ),
-                                child: Center(
-                                  child: TextField(
-                                    controller: _globalQuantityController,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          LightModeColors.dashboardTextPrimary,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      isDense: true,
-                                      filled: false,
-                                      border: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      errorBorder: InputBorder.none,
-                                      focusedErrorBorder: InputBorder.none,
-                                      contentPadding: EdgeInsets.zero,
-                                      hintText: "0",
-                                      hintStyle: TextStyle(
-                                        color: LightModeColors.novoPharmaGray,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    onChanged: (_) => setState(() {}),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Material(
-                                color: LightModeColors.novoPharmaBlue,
-                                borderRadius: BorderRadius.circular(12),
-                                elevation: 0,
-                                child: InkWell(
-                                  onTap: () => _adjustQuantity(1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: const SizedBox(
-                                    width: 44,
-                                    height: 44,
-                                    child: Icon(
-                                      Icons.add_rounded,
+                                child: TextField(
+                                  controller: _globalQuantityController,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  textAlign: TextAlign.center,
+                                  style: AppText.display(size: 22),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    filled: false,
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    errorBorder: InputBorder.none,
+                                    focusedErrorBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    hintText: "0",
+                                    hintStyle: AppText.display(
                                       size: 22,
-                                      color: Colors.white,
+                                      weight: FontWeight.w500,
+                                      color: AppColors.textFaint,
                                     ),
                                   ),
+                                  onChanged: (_) => setState(() {}),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 8),
+                            _squareButton(
+                              icon: Icons.add_rounded,
+                              label: '+1',
+                              filled: true,
+                              onTap: () => _adjustQuantity(1),
+                            ),
+                          ],
                         ),
                       ),
 
                       if (hasLots && currentQty > sumOfLots) ...[
-                        Center(
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, left: 4),
                           child: Text(
                             "Dont ${currentQty - sumOfLots} unité(s) sans lot spécifique.",
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: LightModeColors.novoPharmaGray,
-                              fontStyle: FontStyle.italic,
+                            style: AppText.label(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              letterSpacing: 0,
                             ),
                           ),
                         ),
                       ],
 
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 20),
                     ],
 
                     // Section: Prix de Vente & Conformité
-                    const Text(
-                      "Prix de vente en officine",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: LightModeColors.dashboardTextPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    _sectionTitle("Prix de vente en officine"),
+                    const SizedBox(height: 10),
 
                     // Interactive Choice Cards
-                    Row(
-                      children: [
-                        // Choice 1: Prix conseillé respecté
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => setState(() => _respectsPrice = true),
-                            borderRadius: BorderRadius.circular(14),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _respectsPrice
-                                    ? const Color(0xFFF0FDF4)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Choice 1: Prix conseillé respecté
+                          Expanded(
+                            child: Pressable(
+                              onTap: () =>
+                                  setState(() => _respectsPrice = true),
+                              semanticLabel: "Conseillé",
+                              child: AnimatedContainer(
+                                duration: AppMotion.fast,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
                                   color: _respectsPrice
-                                      ? const Color(0xFF10B981)
-                                      : LightModeColors.lightOutlineVariant,
-                                  width: _respectsPrice ? 1.5 : 1,
+                                      ? AppColors.mintTint
+                                      : Colors.white.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.md,
+                                  ),
+                                  border: Border.all(
+                                    color: _respectsPrice
+                                        ? AppColors.mint
+                                        : Colors.white,
+                                    width: _respectsPrice ? 1.6 : 1,
+                                  ),
                                 ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        _respectsPrice
-                                            ? Icons.check_circle_rounded
-                                            : Icons
-                                                  .radio_button_unchecked_rounded,
-                                        size: 15,
-                                        color: _respectsPrice
-                                            ? const Color(0xFF10B981)
-                                            : LightModeColors.novoPharmaGray,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      const Text(
-                                        "Conseillé",
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.bold,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          _respectsPrice
+                                              ? Icons.check_circle_rounded
+                                              : Icons
+                                                    .radio_button_unchecked_rounded,
+                                          size: 18,
+                                          color: _respectsPrice
+                                              ? AppColors.mintDeep
+                                              : AppColors.textMuted,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            "Conseillé",
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppText.label(
+                                              size: 13,
+                                              weight: FontWeight.w700,
+                                              color: AppColors.text,
+                                              letterSpacing: 0,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        "${widget.product.price.toStringAsFixed(2)} DT",
+                                        style: AppText.display(
+                                          size: 19,
+                                          color: _respectsPrice
+                                              ? AppColors.mintDeep
+                                              : AppColors.text,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    "${widget.product.price.toStringAsFixed(2)} DT",
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: _respectsPrice
-                                          ? const Color(0xFF047857)
-                                          : LightModeColors
-                                                .dashboardTextPrimary,
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
+                          const SizedBox(width: 10),
 
-                        // Choice 2: Prix différent
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => setState(() => _respectsPrice = false),
-                            borderRadius: BorderRadius.circular(14),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: !_respectsPrice
-                                    ? const Color(0xFFFFFBEB)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: !_respectsPrice
-                                      ? const Color(0xFFF59E0B)
-                                      : LightModeColors.lightOutlineVariant,
-                                  width: !_respectsPrice ? 1.5 : 1,
+                          // Choice 2: Prix différent
+                          Expanded(
+                            child: Pressable(
+                              onTap: () =>
+                                  setState(() => _respectsPrice = false),
+                              semanticLabel: "Différent",
+                              child: AnimatedContainer(
+                                duration: AppMotion.fast,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
                                 ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        !_respectsPrice
-                                            ? Icons.edit_note_rounded
-                                            : Icons
-                                                  .radio_button_unchecked_rounded,
-                                        size: 16,
-                                        color: !_respectsPrice
-                                            ? const Color(0xFFF59E0B)
-                                            : LightModeColors.novoPharmaGray,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        "Différent",
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.bold,
+                                decoration: BoxDecoration(
+                                  color: !_respectsPrice
+                                      ? AppColors.amberTint
+                                      : Colors.white.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.md,
+                                  ),
+                                  border: Border.all(
+                                    color: !_respectsPrice
+                                        ? AppColors.amber
+                                        : Colors.white,
+                                    width: !_respectsPrice ? 1.6 : 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          !_respectsPrice
+                                              ? Icons.edit_note_rounded
+                                              : Icons
+                                                    .radio_button_unchecked_rounded,
+                                          size: 18,
+                                          color: !_respectsPrice
+                                              ? AppColors.amberDeep
+                                              : AppColors.textMuted,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    (!_respectsPrice &&
-                                            _sellingPriceController.text
-                                                .trim()
-                                                .isNotEmpty)
-                                        ? "${_sellingPriceController.text.trim()} DT"
-                                        : "Autre prix",
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: !_respectsPrice
-                                          ? FontWeight.bold
-                                          : FontWeight.w500,
-                                      color: !_respectsPrice
-                                          ? const Color(0xFFB45309)
-                                          : LightModeColors.novoPharmaGray,
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            "Différent",
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppText.label(
+                                              size: 13,
+                                              weight: FontWeight.w700,
+                                              color: AppColors.text,
+                                              letterSpacing: 0,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      (!_respectsPrice &&
+                                              _sellingPriceController.text
+                                                  .trim()
+                                                  .isNotEmpty)
+                                          ? "${_sellingPriceController.text.trim()} DT"
+                                          : "Autre prix",
+                                      maxLines: 1,
+                                      style: AppText.display(
+                                        size: 19,
+                                        weight: !_respectsPrice
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: !_respectsPrice
+                                            ? AppColors.amberDeep
+                                            : AppColors.textMuted,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
                     // Custom Price Input & Difference Badge (Shown when !respectsPrice)
                     if (!_respectsPrice) ...[
                       const SizedBox(height: 10),
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFDF5),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        padding: const EdgeInsets.all(14),
+                        decoration: _panelDecoration(
+                          tint: AppColors.amberTint,
+                          border: AppColors.amber.withValues(alpha: 0.45),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -864,84 +792,42 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  "Prix réel constaté",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: LightModeColors.dashboardTextPrimary,
+                                Flexible(
+                                  child: Text(
+                                    "Prix réel constaté",
+                                    style: AppText.label(
+                                      size: 13,
+                                      weight: FontWeight.w700,
+                                      color: AppColors.text,
+                                      letterSpacing: 0,
+                                    ),
                                   ),
                                 ),
                                 if (livePriceDiff != null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: livePriceDiff > 0
-                                          ? const Color(0xFFFEE2E2)
-                                          : const Color(0xFFE0E7FF),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      livePriceDiff > 0
-                                          ? "+${livePriceDiff.toStringAsFixed(2)} DT"
-                                          : "${livePriceDiff.toStringAsFixed(2)} DT",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: livePriceDiff > 0
-                                            ? LightModeColors.lightError
-                                            : LightModeColors.novoPharmaBlue,
-                                      ),
-                                    ),
+                                  _miniPill(
+                                    livePriceDiff > 0
+                                        ? "+${livePriceDiff.toStringAsFixed(2)} DT"
+                                        : "${livePriceDiff.toStringAsFixed(2)} DT",
+                                    tone: livePriceDiff > 0
+                                        ? Tone.coral
+                                        : Tone.indigo,
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             TextField(
                               controller: _sellingPriceController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
                                   ),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              decoration: InputDecoration(
+                              style: AppText.display(size: 19),
+                              cursorColor: AppColors.amberDeep,
+                              decoration: _fieldDecoration(
                                 hintText: "Ex: 28.50",
                                 suffixText: "DT",
-                                suffixStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.novoPharmaBlue,
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFFCD34D),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFFCD34D),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFF59E0B),
-                                    width: 1.5,
-                                  ),
-                                ),
+                                accent: AppColors.amber,
+                                outline: AppColors.amber.withValues(alpha: 0.55),
                               ),
                               onChanged: (_) => setState(() {}),
                             ),
@@ -952,123 +838,102 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
 
                     // Section: Lots d'Expiration (Only if !isPriceOnly)
                     if (!_isPriceOnly) ...[
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 20),
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightGray,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: LightModeColors.lightOutlineVariant,
-                          ),
-                        ),
+                        padding: const EdgeInsets.all(14),
+                        decoration: _panelDecoration(),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_month_rounded,
-                                      size: 15,
-                                      color: LightModeColors.novoPharmaBlue,
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      "Lots périssables",
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: LightModeColors
-                                            .dashboardTextPrimary,
-                                      ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      "(Optionnel)",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: LightModeColors.novoPharmaGray,
-                                      ),
-                                    ),
-                                  ],
+                                const Icon(
+                                  Icons.calendar_month_rounded,
+                                  size: 18,
+                                  color: AppColors.indigo,
                                 ),
-                                if (hasLots)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          LightModeColors.novoPharmaLightBlue,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      "${_expirations.length} lot(s)",
-                                      style: const TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: LightModeColors.novoPharmaBlue,
-                                      ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text.rich(
+                                    TextSpan(
+                                      text: "Lots périssables",
+                                      style: AppText.display(size: 15.5),
+                                      children: [
+                                        const TextSpan(text: "  "),
+                                        TextSpan(
+                                          text: "(Optionnel)",
+                                          style: AppText.label(
+                                            size: 12,
+                                            weight: FontWeight.w500,
+                                            letterSpacing: 0,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                ),
+                                if (hasLots) ...[
+                                  const SizedBox(width: 8),
+                                  _miniPill("${_expirations.length} lot(s)"),
+                                ],
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
 
                             // Add Lot Row: Date + Qty + Add Button
                             Row(
                               children: [
                                 Expanded(
-                                  flex: 5,
-                                  child: InkWell(
+                                  flex: 6,
+                                  child: Pressable(
                                     onTap: () => _selectDate(context),
-                                    borderRadius: BorderRadius.circular(10),
+                                    pressedScale: 0.97,
                                     child: Container(
-                                      height: 40,
+                                      height: 46,
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
+                                        horizontal: 12,
                                       ),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadii.sm,
+                                        ),
                                         border: Border.all(
-                                          color: LightModeColors
-                                              .lightOutlineVariant,
+                                          color: AppColors.line,
                                         ),
                                       ),
                                       child: Row(
                                         children: [
                                           const Icon(
                                             Icons.event_available_rounded,
-                                            size: 15,
-                                            color:
-                                                LightModeColors.novoPharmaBlue,
+                                            size: 18,
+                                            color: AppColors.indigo,
                                           ),
-                                          const SizedBox(width: 6),
+                                          const SizedBox(width: 8),
                                           Expanded(
-                                            child: Text(
-                                              _selectedDate == null
-                                                  ? "Date d'exp."
-                                                  : DateFormat(
-                                                      'dd/MM/yyyy',
-                                                    ).format(_selectedDate!),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight:
-                                                    _selectedDate != null
-                                                    ? FontWeight.bold
-                                                    : FontWeight.w500,
-                                                color: _selectedDate == null
-                                                    ? LightModeColors
-                                                          .novoPharmaGray
-                                                    : LightModeColors
-                                                          .dashboardTextPrimary,
+                                            // Scales rather than truncates:
+                                            // a date must read in full.
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                _selectedDate == null
+                                                    ? "Date d'exp."
+                                                    : DateFormat(
+                                                        'dd/MM/yyyy',
+                                                      ).format(_selectedDate!),
+                                                style: _selectedDate != null
+                                                    ? AppText.display(
+                                                        size: 14.5,
+                                                        letterSpacing: 0,
+                                                      )
+                                                    : AppText.body(
+                                                        size: 14,
+                                                        color:
+                                                            AppColors.textMuted,
+                                                      ),
+                                                maxLines: 1,
                                               ),
-                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
@@ -1080,91 +945,46 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                                 Expanded(
                                   flex: 3,
                                   child: SizedBox(
-                                    height: 40,
+                                    height: 46,
                                     child: TextField(
                                       controller: _lotQuantityController,
                                       keyboardType: TextInputType.number,
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
+                                      style: AppText.display(
+                                        size: 16,
+                                        letterSpacing: 0,
                                       ),
-                                      decoration: InputDecoration(
+                                      decoration: _fieldDecoration(
                                         hintText: "Qté",
-                                        filled: true,
-                                        fillColor: Colors.white,
                                         contentPadding:
                                             const EdgeInsets.symmetric(
                                               horizontal: 6,
-                                              vertical: 10,
+                                              vertical: 14,
                                             ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: LightModeColors
-                                                .lightOutlineVariant,
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: LightModeColors
-                                                .lightOutlineVariant,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color:
-                                                LightModeColors.novoPharmaBlue,
-                                            width: 1.5,
-                                          ),
-                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                SizedBox(
-                                  height: 40,
-                                  child: ElevatedButton(
-                                    onPressed: _addLot,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          LightModeColors.novoPharmaBlue,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                      ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.add_rounded,
-                                      size: 20,
-                                    ),
-                                  ),
+                                _squareButton(
+                                  icon: Icons.add_rounded,
+                                  label: '+',
+                                  filled: true,
+                                  onTap: _addLot,
                                 ),
                               ],
                             ),
 
                             // Existing Lots List
                             if (hasLots) ...[
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(
                                   maxHeight: 140,
                                 ),
                                 child: ListView.separated(
                                   shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
                                   itemCount: _expirations.length,
                                   separatorBuilder: (_, __) =>
                                       const SizedBox(height: 6),
@@ -1178,83 +998,84 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                                             'dd/MM/yyyy',
                                           ).format(parsedDate)
                                         : item.expirationDate;
+                                    // Presentation only: a lot whose date is
+                                    // already behind us is shown in coral.
+                                    final today = DateUtils.dateOnly(
+                                      DateTime.now(),
+                                    );
+                                    final isExpired =
+                                        parsedDate != null &&
+                                        parsedDate.isBefore(today);
 
                                     return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
-                                      ),
+                                      padding: const EdgeInsets.only(left: 12),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(10),
+                                        color: isExpired
+                                            ? AppColors.coralTint
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadii.sm,
+                                        ),
                                         border: Border.all(
-                                          color: LightModeColors
-                                              .lightOutlineVariant,
+                                          color: isExpired
+                                              ? AppColors.coral.withValues(
+                                                  alpha: 0.45,
+                                                )
+                                              : AppColors.line,
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.access_time_rounded,
-                                                size: 14,
-                                                color: LightModeColors
-                                                    .novoPharmaGray,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                displayDate,
-                                                style: const TextStyle(
-                                                  fontSize: 12.5,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: LightModeColors
-                                                      .dashboardTextPrimary,
-                                                ),
-                                              ),
-                                            ],
+                                          Icon(
+                                            isExpired
+                                                ? Icons.error_outline_rounded
+                                                : Icons.access_time_rounded,
+                                            size: 16,
+                                            color: isExpired
+                                                ? AppColors.coralDeep
+                                                : AppColors.textMuted,
                                           ),
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 7,
-                                                      vertical: 2,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: LightModeColors
-                                                      .novoPharmaLightBlue,
-                                                  borderRadius:
-                                                      BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  "${item.quantity} pcs",
-                                                  style: const TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: LightModeColors
-                                                        .novoPharmaBlue,
-                                                  ),
-                                                ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              displayDate,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppText.display(
+                                                size: 14.5,
+                                                letterSpacing: 0,
+                                                color: isExpired
+                                                    ? AppColors.coralDeep
+                                                    : AppColors.text,
                                               ),
-                                              const SizedBox(width: 6),
-                                              IconButton(
-                                                icon: const Icon(
+                                            ),
+                                          ),
+                                          _miniPill(
+                                            "${item.quantity} pcs",
+                                            tone: isExpired
+                                                ? Tone.coral
+                                                : Tone.indigo,
+                                          ),
+                                          Tooltip(
+                                            message: MaterialLocalizations.of(
+                                              context,
+                                            ).deleteButtonTooltip,
+                                            child: Pressable(
+                                              onTap: () => _removeLot(index),
+                                              pressedScale: 0.88,
+                                              semanticLabel:
+                                                  MaterialLocalizations.of(
+                                                    context,
+                                                  ).deleteButtonTooltip,
+                                              child: const SizedBox.square(
+                                                dimension: 44,
+                                                child: Icon(
                                                   Icons.delete_outline_rounded,
-                                                  size: 17,
-                                                  color: LightModeColors
-                                                      .lightError,
+                                                  size: 20,
+                                                  color: AppColors.coralDeep,
                                                 ),
-                                                onPressed: () =>
-                                                    _removeLot(index),
-                                                padding: EdgeInsets.zero,
-                                                constraints:
-                                                    const BoxConstraints(),
                                               ),
-                                            ],
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -1273,72 +1094,31 @@ class _ExpirationDialogState extends State<ExpirationDialog> {
                     // Dialog Action Buttons
                     Row(
                       children: [
-                        if (widget.initialStockItem != null)
-                          TextButton.icon(
-                            onPressed: () {
-                              widget.onSave(null);
-                              Navigator.pop(context);
-                            },
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 18,
-                              color: LightModeColors.lightError,
-                            ),
-                            label: const Text(
-                              "Effacer",
-                              style: TextStyle(
-                                color: LightModeColors.lightError,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                            ),
-                          )
-                        else
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              "Annuler",
-                              style: TextStyle(
-                                color: LightModeColors.novoPharmaGray,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: _saveAndClose,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.novoPharmaBlue,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.check_rounded, size: 18),
-                              SizedBox(width: 6),
-                              Text(
-                                "Valider",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                        Expanded(
+                          flex: 2,
+                          child: widget.initialStockItem != null
+                              ? SecondaryButton(
+                                  label: "Effacer",
+                                  icon: Icons.delete_outline_rounded,
+                                  tone: Tone.coral,
+                                  onPressed: () {
+                                    widget.onSave(null);
+                                    Navigator.pop(context);
+                                  },
+                                )
+                              : SecondaryButton(
+                                  label: "Annuler",
+                                  onPressed: () => Navigator.pop(context),
                                 ),
-                              ),
-                            ],
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 3,
+                          child: PrimaryButton(
+                            label: "Valider",
+                            icon: Icons.check_rounded,
+                            height: 52,
+                            onPressed: _saveAndClose,
                           ),
                         ),
                       ],

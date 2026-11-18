@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class BirthdayPopupDialog extends StatefulWidget {
   final String title;
@@ -22,7 +22,6 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
   Timer? _countdownTimer;
   int _remainingSeconds = 10;
 
@@ -36,16 +35,22 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
 
     _scaleAnimation = CurvedAnimation(
       parent: _animController,
-      curve: Curves.easeOutBack,
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeIn,
+      curve: AppMotion.spring,
     );
 
     _animController.forward();
     _startTimer();
+
+    // This popup is itself the earned moment: shower it once, as it opens.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) celebrate(context);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduced(context)) _animController.value = 1;
   }
 
   void _startTimer() {
@@ -81,200 +86,173 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final dialogWidth = mediaQuery.size.width * 0.85;
+    final closeLabel = MaterialLocalizations.of(context).closeButtonTooltip;
 
     return Center(
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
+      // Pops up with a little overshoot. The route's own fade handles
+      // opacity, so the frost stays live while it grows.
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 0.86, end: 1).animate(_scaleAnimation),
+        child: Material(
+          color: Colors.transparent,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 380,
+              maxHeight: mediaQuery.size.height * 0.82,
+            ),
+            child: Glass(
+              blur: Glass.frost,
               width: dialogWidth,
-              constraints: const BoxConstraints(maxWidth: 380),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Inner content
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+              borderRadius: BorderRadius.circular(AppRadii.xl),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Timer badge on the left, close button "X" on the right
+                    Row(
                       children: [
-                        // Timer badge top-left inside
-                        Align(
-                          alignment: Alignment.topLeft,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.timer_outlined,
-                                  size: 14,
-                                  color: LightModeColors.lightPrimary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '$_remainingSeconds s',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: LightModeColors.lightPrimary,
-                                  ),
-                                ),
-                              ],
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: TonePill(
+                            label: '$_remainingSeconds s',
+                            tone: Tone.amber,
+                            icon: Icons.timer_rounded,
+                          ),
+                        ),
+                        const Spacer(),
+                        Tooltip(
+                          message: closeLabel,
+                          child: Pressable(
+                            onTap: _close,
+                            pressedScale: 0.9,
+                            semanticLabel: closeLabel,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.ink.withValues(alpha: 0.07),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 22,
+                                color: AppColors.text,
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
 
-                        // Animated / Colorful Birthday Icon
-                        Container(
-                          width: 80,
-                          height: 80,
+                    // Birthday icon: a coral dome in an amber halo
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.amberTint,
+                        border: Border.all(
+                          color: AppColors.amber.withValues(alpha: 0.45),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const BlisterIcon(
+                        icon: Icons.cake_rounded,
+                        tone: Tone.coral,
+                        size: 84,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        widget.title,
+                        textAlign: TextAlign.center,
+                        style: AppText.display(size: 25, height: 1.15),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Description
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        widget.description,
+                        textAlign: TextAlign.center,
+                        style: AppText.body(size: 15, height: 1.45),
+                      ),
+                    ),
+
+                    // Optional Points Badge
+                    if (widget.points != null && widget.points! > 0) ...[
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 16,
+                          ),
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFFF758C),
-                                Color(0xFFFF7EB3),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                            gradient: AppGradients.amber,
+                            borderRadius: BorderRadius.circular(AppRadii.lg),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFF758C).withValues(alpha: 0.35),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
+                            boxShadow: AppShadows.glow(
+                              AppColors.amber,
+                              strength: 0.32,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.stars_rounded,
+                                      color: AppColors.ink,
+                                      size: 30,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    CountUp(
+                                      value: widget.points!,
+                                      format: (v) => '+${formatPoints(v)}',
+                                      style: AppText.display(
+                                        size: 46,
+                                        weight: FontWeight.w800,
+                                        color: AppColors.ink,
+                                        height: 1.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'points bonus !',
+                                textAlign: TextAlign.center,
+                                style: AppText.body(
+                                  size: 15,
+                                  weight: FontWeight.w700,
+                                  color: AppColors.ink,
+                                  height: 1.2,
+                                ),
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.cake_rounded,
-                              size: 42,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-
-                        // Title
-                        Text(
-                          widget.title,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: LightModeColors.dashboardTextPrimary,
-                            height: 1.25,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Description
-                        Text(
-                          widget.description,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: LightModeColors.dashboardTextPrimary
-                                .withValues(alpha: 0.75),
-                            height: 1.4,
-                          ),
-                        ),
-
-                        // Optional Points Badge
-                        if (widget.points != null && widget.points! > 0) ...[
-                          const SizedBox(height: 18),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF10B981),
-                                  Color(0xFF059669),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.stars_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '+${widget.points} points bonus !',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  // Close button "X" on top-right
-                  Positioned(
-                    top: 14,
-                    right: 14,
-                    child: GestureDetector(
-                      onTap: _close,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          size: 18,
-                          color: Colors.black87,
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -293,6 +271,7 @@ Future<void> showBirthdayPopupDialog({
   await showDialog(
     context: context,
     barrierDismissible: true,
+    barrierColor: AppColors.ink.withValues(alpha: 0.55),
     builder: (context) => BirthdayPopupDialog(
       title: title,
       description: description,

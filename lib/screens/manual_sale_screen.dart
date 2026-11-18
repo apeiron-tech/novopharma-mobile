@@ -11,7 +11,7 @@ import 'package:novopharma/models/user_model.dart';
 import 'package:novopharma/models/challenge.dart';
 import 'package:novopharma/services/challenge_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class ManualSaleScreen extends StatefulWidget {
   const ManualSaleScreen({super.key});
@@ -121,96 +121,84 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
     }
   }
 
+  // Presentation only: the first screenful arrives once; rows created later
+  // (scrolling back, a new search) appear immediately.
+  bool _listArrived = false;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.manualSale),
-        backgroundColor: LightModeColors.lightBackground,
-        foregroundColor: LightModeColors.dashboardTextPrimary,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 4,
-        iconTheme: IconThemeData(color: LightModeColors.lightPrimary),
-      ),
-      backgroundColor: LightModeColors.lightBackground,
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 12.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: LightModeColors.lightSurface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: l10n.searchProducts,
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: LightModeColors.lightOnSurfaceVariant,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  hintStyle: const TextStyle(
-                    color: LightModeColors.lightOnSurfaceVariant,
-                  ),
-                ),
-              ),
+      backgroundColor: AppColors.canvas,
+      appBar: InkAppBar(
+        title: l10n.manualSale,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            // Search bar
+            child: AppSearchField(
+              controller: _searchController,
+              hintText: l10n.searchProducts,
+              onDark: true,
             ),
           ),
-
-          // Products list
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredProducts.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 80,
-                          color: LightModeColors.lightOnSurfaceVariant,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchController.text.isEmpty
-                              ? 'No products available'
-                              : 'No products found',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: LightModeColors.lightOnSurfaceVariant,
-                          ),
-                        ),
-                      ],
+        ),
+      ),
+      body: AppBackground(
+        accent: Tone.peach,
+        // Products list
+        child: _isLoading
+            ? const Align(
+                alignment: Alignment.topCenter,
+                child: SkeletonList(
+                  count: 6,
+                  itemHeight: 104,
+                  padding: EdgeInsets.fromLTRB(16, 18, 16, 16),
+                ),
+              )
+            : _filteredProducts.isEmpty
+            ? EmptyState(
+                icon: Icons.search_off_rounded,
+                tone: Tone.peach,
+                title: _searchController.text.isEmpty
+                    ? 'No products available'
+                    : 'No products found',
+              )
+            : Builder(
+                builder: (context) {
+                  if (!_listArrived) {
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _listArrived = true,
+                    );
+                  }
+                  return ListView.builder(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      18,
+                      16,
+                      MediaQuery.paddingOf(context).bottom + 24,
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: _filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = _filteredProducts[index];
-                      return _buildProductCard(product, l10n);
+                      final card = _buildProductCard(product, l10n);
+                      if (index > 5) return card;
+                      return Entrance(
+                        delay: _listArrived
+                            ? Duration.zero
+                            : Duration(milliseconds: 60 * index),
+                        duration:
+                            _listArrived ? Duration.zero : AppMotion.slow,
+                        child: card,
+                      );
                     },
-                  ),
-          ),
-        ],
+                  );
+                },
+              ),
       ),
     );
   }
@@ -236,170 +224,126 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
   }
 
   Widget _buildProductCard(Product product, AppLocalizations l10n) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SoftCard(
+        radius: AppRadii.md + 2,
+        padding: const EdgeInsets.all(12),
+        semanticLabel: product.name,
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            '/product',
+            arguments: {'id': product.id},
+          );
+        },
+        child: Row(
+          children: [
+            // Product Image
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadii.sm),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: product.imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: product.imageUrl,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) =>
+                          const SkeletonBox(height: 76, radius: 0),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.image_not_supported_rounded,
+                        color: AppColors.textFaint,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.image_not_supported_rounded,
+                      color: AppColors.textFaint,
+                    ),
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/product',
-                arguments: {'id': product.id},
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Product Image
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: LightModeColors.lightBackground,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: LightModeColors.lightOutline),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: product.imageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: product.imageUrl,
-                              fit: BoxFit.contain,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                              errorWidget: (context, url, error) => const Icon(
-                                Icons.image_not_supported_outlined,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.image_not_supported_outlined,
-                              color: LightModeColors.lightOnSurfaceVariant,
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+            const SizedBox(width: 14),
 
-                  // Product Info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: LightModeColors.dashboardTextPrimary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          product.marque,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: LightModeColors.dashboardTextSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.warningContainer,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${product.price.toStringAsFixed(3)} TND',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.warning,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Builder(
-                              builder: (context) {
-                                final matchingChallenge = _getMatchingChallenge(product);
-                                final standardPoints = product.getPoints(_pharmacyCategory, userRole: _user?.role);
-                                final pointsToDisplay = matchingChallenge != null ? matchingChallenge.salePoints : standardPoints;
-                                
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: matchingChallenge != null 
-                                        ? LightModeColors.success.withValues(alpha: 0.12)
-                                        : LightModeColors.warningContainer,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (matchingChallenge != null) ...[
-                                        const Icon(Icons.celebration_outlined, color: LightModeColors.success, size: 14),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      Text(
-                                        '${pointsToDisplay % 1 == 0 ? pointsToDisplay.toInt() : pointsToDisplay} pts',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: matchingChallenge != null ? LightModeColors.success : LightModeColors.warning,
-                                        ),
-                                      ),
-                                      if (matchingChallenge != null) ...[
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '(Std: $standardPoints)',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: LightModeColors.success.withValues(alpha: 0.7),
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                );
-                              }
-                            ),
-                          ],
-                        ),
-                      ],
+            // Product Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: AppText.body(
+                      size: 15.5,
+                      weight: FontWeight.w700,
+                      height: 1.25,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    product.marque,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.label(size: 13, letterSpacing: 0),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        '${product.price.toStringAsFixed(3)} TND',
+                        style: AppText.display(size: 15.5),
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final matchingChallenge = _getMatchingChallenge(product);
+                          final standardPoints = product.getPoints(_pharmacyCategory, userRole: _user?.role);
+                          final pointsToDisplay = matchingChallenge != null ? matchingChallenge.salePoints : standardPoints;
+
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TonePill(
+                                label:
+                                    '${pointsToDisplay % 1 == 0 ? pointsToDisplay.toInt() : pointsToDisplay} pts',
+                                tone: matchingChallenge != null
+                                    ? Tone.indigo
+                                    : Tone.mint,
+                                icon: matchingChallenge != null
+                                    ? Icons.celebration_rounded
+                                    : null,
+                              ),
+                              if (matchingChallenge != null) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  '(Std: $standardPoints)',
+                                  style: AppText.label(
+                                    size: 11.5,
+                                    weight: FontWeight.w500,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textFaint,
+              size: 22,
+            ),
+          ],
         ),
       ),
     );

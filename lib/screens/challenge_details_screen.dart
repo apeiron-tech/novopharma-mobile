@@ -10,7 +10,7 @@ import 'package:novopharma/services/product_service.dart';
 import 'package:novopharma/services/user_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'product_screen.dart';
 
 class _ChallengeDetailsData {
@@ -92,154 +92,232 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: LightModeColors.lightBackground,
-      appBar: AppBar(
-        title: const Text(
-          "Challenge",
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
-            letterSpacing: -0.5,
-            color: LightModeColors.dashboardTextPrimary,
-          ),
-        ),
-        backgroundColor: LightModeColors.lightBackground,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: FutureBuilder<_ChallengeDetailsData>(
-        future: _dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data?.challenge == null) {
-            return const Center(child: Text("Erreur lors du chargement des données."));
-          }
-
-          final data = snapshot.data!;
-          final challenge = data.challenge!;
-
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildChallengeHero(challenge),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle("Description"),
-                      const SizedBox(height: 12),
-                      Text(
-                        challenge.description,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[800],
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle("Produits du challenge"),
-                      const SizedBox(height: 16),
-                       ...data.products.map((product) => _buildProductCard(context, product, data.userCategory, challenge, userRole: data.userRole)),
-                      const SizedBox(height: 40),
-                    ],
+      backgroundColor: AppColors.canvas,
+      body: AppBackground(
+        accent: Tone.indigo,
+        child: FutureBuilder<_ChallengeDetailsData>(
+          future: _dataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkHero(
+                    padding: _heroPadding,
+                    child: _buildTopBar(context),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                  const Expanded(
+                    child: SkeletonList(
+                      count: 4,
+                      itemHeight: 96,
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpace.page,
+                        22,
+                        AppSpace.page,
+                        0,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            if (snapshot.hasError || !snapshot.hasData || snapshot.data?.challenge == null) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkHero(
+                    padding: _heroPadding,
+                    child: _buildTopBar(context),
+                  ),
+                  const Expanded(
+                    child: EmptyState(
+                      icon: Icons.error_outline_rounded,
+                      title: "Erreur lors du chargement des données.",
+                      tone: Tone.coral,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            final data = snapshot.data!;
+            final challenge = data.challenge!;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom + 28,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildChallengeHero(challenge),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      24,
+                      AppSpace.page,
+                      0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (challenge.description.isNotEmpty) ...[
+                          _buildSectionTitle("Description"),
+                          const SizedBox(height: 12),
+                          Entrance(
+                            delay: const Duration(milliseconds: 240),
+                            child: SoftCard(
+                              padding: const EdgeInsets.all(18),
+                              child: Text(
+                                challenge.description,
+                                style: AppText.body(size: 15.5, height: 1.55),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 26),
+                        ],
+                        _buildSectionTitle("Produits du challenge"),
+                        const SizedBox(height: 14),
+                        for (var i = 0; i < data.products.length; i++)
+                          Entrance.staggered(
+                            index: i,
+                            base: const Duration(milliseconds: 300),
+                            child: _buildProductCard(context, data.products[i], data.userCategory, challenge, userRole: data.userRole),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildChallengeHero(Challenge challenge) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: CachedNetworkImage(
-                  imageUrl: challenge.imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: Colors.grey[200]),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-                  ),
-                ),
-              ),
-              // Status Overlay
-              Positioned(
-                top: 16,
-                right: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: LightModeColors.success.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Text(
-                    "CHALLENGE ACTIF",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  static const _heroPadding = EdgeInsets.fromLTRB(
+    AppSpace.page,
+    10,
+    AppSpace.page,
+    26,
+  );
+
+  Widget _buildTopBar(BuildContext context, {Widget? trailing}) {
+    return Row(
+      children: [
+        GlassIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onTap: () => Navigator.maybePop(context),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            "Challenge",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.display(size: 20, color: Colors.white),
           ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  challenge.title,
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: LightModeColors.dashboardTextPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
+        ),
+        if (trailing != null) ...[const SizedBox(width: 12), trailing],
+      ],
+    );
+  }
+
+  Widget _buildChallengeHero(Challenge challenge) {
+    return InkHero(
+      padding: _heroPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Entrance(
+            offset: const Offset(0, -12),
+            child: _buildTopBar(
+              context,
+              // Status
+              trailing: const TonePill(
+                label: "Challenge actif",
+                tone: Tone.mint,
+                icon: Icons.bolt_rounded,
+              ),
+            ),
+          ),
+          if (challenge.imageUrl.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Entrance(
+              delay: const Duration(milliseconds: 80),
+              scaleFrom: 0.96,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadii.md),
+                child: Stack(
                   children: [
-                    _buildInfoCard(
-                      Icons.calendar_today_rounded,
-                      "Début",
-                      _formatDate(challenge.startDate),
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: CachedNetworkImage(
+                        imageUrl: challenge.imageUrl,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => ColoredBox(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                        errorWidget: (context, url, error) => ColoredBox(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          child: const Icon(
+                            Icons.emoji_events_rounded,
+                            size: 44,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    _buildInfoCard(
-                      Icons.event_available_rounded,
-                      "Fin",
-                      _formatDate(challenge.endDate),
+                    // The lit rim that seats the picture in the glass.
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadii.md),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.24),
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          Entrance(
+            delay: const Duration(milliseconds: 140),
+            child: Text(
+              challenge.title,
+              style: AppText.display(
+                size: 26,
+                color: Colors.white,
+                height: 1.12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Entrance(
+            delay: const Duration(milliseconds: 200),
+            child: Row(
+              children: [
+                _buildInfoCard(
+                  Icons.calendar_today_rounded,
+                  "Début",
+                  _formatDate(challenge.startDate),
+                ),
+                const SizedBox(width: 12),
+                _buildInfoCard(
+                  Icons.event_available_rounded,
+                  "Fin",
+                  _formatDate(challenge.endDate),
                 ),
               ],
             ),
@@ -251,22 +329,22 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
 
   Widget _buildInfoCard(IconData icon, String label, String value) {
     return Expanded(
-      child: Container(
+      child: SoftCard(
+        style: GlassStyle.dark,
+        blur: Glass.frost,
+        radius: AppRadii.md,
+        shadow: false,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: LightModeColors.lightBackground,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade100),
-        ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
+                color: Colors.white.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 14, color: LightModeColors.lightPrimary),
+              child: Icon(icon, size: 16, color: Colors.white),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -274,21 +352,21 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.grey[500],
-                      letterSpacing: 0.5,
+                    label,
+                    style: AppText.label(
+                      size: 12,
+                      color: Colors.white.withValues(alpha: 0.78),
+                      letterSpacing: 0,
                     ),
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
+                  const SizedBox(height: 2),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: AppText.display(size: 15, color: Colors.white),
                     ),
                   ),
                 ],
@@ -301,27 +379,7 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: LightModeColors.warning,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: LightModeColors.dashboardTextPrimary,
-          ),
-        ),
-      ],
-    );
+    return SectionHeader(title: title);
   }
 
   Widget _buildProductCard(BuildContext context, Product product, String? category, Challenge challenge, {String? userRole}) {
@@ -343,96 +401,72 @@ class _ChallengeDetailsScreenState extends State<ChallengeDetailsScreen> {
       points = challenge.salePoints;
     }
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductScreen(id: product.id),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SoftCard(
+        radius: AppRadii.md,
+        padding: const EdgeInsets.all(12),
+        semanticLabel: product.name,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductScreen(id: product.id),
+            ),
+          );
+        },
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+              child: Container(
+                width: 70,
+                height: 70,
+                color: AppColors.surface,
+                child: CachedNetworkImage(
+                  imageUrl: product.imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => const Icon(Icons.image_rounded, color: AppColors.textFaint),
+                  errorWidget: (context, url, error) => const Icon(Icons.broken_image_rounded, color: AppColors.textFaint),
+                ),
               ),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    color: Colors.grey[50],
-                    child: CachedNetworkImage(
-                      imageUrl: product.imageUrl,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) => const Icon(Icons.image_outlined, color: Colors.grey),
-                      errorWidget: (context, url, error) => const Icon(Icons.broken_image_outlined, color: Colors.grey),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: AppText.display(size: 16, height: 1.15),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "${product.marque} • ${product.category}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(
+                      size: 13,
+                      color: AppColors.textMuted,
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: LightModeColors.dashboardTextPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${product.marque} • ${product.category}",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.success.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          "${points % 1 == 0 ? points.toInt() : points} pts",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: LightModeColors.success,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  TonePill(
+                    label: "${points % 1 == 0 ? points.toInt() : points} pts",
+                    tone: Tone.amber,
+                    icon: Icons.star_rounded,
                   ),
-                ),
-                const Icon(Icons.chevron_right, color: Colors.grey),
-              ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textFaint,
+            ),
+          ],
         ),
       ),
     );

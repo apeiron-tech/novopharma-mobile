@@ -9,7 +9,7 @@ import 'package:novopharma/models/stock_models.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/services/product_service.dart';
 import 'package:novopharma/widgets/expiration_dialog.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class StockReviewScreen extends StatefulWidget {
   final String pharmacyId;
@@ -222,7 +222,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Inventaire synchronisé avec succès !"),
-            backgroundColor: LightModeColors.success,
+            backgroundColor: AppColors.mintDeep,
           ),
         );
         // Pop and return true to indicate successful sync
@@ -233,7 +233,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Erreur de synchronisation: $e"),
-            backgroundColor: LightModeColors.lightError,
+            backgroundColor: AppColors.coralDeep,
           ),
         );
       }
@@ -244,108 +244,195 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
     }
   }
 
+  // Presentation only: the first screenful of rows arrives once per visit.
+  // Rows built later (scrolling back up, after an edit) appear in place.
+  bool _rowsArrived = false;
+
+  Widget _arrive(int index, Widget child) {
+    if (index >= 6) return child;
+    final play = !_rowsArrived;
+    if (play) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _rowsArrived = true);
+    }
+    return Entrance(
+      delay: play ? Duration(milliseconds: 50 * index) : Duration.zero,
+      duration: play ? AppMotion.slow : Duration.zero,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final itemsList = _draftProducts.values.toList();
 
+    // Figures for the summary, read from the draft already on screen.
+    final int totalQuantity = itemsList.fold<int>(0, (total, item) => total + (item.totalQuantity ?? 0));
+    final int respectedCount = itemsList.where((item) => item.respectsPrice).length;
+    final int notRespectedCount = itemsList.length - respectedCount;
+
     return Scaffold(
-      backgroundColor: LightModeColors.novoPharmaLightGray,
-      appBar: AppBar(
-        title: const Text("Récapitulatif Inventaire", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: LightModeColors.dashboardTextPrimary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-          onPressed: () => Navigator.pop(context),
+      backgroundColor: AppColors.canvas,
+      // The list runs under the frosted submit bar.
+      extendBody: true,
+      appBar: InkAppBar(
+        title: "Récapitulatif Inventaire",
+        subtitle: widget.pharmacyName,
+        leading: GlassIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onTap: () => Navigator.pop(context),
         ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Header pharmacy info
-                Container(
-                  width: double.infinity,
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        bottom: _isLoading
+            ? null
+            : PreferredSize(
+                // An upper bound: the bar takes only the height it needs.
+                preferredSize: Size.fromHeight(itemsList.isEmpty ? 64 : 196),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        widget.pharmacyName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: LightModeColors.dashboardTextPrimary),
-                        overflow: TextOverflow.ellipsis,
+                      // Header visit info
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            _activeVisitId != null
+                                ? Icons.event_available_rounded
+                                : Icons.warning_amber_rounded,
+                            size: 17,
+                            color: _activeVisitId != null
+                                ? AppColors.mintBright
+                                : AppColors.amber,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _activeVisitId != null
+                                  ? "Visite active ID: $_activeVisitId"
+                                  : "Attention: Aucune visite active trouvée.",
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppText.body(
+                                size: 13,
+                                weight: _activeVisitId != null ? FontWeight.w500 : FontWeight.w700,
+                                color: Colors.white,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _activeVisitId != null
-                            ? "Visite active ID: $_activeVisitId"
-                            : "Attention: Aucune visite active trouvée.",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _activeVisitId != null 
-                              ? LightModeColors.novoPharmaGray 
-                              : LightModeColors.lightError,
-                          fontWeight: _activeVisitId != null ? FontWeight.normal : FontWeight.bold,
+
+                      // What is about to be synchronised
+                      if (itemsList.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        SoftCard(
+                          style: GlassStyle.dark,
+                          blur: Glass.frost,
+                          radius: AppRadii.md,
+                          shadow: false,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: StatBlock(
+                                  label: "Qté",
+                                  value: formatPoints(totalQuantity),
+                                  onDark: true,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                flex: 3,
+                                child: StatBlock(
+                                  label: "Prix respecté",
+                                  value: '$respectedCount',
+                                  onDark: true,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                flex: 3,
+                                child: StatBlock(
+                                  label: "Prix non respecté",
+                                  value: '$notRespectedCount',
+                                  onDark: true,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+              ),
+      ),
+      body: AppBackground(
+        child: _isLoading
+            ? const SkeletonList(
+                count: 4,
+                itemHeight: 150,
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
+              )
+            // List of items in draft
+            : itemsList.isEmpty
+                ? const EmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: "Aucun produit dans le panier de révision",
+                  )
+                : Builder(
+                    // Inside the body, so the bottom inset includes the
+                    // submit bar.
+                    builder: (context) => ListView.builder(
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        16,
+                        20,
+                        MediaQuery.paddingOf(context).bottom + 20,
+                      ),
+                      itemCount: itemsList.length,
+                      itemBuilder: (context, index) {
+                        final item = itemsList[index];
+                        final hasExpirations = item.expirations.isNotEmpty;
 
-                // List of items in draft
-                Expanded(
-                  child: itemsList.isEmpty
-                      ? const Center(
-                          child: Text("Aucun produit dans le panier de révision", style: TextStyle(color: LightModeColors.novoPharmaGray)),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          itemCount: itemsList.length,
-                          itemBuilder: (context, index) {
-                            final item = itemsList[index];
-                            final hasExpirations = item.expirations.isNotEmpty;
-                            
-                            final matchedProduct = _allProducts.firstWhere(
-                              (p) => p.id == item.productId,
-                              orElse: () => Product(
-                                id: item.productId,
-                                name: item.productName,
-                                marque: '',
-                                category: '',
-                                description: '',
-                                price: 0,
-                                points: 0,
-                                pointsPharmacie: 0,
-                                pointsParaPharmacie: 0,
-                                pointsDermoConseiller: 0,
-                                pointsUnified: true,
-                                sku: '',
-                                stock: 0,
-                                protocol: '',
-                                recommendedWith: [],
-                                createdAt: DateTime.now(),
-                                updatedAt: DateTime.now(),
-                                imageUrl: '',
-                                composition: '',
-                                clientCode: 0,
-                              ),
-                            );
+                        final matchedProduct = _allProducts.firstWhere(
+                          (p) => p.id == item.productId,
+                          orElse: () => Product(
+                            id: item.productId,
+                            name: item.productName,
+                            marque: '',
+                            category: '',
+                            description: '',
+                            price: 0,
+                            points: 0,
+                            pointsPharmacie: 0,
+                            pointsParaPharmacie: 0,
+                            pointsDermoConseiller: 0,
+                            pointsUnified: true,
+                            sku: '',
+                            stock: 0,
+                            protocol: '',
+                            recommendedWith: [],
+                            createdAt: DateTime.now(),
+                            updatedAt: DateTime.now(),
+                            imageUrl: '',
+                            composition: '',
+                            clientCode: 0,
+                          ),
+                        );
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: LightModeColors.lightOutlineVariant),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4)),
-                                ],
-                              ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _arrive(
+                            index,
+                            SoftCard(
+                              padding: const EdgeInsets.all(14),
+                              radius: 24,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -354,211 +441,232 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                     children: [
                                       // Product Image
                                       Container(
-                                        width: 50,
-                                        height: 50,
+                                        width: 52,
+                                        height: 52,
                                         margin: const EdgeInsets.only(right: 12),
+                                        clipBehavior: Clip.antiAlias,
                                         decoration: BoxDecoration(
-                                          color: LightModeColors.novoPharmaLightGray,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: LightModeColors.lightOutlineVariant),
+                                          color: AppColors.surface,
+                                          borderRadius: BorderRadius.circular(14),
                                         ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: matchedProduct.imageUrl.isNotEmpty
-                                              ? CachedNetworkImage(
-                                                  imageUrl: matchedProduct.imageUrl,
-                                                  fit: BoxFit.contain,
-                                                  placeholder: (context, url) => const Center(
-                                                    child: SizedBox(
-                                                      width: 14,
-                                                      height: 14,
-                                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                                    ),
-                                                  ),
-                                                  errorWidget: (context, url, error) => const Icon(
-                                                    Icons.image_not_supported_outlined,
-                                                    size: 18,
-                                                    color: LightModeColors.novoPharmaGray,
-                                                  ),
-                                                )
-                                              : const Icon(
+                                        child: matchedProduct.imageUrl.isNotEmpty
+                                            ? CachedNetworkImage(
+                                                imageUrl: matchedProduct.imageUrl,
+                                                fit: BoxFit.contain,
+                                                placeholder: (context, url) => const SizedBox.expand(),
+                                                errorWidget: (context, url, error) => const Icon(
                                                   Icons.image_not_supported_outlined,
-                                                  size: 18,
-                                                  color: LightModeColors.novoPharmaGray,
+                                                  size: 20,
+                                                  color: AppColors.textFaint,
                                                 ),
-                                        ),
+                                              )
+                                            : const Icon(
+                                                Icons.image_not_supported_outlined,
+                                                size: 20,
+                                                color: AppColors.textFaint,
+                                              ),
                                       ),
                                       Expanded(
-                                        child: Text(
-                                          item.productName,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: LightModeColors.dashboardTextPrimary),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: LightModeColors.novoPharmaLightBlue,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          item.totalQuantity != null ? "Qté: ${item.totalQuantity}" : "Prix uniquement",
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: LightModeColors.novoPharmaBlue),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.productName,
+                                              style: AppText.body(size: 15, weight: FontWeight.w700, height: 1.25),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.indigoTint,
+                                                borderRadius: BorderRadius.circular(AppRadii.pill),
+                                              ),
+                                              child: Text(
+                                                item.totalQuantity != null ? "Qté: ${item.totalQuantity}" : "Prix uniquement",
+                                                style: AppText.display(size: 15, color: AppColors.indigoDeep),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                   if (hasExpirations) ...[
-                                    const SizedBox(height: 12),
-                                    const Text("Lots d'expiration :", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: LightModeColors.novoPharmaGray)),
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      "Lots d'expiration :",
+                                      style: AppText.label(size: 12.5, letterSpacing: 0),
+                                    ),
                                     const SizedBox(height: 6),
                                     Wrap(
                                       spacing: 6,
-                                      runSpacing: 4,
+                                      runSpacing: 6,
                                       children: [
                                         ...item.expirations.map((exp) {
                                           return Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                             decoration: BoxDecoration(
-                                              color: LightModeColors.novoPharmaLightGray,
-                                              borderRadius: BorderRadius.circular(6),
+                                              color: AppColors.indigoTint,
+                                              borderRadius: BorderRadius.circular(AppRadii.pill),
                                             ),
                                             child: Text(
                                               "${exp.expirationDate}: ${exp.quantity}",
-                                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: LightModeColors.dashboardTextPrimary),
+                                              style: AppText.label(
+                                                size: 12,
+                                                weight: FontWeight.w700,
+                                                color: AppColors.indigoDeep,
+                                                letterSpacing: 0,
+                                              ),
                                             ),
                                           );
                                           }),
                                         if (item.totalQuantity != null && item.totalQuantity! > item.expirations.fold<int>(0, (acc, exp) => acc + exp.quantity))
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                             decoration: BoxDecoration(
-                                              color: LightModeColors.novoPharmaLightGray,
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: LightModeColors.lightOutlineVariant),
+                                              color: AppColors.line,
+                                              borderRadius: BorderRadius.circular(AppRadii.pill),
                                             ),
                                             child: Text(
                                               "Sans date: ${item.totalQuantity! - item.expirations.fold<int>(0, (acc, exp) => acc + exp.quantity)}",
-                                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: LightModeColors.novoPharmaGray),
+                                              style: AppText.label(size: 12, weight: FontWeight.w700, letterSpacing: 0),
                                             ),
                                           ),
                                       ],
                                     ),
                                   ],
                                   const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: item.respectsPrice
-                                              ? LightModeColors.success.withValues(alpha: 0.1)
-                                              : LightModeColors.lightError.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(
-                                            color: item.respectsPrice
-                                                ? LightModeColors.success.withValues(alpha: 0.3)
-                                                : LightModeColors.lightError.withValues(alpha: 0.3),
-                                          ),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: _FlexPill(
+                                      icon: item.respectsPrice ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
+                                      tone: item.respectsPrice ? Tone.mint : Tone.coral,
+                                      label: item.respectsPrice ? "Prix respecté" : "Prix non respecté",
+                                    ),
+                                  ),
+                                  if (!item.respectsPrice && item.sellingPrice != null) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      "Vente: ${item.sellingPrice!.toStringAsFixed(2)} DT (Diff: ${item.priceDifference != null ? (item.priceDifference! > 0 ? '+' : '') + item.priceDifference!.toStringAsFixed(2) : '0.00'} DT)",
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppText.label(size: 12.5, letterSpacing: 0),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 14),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 10,
+                                      runSpacing: 8,
+                                      children: [
+                                        SecondaryButton(
+                                          label: "Modifier",
+                                          icon: Icons.edit_outlined,
+                                          height: 44,
+                                          expand: false,
+                                          onPressed: () => _editItem(item),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              item.respectsPrice ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
-                                              size: 14,
-                                              color: item.respectsPrice ? LightModeColors.success : LightModeColors.lightError,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              item.respectsPrice ? "Prix respecté" : "Prix non respecté",
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: item.respectsPrice ? LightModeColors.success : LightModeColors.lightError,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (!item.respectsPrice && item.sellingPrice != null) ...[
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            "Vente: ${item.sellingPrice!.toStringAsFixed(2)} DT (Diff: ${item.priceDifference != null ? (item.priceDifference! > 0 ? '+' : '') + item.priceDifference!.toStringAsFixed(2) : '0.00'} DT)",
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: LightModeColors.novoPharmaGray,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                        SecondaryButton(
+                                          label: "Supprimer",
+                                          icon: Icons.delete_outline_rounded,
+                                          tone: Tone.coral,
+                                          height: 44,
+                                          expand: false,
+                                          onPressed: () => _deleteItem(item.productId),
                                         ),
                                       ],
-                                    ],
+                                    ),
                                   ),
-                                  const Divider(height: 24),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      TextButton.icon(
-                                        onPressed: () => _editItem(item),
-                                        icon: const Icon(Icons.edit_outlined, size: 16, color: LightModeColors.novoPharmaBlue),
-                                        label: const Text("Modifier", style: TextStyle(fontSize: 13, color: LightModeColors.novoPharmaBlue)),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      TextButton.icon(
-                                        onPressed: () => _deleteItem(item.productId),
-                                        icon: const Icon(Icons.delete_outline, size: 16, color: LightModeColors.lightError),
-                                        label: const Text("Supprimer", style: TextStyle(fontSize: 13, color: LightModeColors.lightError)),
-                                      ),
-                                    ],
-                                  )
                                 ],
                               ),
-                            );
-                          },
-                        ),
-                ),
-                
-                // Finalize sync button
-                if (itemsList.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                      ),
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSyncing ? null : _finalizeAndSync,
-                        icon: _isSyncing
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                              )
-                            : const Icon(Icons.cloud_upload_rounded, color: Colors.white),
-                        label: Text(
-                          _isSyncing ? "Synchronisation en cours..." : "Finaliser & Synchroniser",
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: LightModeColors.novoPharmaBlue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
-                        ),
-                      ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-              ],
+      ),
+
+      // Finalize sync button
+      bottomNavigationBar: !_isLoading && itemsList.isNotEmpty
+          ? GlassBottomBar(
+              // While the sync runs the action gives way to its status, so
+              // it cannot be sent twice.
+              child: AnimatedSwitcher(
+                duration: AppMotion.fast,
+                child: _isSyncing
+                    ? SizedBox(
+                        key: const ValueKey('syncing'),
+                        height: 56,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CapsuleLoader(size: 34),
+                            const SizedBox(width: 14),
+                            Flexible(
+                              child: Text(
+                                "Synchronisation en cours...",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppText.body(size: 16, weight: FontWeight.w700, height: 1.1),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : PrimaryButton(
+                        key: const ValueKey('submit'),
+                        label: "Finaliser & Synchroniser",
+                        icon: Icons.cloud_upload_rounded,
+                        onPressed: _isSyncing ? null : _finalizeAndSync,
+                      ),
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+/// A [TonePill] whose label gives way instead of overflowing.
+class _FlexPill extends StatelessWidget {
+  final String label;
+  final Tone tone;
+  final IconData? icon;
+
+  const _FlexPill({required this.label, this.tone = Tone.indigo, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tone.tint,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: tone.deep),
+            const SizedBox(width: 5),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label(
+                size: 12,
+                weight: FontWeight.w700,
+                color: tone.deep,
+                letterSpacing: 0,
+              ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -7,7 +7,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart'
     show YoutubePlayerController;
 import '../widgets/app_youtube_player.dart';
 import '../models/blog_post.dart';
-import '../theme.dart';
+import '../design/design.dart';
 import '../widgets/video_player_dialog.dart';
 
 class ActualiteDetailsScreen extends StatefulWidget {
@@ -50,15 +50,56 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     );
   }
 
+  // How far the title sheet rides up over the hero's bottom edge.
+  static const double _sheetOverlap = 48;
+
+  /// A neutral pill for metadata that should not carry a feature colour.
+  static const Tone _quietTone = Tone(
+    AppColors.textFaint,
+    AppColors.textMuted,
+    AppColors.line,
+  );
+
   Widget _buildScaffold(BuildContext context, Widget? youtubePlayerWidget) {
+    final topInset = MediaQuery.paddingOf(context).top;
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(color: LightModeColors.lightSurfaceVariant),
-        child: SafeArea(
-          child: Column(
+      backgroundColor: AppColors.canvas,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: AppBackground(
+          child: Stack(
             children: [
-              _buildHeader(context),
-              Expanded(child: _buildContent(context, youtubePlayerWidget)),
+              Positioned.fill(
+                child: _buildContent(context, youtubePlayerWidget),
+              ),
+              // An ink mist behind the status bar, so its icons stay
+              // readable once the article has scrolled up underneath them.
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: topInset + 28,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.ink.withValues(alpha: 0.5),
+                          AppColors.ink.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: _buildHeader(context),
+              ),
             ],
           ),
         ),
@@ -66,375 +107,253 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     );
   }
 
+  /// The way back, floating over the cover on smoked glass.
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LightModeColors.novoPharmaBlue,
-            LightModeColors.novoPharmaBlue.withValues(alpha: 0.8),
-            LightModeColors.lightSecondary,
-          ],
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: _GlassCrumb(
+            label: 'Détails Actualité',
+            onBack: () => Navigator.of(context).pop(),
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
-      child: Stack(
-        children: [
-          // Main content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: LightModeColors.lightOnPrimary.withValues(
-                        alpha: 0.1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: LightModeColors.lightOnPrimary,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Détails Actualité',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: LightModeColors.lightOnPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+    );
+  }
+
+  /// Keeps the reading column at a comfortable measure on tablets.
+  Widget _column(Widget child) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: child,
       ),
+    );
+  }
+
+  /// The cover as the page's hero — or the aurora when the story has none.
+  Widget _buildCover(double height) {
+    final coverImageUrl = widget.actualite.coverImageUrl;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        bottom: Radius.circular(AppRadii.xl),
+      ),
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: coverImageUrl != null && coverImageUrl.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: coverImageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => const SizedBox.expand(
+                  child: Shimmer(child: SkeletonBox(radius: 0)),
+                ),
+                errorWidget: (context, url, error) => const SizedBox.expand(
+                  child: AuroraBackground(animate: false),
+                ),
+              )
+            : const AuroraBackground(),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        TintIcon(icon: icon, size: 36),
+        const SizedBox(width: 12),
+        Expanded(child: Text(title, style: AppText.display(size: 20))),
+      ],
     );
   }
 
   Widget _buildContent(BuildContext context, Widget? youtubePlayerWidget) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final media = MediaQuery.of(context);
+    final hasCover =
+        widget.actualite.coverImageUrl != null &&
+        widget.actualite.coverImageUrl!.isNotEmpty;
+    final heroHeight = media.padding.top + (hasCover ? 250.0 : 140.0);
+    final excerpt = widget.actualite.excerpt;
+    final hasExcerpt = excerpt != null && excerpt.isNotEmpty;
+    final hasBody = widget.actualite.content.isNotEmpty;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: media.padding.bottom + 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Cover Image, with the title sheet overlapping its bottom edge.
+          Stack(
             children: [
-              // Cover Image
-              if (widget.actualite.coverImageUrl != null &&
-                  widget.actualite.coverImageUrl!.isNotEmpty)
-                Container(
-                  height: 250,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        LightModeColors.lightPrimary.withValues(alpha: 0.1),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: CachedNetworkImage(
-                    imageUrl: widget.actualite.coverImageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: LightModeColors.lightSurfaceVariant,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: LightModeColors.lightPrimary,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: LightModeColors.lightSurfaceVariant,
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: LightModeColors.dashboardTextTertiary,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                ),
-
+              _buildCover(heroHeight),
               Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Category Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            LightModeColors.success.withValues(alpha: 0.1),
-                            LightModeColors.success.withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: LightModeColors.success.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        widget.actualite.actualiteCategory ?? 'Actualité',
-                        style: const TextStyle(
-                          color: LightModeColors.success,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Title
-                    Text(
-                      widget.actualite.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: LightModeColors.dashboardTextPrimary,
-                        height: 1.3,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Meta Information
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.warning.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.person_outline,
-                            size: 14,
-                            color: LightModeColors.warning,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          widget.actualite.author ?? 'Admin',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: LightModeColors.warning,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.lightSurfaceVariant
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.access_time_rounded,
-                            size: 14,
-                            color: LightModeColors.dashboardTextSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatDate(widget.actualite.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: LightModeColors.dashboardTextSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Excerpt
-                    if (widget.actualite.excerpt != null &&
-                        widget.actualite.excerpt!.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaBlue.withValues(
-                            alpha: 0.05,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: LightModeColors.novoPharmaBlue.withValues(
-                              alpha: 0.1,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          widget.actualite.excerpt!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: LightModeColors.dashboardTextSecondary,
-                            height: 1.4,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-
-                    if (widget.actualite.excerpt != null &&
-                        widget.actualite.excerpt!.isNotEmpty)
-                      const SizedBox(height: 24),
-
-                    // Content
-                    Text(
-                      widget.actualite.content,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: LightModeColors.dashboardTextPrimary,
-                        height: 1.6,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Video Section
-                    if (_youtubeController != null &&
-                        youtubePlayerWidget != null) ...[
-                      _buildYoutubePlayerSection(youtubePlayerWidget),
-                      const SizedBox(height: 24),
-                    ] else if (widget.actualite.hasVideo ||
-                        (widget.actualite.youtubeVideoUrl != null &&
-                            widget.actualite.youtubeVideoUrl!.isNotEmpty) ||
-                        (widget.actualite.videoUrl != null &&
-                            widget.actualite.videoUrl!.isNotEmpty)) ...[
-                      _buildOpenVideoButtonSection(),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Media Section (Only PDF files)
-                    if (widget.actualite.pdfFiles.isNotEmpty) ...[
-                      Column(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  heroHeight - _sheetOverlap,
+                  16,
+                  0,
+                ),
+                child: _column(
+                  // Frosted for real: this pane floats over the picture.
+                  SoftCard(
+                    blur: Glass.frost,
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                    child: Entrance(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Fichiers & Médias',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: LightModeColors.dashboardTextPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ...widget.actualite.pdfFiles.map((mediaFile) {
-                            return _buildMediaItem(mediaFile);
-                          }),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Tags
-                    if (widget.actualite.tags.isNotEmpty)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tags',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: LightModeColors.dashboardTextPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          // Category and date
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: widget.actualite.tags.map((tag) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: LightModeColors.lightSurfaceVariant
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: LightModeColors.lightOutline,
-                                  ),
-                                ),
+                            children: [
+                              TonePill(
+                                label:
+                                    widget.actualite.actualiteCategory ??
+                                    'Actualité',
+                              ),
+                              TonePill(
+                                label: _formatDate(widget.actualite.createdAt),
+                                tone: _quietTone,
+                                icon: Icons.schedule_rounded,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Title
+                          Text(
+                            widget.actualite.title,
+                            style: AppText.display(size: 26, height: 1.12),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Meta Information
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.person_rounded,
+                                size: 16,
+                                color: AppColors.textFaint,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
                                 child: Text(
-                                  tag,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                        LightModeColors.dashboardTextSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  widget.actualite.author ?? 'Admin',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppText.label(letterSpacing: 0),
                                 ),
-                              );
-                            }).toList(),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-
-                    const SizedBox(height: 20),
-                  ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-        ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _column(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // The article: lead paragraph, then the text, at a
+                  // reading size.
+                  if (hasExcerpt || hasBody)
+                    SoftCard(
+                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Excerpt
+                          if (hasExcerpt)
+                            Container(
+                              padding: const EdgeInsets.only(left: 14),
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(
+                                    color: AppColors.mint,
+                                    width: 3,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                excerpt,
+                                style: AppText.body(
+                                  size: 17,
+                                  weight: FontWeight.w500,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+
+                          if (hasExcerpt && hasBody)
+                            const SizedBox(height: 20),
+
+                          // Content
+                          if (hasBody)
+                            Text(
+                              widget.actualite.content,
+                              style: AppText.body(size: 16, height: 1.55),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                  // Video Section
+                  if (_youtubeController != null &&
+                      youtubePlayerWidget != null) ...[
+                    const SizedBox(height: 26),
+                    _buildYoutubePlayerSection(youtubePlayerWidget),
+                  ] else if (widget.actualite.hasVideo ||
+                      (widget.actualite.youtubeVideoUrl != null &&
+                          widget.actualite.youtubeVideoUrl!.isNotEmpty) ||
+                      (widget.actualite.videoUrl != null &&
+                          widget.actualite.videoUrl!.isNotEmpty)) ...[
+                    const SizedBox(height: 26),
+                    _buildOpenVideoButtonSection(),
+                  ],
+
+                  // Media Section (Only PDF files)
+                  if (widget.actualite.pdfFiles.isNotEmpty) ...[
+                    const SizedBox(height: 26),
+                    _buildSectionTitle(
+                      'Fichiers & Médias',
+                      Icons.folder_rounded,
+                    ),
+                    const SizedBox(height: 14),
+                    ...widget.actualite.pdfFiles.map((mediaFile) {
+                      return _buildMediaItem(mediaFile);
+                    }),
+                  ],
+
+                  // Tags
+                  if (widget.actualite.tags.isNotEmpty) ...[
+                    const SizedBox(height: 22),
+                    Text('Tags', style: AppText.label(letterSpacing: 0)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: widget.actualite.tags.map((tag) {
+                        return TonePill(label: tag, tone: _quietTone);
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -496,107 +415,76 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     }
 
     IconData iconData;
-    Color iconColor;
+    Tone tone;
 
     if (isVideo) {
-      iconData = Icons.play_circle_filled;
-      iconColor = LightModeColors.lightError;
+      iconData = Icons.play_circle_filled_rounded;
+      tone = Tone.coral;
     } else if (isPdf) {
-      iconData = Icons.picture_as_pdf;
-      iconColor = LightModeColors.lightError;
+      iconData = Icons.picture_as_pdf_rounded;
+      tone = Tone.coral;
     } else if (isImage) {
-      iconData = Icons.image;
-      iconColor = LightModeColors.warning;
+      iconData = Icons.image_rounded;
+      tone = Tone.peach;
     } else {
-      iconData = Icons.insert_drive_file;
-      iconColor = LightModeColors.dashboardTextSecondary;
+      iconData = Icons.insert_drive_file_rounded;
+      tone = _quietTone;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LightModeColors.lightOutline),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () =>
-              _handleMediaTap(fileUrl, fileName, isVideo, isPdf, isImage),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SoftCard(
+        radius: AppRadii.md,
+        padding: const EdgeInsets.all(12),
+        semanticLabel: fileName,
+        onTap: () =>
+            _handleMediaTap(fileUrl, fileName, isVideo, isPdf, isImage),
+        child: Row(
+          children: [
+            TintIcon(icon: iconData, tone: tone, size: 48),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    fileName,
+                    style: AppText.body(size: 15, weight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: Icon(iconData, color: iconColor, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 6),
+                  Row(
                     children: [
-                      Text(
-                        fileName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: LightModeColors.dashboardTextPrimary,
+                      Flexible(
+                        child: TonePill(
+                          label: fileType.toUpperCase(),
+                          tone: tone,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: iconColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              fileType.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: iconColor,
-                              ),
-                            ),
+                      if (fileSize > 0) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatFileSize(fileSize),
+                          style: AppText.display(
+                            size: 13,
+                            weight: FontWeight.w600,
+                            color: AppColors.textMuted,
                           ),
-                          if (fileSize > 0) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              _formatFileSize(fileSize),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: LightModeColors.dashboardTextSecondary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
                   ),
-                ),
-                Icon(
-                  isVideo ? Icons.play_arrow : Icons.download,
-                  color: iconColor,
-                  size: 20,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Icon(
+              isVideo ? Icons.play_arrow_rounded : Icons.download_rounded,
+              color: tone.deep,
+              size: 22,
+            ),
+          ],
         ),
       ),
     );
@@ -644,54 +532,65 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
       barrierDismissible: true,
       builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Stack(
           children: [
             PhotoView(
               imageProvider: CachedNetworkImageProvider(imageUrl),
-              backgroundDecoration: const BoxDecoration(color: Colors.black),
+              backgroundDecoration: const BoxDecoration(color: AppColors.ink),
               minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2.0,
               loadingBuilder: (context, event) => const Center(
-                child: CircularProgressIndicator(
-                  color: LightModeColors.lightOnPrimary,
+                child: CapsuleLoader(
+                  left: Colors.white,
+                  right: AppColors.mint,
                 ),
               ),
               errorBuilder: (context, error, stackTrace) => const Center(
                 child: Icon(
-                  Icons.error,
-                  color: LightModeColors.lightOnPrimary,
-                  size: 64,
+                  Icons.broken_image_rounded,
+                  color: Colors.white,
+                  size: 56,
                 ),
               ),
             ),
             Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                icon: const Icon(
-                  Icons.close,
-                  color: LightModeColors.lightOnPrimary,
-                  size: 30,
+              top: 12,
+              right: 12,
+              child: Glass(
+                style: GlassStyle.smoked,
+                blur: Glass.frost,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                child: GlassIconButton(
+                  icon: Icons.close_rounded,
+                  tooltip: MaterialLocalizations.of(
+                    dialogContext,
+                  ).closeButtonTooltip,
+                  onTap: () => Navigator.of(dialogContext).pop(),
                 ),
               ),
             ),
             Positioned(
-              bottom: 40,
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(8),
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Glass(
+                style: GlassStyle.smoked,
+                blur: Glass.frost,
+                borderRadius: BorderRadius.circular(AppRadii.md),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
                 child: Text(
                   imageName,
-                  style: const TextStyle(
-                    color: LightModeColors.lightOnPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.body(
+                    size: 15,
+                    weight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -710,41 +609,67 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
   ) async {
     try {
       // Show dialog with options
-      await showDialog(
+      await showGlassDialog<void>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(isPdf ? 'Document PDF' : 'Document'),
-          content: Column(
+        child: Builder(
+          builder: (dialogContext) => Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Fichier: $fileName'),
+              Row(
+                children: [
+                  TintIcon(
+                    icon: isPdf
+                        ? Icons.picture_as_pdf_rounded
+                        : Icons.insert_drive_file_rounded,
+                    tone: isPdf ? Tone.coral : Tone.indigo,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      isPdf ? 'Document PDF' : 'Document',
+                      style: AppText.display(size: 21),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
+                'Fichier: $fileName',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body(size: 15, weight: FontWeight.w600),
+              ),
+              const SizedBox(height: 10),
+              Text(
                 'Sélectionnez une option pour ouvrir le document:',
-                style: TextStyle(fontSize: 14),
+                style: AppText.body(size: 14, color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 22),
+              PrimaryButton(
+                label: 'Ouvrir',
+                icon: Icons.open_in_new_rounded,
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+                  await _openInBrowser(url);
+                },
+              ),
+              const SizedBox(height: 10),
+              SecondaryButton(
+                label: 'Copier le lien',
+                icon: Icons.link_rounded,
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+                  await _copyUrlToClipboard(url);
+                },
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Annuler'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await _copyUrlToClipboard(url);
-              },
-              child: const Text('Copier le lien'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await _openInBrowser(url);
-              },
-              child: const Text('Ouvrir'),
-            ),
-          ],
         ),
       );
     } catch (e) {
@@ -782,9 +707,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: LightModeColors.novoPharmaBlue,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -818,98 +741,26 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
 
   Widget _buildYoutubePlayerSection(Widget youtubePlayerWidget) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Icon(
-              Icons.ondemand_video_rounded,
-              size: 20,
-              color: LightModeColors.novoPharmaBlue,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Vidéo associée',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: youtubePlayerWidget,
-          ),
-        ),
+        _buildSectionTitle('Vidéo associée', Icons.ondemand_video_rounded),
+        const SizedBox(height: 14),
+        // The player brings its own ink glass frame.
+        youtubePlayerWidget,
       ],
     );
   }
 
   Widget _buildOpenVideoButtonSection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Icon(
-              Icons.ondemand_video_rounded,
-              size: 20,
-              color: LightModeColors.novoPharmaBlue,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Vidéo associée',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _openVideo,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: LightModeColors.novoPharmaBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              elevation: 0,
-            ),
-            icon: const Icon(
-              Icons.play_circle_filled_rounded,
-              size: 22,
-              color: Colors.white,
-            ),
-            label: const Text(
-              "Ouvrir la vidéo",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
+        _buildSectionTitle('Vidéo associée', Icons.ondemand_video_rounded),
+        const SizedBox(height: 14),
+        PrimaryButton(
+          label: "Ouvrir la vidéo",
+          icon: Icons.play_circle_filled_rounded,
+          onPressed: _openVideo,
         ),
       ],
     );
@@ -953,5 +804,49 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
         _showSnackBar('Erreur lors de l\'ouverture de la vidéo');
       }
     }
+  }
+}
+
+/// Back button and screen name in one smoked-glass pill. It stays put while
+/// the article scrolls, so it is frosted and dark enough to read over the
+/// cover and over the page alike.
+class _GlassCrumb extends StatelessWidget {
+  final String label;
+  final VoidCallback onBack;
+
+  const _GlassCrumb({required this.label, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Glass(
+      style: GlassStyle.smoked,
+      blur: Glass.frost,
+      borderRadius: BorderRadius.circular(AppRadii.pill),
+      padding: const EdgeInsets.fromLTRB(4, 4, 18, 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GlassIconButton(
+            icon: Icons.arrow_back_rounded,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onTap: onBack,
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label(
+                size: 14,
+                weight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

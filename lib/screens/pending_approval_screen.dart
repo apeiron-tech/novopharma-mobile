@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 
@@ -12,62 +13,102 @@ class PendingApprovalScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: LightModeColors.novoPharmaLightBlue,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: Image.asset('assets/logo/fullLogoBlue.png'),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  l10n.accountPendingApproval,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.accountPendingApprovalMessage,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: LightModeColors.dashboardTextSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () => authProvider.signOut(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: LightModeColors.novoPharmaBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const AuroraBackground(),
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, viewport) => SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(22, 12, 22, 20),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight:
+                          (viewport.maxHeight - 32).clamp(0.0, double.infinity),
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Entrance(
+                              offset: Offset(0, -10),
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: BrandLogo(height: 38),
+                              ),
+                            ),
+                            const SizedBox(height: 44),
+                            Entrance(
+                              delay: const Duration(milliseconds: 80),
+                              child: Text(
+                                l10n.accountPendingApproval,
+                                maxLines: 3,
+                                style: AppText.display(
+                                  size: 34,
+                                  weight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Entrance(
+                              delay: const Duration(milliseconds: 180),
+                              offset: const Offset(0, 40),
+                              child: Glass(
+                                style: GlassStyle.dark,
+                                blur: Glass.frost,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadii.xl),
+                                padding:
+                                    const EdgeInsets.fromLTRB(22, 24, 22, 26),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const BlisterIcon(
+                                      icon: Icons.hourglass_top_rounded,
+                                      tone: Tone.amber,
+                                      size: 64,
+                                    ),
+                                    const SizedBox(height: 18),
+                                    Text(
+                                      l10n.accountPendingApprovalMessage,
+                                      style: AppText.body(
+                                        size: 16,
+                                        height: 1.5,
+                                        color: Colors.white
+                                            .withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            Entrance(
+                              delay: const Duration(milliseconds: 280),
+                              child: SecondaryButton(
+                                label: l10n.logOut,
+                                icon: Icons.logout_rounded,
+                                onDark: true,
+                                height: 56,
+                                onPressed: () => authProvider.signOut(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    child: Text(
-                      l10n.logOut,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

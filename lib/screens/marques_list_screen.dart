@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/models/marque.dart';
 import 'package:novopharma/services/marque_service.dart';
-import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/marque_details_popup.dart';
 
 class MarquesListScreen extends StatefulWidget {
@@ -18,6 +18,10 @@ class _MarquesListScreenState extends State<MarquesListScreen> {
   List<MarqueModel> _allMarques = [];
   List<MarqueModel> _filteredMarques = [];
   bool _isLoading = true;
+
+  // The grid arrives once. Tiles built after the first screenful has landed
+  // (scrolling back, searching) appear in place instead of animating again.
+  bool _arrived = false;
 
   @override
   void initState() {
@@ -73,180 +77,164 @@ class _MarquesListScreenState extends State<MarquesListScreen> {
   void _showMarqueDetails(MarqueModel marque) {
     showDialog(
       context: context,
+      barrierColor: AppColors.ink.withValues(alpha: 0.45),
       builder: (context) => MarqueDetailsPopup(marque: marque),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Assistance Marques',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: LightModeColors.dashboardTextPrimary,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: LightModeColors.dashboardTextPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Search Bar Header
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            color: Colors.white,
-            child: TextField(
+      backgroundColor: AppColors.canvas,
+      appBar: InkAppBar(
+        title: 'Assistance marques',
+        onBack: () => Navigator.of(context).pop(),
+        // Search Bar Header
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(52),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+            child: AppSearchField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Rechercher une marque...',
-                prefixIcon: const Icon(Icons.search, color: LightModeColors.lightPrimary),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () => _searchController.clear(),
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              hintText: 'Rechercher une marque...',
+              onDark: true,
             ),
           ),
-
-          // Marques Grid List
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: LightModeColors.lightPrimary,
-                    ),
+        ),
+      ),
+      body: AppBackground(
+        // Marques Grid List
+        child: _isLoading
+            ? _buildLoadingGrid()
+            : _filteredMarques.isEmpty
+                ? const EmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: 'Aucune marque trouvée',
                   )
-                : _filteredMarques.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Aucune marque trouvée',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _fetchMarques,
-                        color: LightModeColors.lightPrimary,
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.95,
+                : RefreshIndicator(
+                    onRefresh: _fetchMarques,
+                    color: AppColors.indigo,
+                    child: Builder(
+                      builder: (context) {
+                        if (!_arrived) {
+                          WidgetsBinding.instance.addPostFrameCallback(
+                            (_) => _arrived = true,
+                          );
+                        }
+                        return GridView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpace.page,
+                            AppSpace.xl,
+                            AppSpace.page,
+                            bottomInset + 24,
                           ),
+                          gridDelegate: _gridDelegate,
                           itemCount: _filteredMarques.length,
                           itemBuilder: (context, index) {
                             final marque = _filteredMarques[index];
-                            return _buildMarqueCard(marque);
+                            final stagger = !_arrived && index < 8;
+                            return Entrance(
+                              delay: stagger
+                                  ? Duration(milliseconds: 60 * index)
+                                  : Duration.zero,
+                              duration:
+                                  stagger ? AppMotion.slow : Duration.zero,
+                              child: _buildMarqueCard(marque),
+                            );
                           },
-                        ),
-                      ),
-          ),
-        ],
+                        );
+                      },
+                    ),
+                  ),
+      ),
+    );
+  }
+
+  static const _gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 2,
+    crossAxisSpacing: 14,
+    mainAxisSpacing: 14,
+    mainAxisExtent: 184,
+  );
+
+  /// Tiles in the shape of what is coming.
+  Widget _buildLoadingGrid() {
+    return Shimmer(
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpace.page),
+        gridDelegate: _gridDelegate,
+        itemCount: 6,
+        itemBuilder: (_, __) => const SkeletonBox(
+          height: double.infinity,
+          radius: AppRadii.lg,
+        ),
       ),
     );
   }
 
   Widget _buildMarqueCard(MarqueModel marque) {
-    return GestureDetector(
+    final hasContacts = marque.contactList.isNotEmpty;
+
+    return SoftCard(
       onTap: () => _showMarqueDetails(marque),
-      child: Card(
-        elevation: 2,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Logo
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: marque.logo != null && marque.logo!.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            marque.logo!,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildLogoFallback(marque.marqueName),
-                          ),
-                        )
-                      : _buildLogoFallback(marque.marqueName),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Title
-              Text(
-                marque.marqueName,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: LightModeColors.dashboardTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Category preview tag count
-              Text(
-                marque.contactList.isNotEmpty
-                    ? '${marque.contactList.length} contact(s)'
-                    : 'Aide & Info',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: marque.contactList.isNotEmpty
-                      ? Colors.green.shade700
-                      : Colors.grey.shade500,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+      semanticLabel: marque.marqueName,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Logo, in a round white dome
+          Container(
+            width: 64,
+            height: 64,
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: AppShadows.card,
+            ),
+            child: ClipOval(
+              child: marque.logo != null && marque.logo!.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.network(
+                        marque.logo!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildLogoFallback(marque.marqueName),
+                      ),
+                    )
+                  : _buildLogoFallback(marque.marqueName),
+            ),
           ),
-        ),
+          // Title
+          Expanded(
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: Text(
+                marque.marqueName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.display(size: 17, height: 1.15),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Category preview tag count
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: TonePill(
+              label: hasContacts
+                  ? '${marque.contactList.length} contact(s)'
+                  : 'Aide & Info',
+              tone: hasContacts ? Tone.mint : Tone.indigo,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -255,10 +243,10 @@ class _MarquesListScreenState extends State<MarquesListScreen> {
     return Center(
       child: Text(
         marqueName.isNotEmpty ? marqueName.substring(0, 1).toUpperCase() : 'M',
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: LightModeColors.lightPrimary,
+        style: AppText.display(
+          size: 26,
+          color: AppColors.indigo,
+          letterSpacing: 0,
         ),
       ),
     );

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:novopharma/screens/auth_wrapper.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -26,23 +26,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: LightModeColors.novoPharmaLightBlue,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
-              child: Image.asset('assets/logo/fullLogoBlue.png'),
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Color.fromARGB(255, 255, 0, 0),
-              ),
-            ),
-          ],
+    return const Scaffold(
+      backgroundColor: AppColors.ink,
+      body: AuroraBackground(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BrandLogo(height: 52),
+              SizedBox(height: 32),
+              CapsuleLoader(size: 52, left: Colors.white),
+            ],
+          ),
         ),
       ),
     );

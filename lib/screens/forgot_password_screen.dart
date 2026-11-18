@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:novopharma/theme.dart';
+import 'package:flutter/services.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
@@ -48,7 +49,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           // ... (in _sendResetEmail)
           final errorMessage = AuthErrorHandler.getErrorMessage(context, error);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: AppColors.coralDeep,
+            ),
           );
         }
       }
@@ -59,308 +63,259 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: LightModeColors.lightBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const AuroraBackground(),
+            SafeArea(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: GlassFormTheme(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Entrance(
+                            offset: const Offset(0, -10),
+                            child: Row(
+                              children: [
+                                GlassIconButton(
+                                  icon: Icons.arrow_back_rounded,
+                                  tooltip: MaterialLocalizations.of(context)
+                                      .backButtonTooltip,
+                                  onTap: () => Navigator.pop(context),
+                                ),
+                                const Spacer(),
+                                const BrandLogo(height: 34),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          if (!_emailSent)
+                            ..._buildRequest(l10n)
+                          else
+                            ..._buildSent(l10n),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              color: LightModeColors.dashboardTextPrimary,
-              size: 16,
-            ),
-          ),
-          onPressed: () => Navigator.pop(context),
+          ],
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+    );
+  }
+
+  /// Ask for the address the link should go to.
+  List<Widget> _buildRequest(AppLocalizations l10n) {
+    final soft = Colors.white.withValues(alpha: 0.76);
+    return [
+      Entrance(
+        delay: const Duration(milliseconds: 80),
+        child: Text(
+          l10n.resetPassword,
+          maxLines: 3,
+          style: AppText.display(
+            size: 36,
+            weight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+      Entrance(
+        delay: const Duration(milliseconds: 140),
+        child: Text(
+          l10n.resetPasswordInstructions,
+          style: AppText.body(size: 15.5, color: soft),
+        ),
+      ),
+      const SizedBox(height: 28),
+      Entrance(
+        delay: const Duration(milliseconds: 220),
+        offset: const Offset(0, 40),
+        child: Glass(
+          style: GlassStyle.dark,
+          blur: Glass.frost,
+          borderRadius: BorderRadius.circular(AppRadii.xl),
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+          child: Form(
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
-
-                if (!_emailSent) ...[
-                  // Reset Password Header
-                  Text(
-                    l10n.resetPassword,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 8),
+                  child: Text(
+                    l10n.emailAddress,
+                    style: AppText.label(
+                      size: 13.5,
+                      color: Colors.white.withValues(alpha: 0.86),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.resetPasswordInstructions,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: LightModeColors.novoPharmaGray,
-                      height: 1.5,
-                    ),
+                ),
+                TextFormField(
+                  controller: _emailController,
+                  style: GlassFormTheme.fieldText,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your email',
+                    prefixIcon: Icon(Icons.alternate_email_rounded),
                   ),
-
-                  const SizedBox(height: 40),
-
-                  // Reset Form
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.emailAddress,
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: LightModeColors.dashboardTextPrimary,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your email',
-                            prefixIcon: const Icon(
-                              Icons.email_outlined,
-                              color: LightModeColors.novoPharmaGray,
-                            ),
-                            filled: true,
-                            fillColor: LightModeColors.lightSurface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: LightModeColors.lightOutline,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: LightModeColors.lightOutline,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: LightModeColors.lightPrimary,
-                                width: 2,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value?.isEmpty ?? true) {
-                              return l10n.emailRequiredError;
-                            }
-                            if (!RegExp(
-                              r'^[^@]+@[^@]+\.[^@]+',
-                            ).hasMatch(value!)) {
-                              return l10n.emailValidError;
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Send Reset Link Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _sendResetEmail,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: LightModeColors.lightPrimary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              l10n.sendResetLink,
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                            ),
-                    ),
-                  ),
-                ] else ...[
-                  // Email Sent Success State
-                  const SizedBox(height: 40),
-
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: LightModeColors.novoPharmaBlue.withValues(
-                              alpha: 0.1,
-                            ),
-                            borderRadius: BorderRadius.circular(60),
-                          ),
-                          child: const Icon(
-                            Icons.email_outlined,
-                            size: 60,
-                            color: LightModeColors.novoPharmaBlue,
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        Text(
-                          l10n.checkYourEmail,
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: LightModeColors.dashboardTextPrimary,
-                              ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          l10n.passwordResetLinkSent,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: LightModeColors.novoPharmaGray),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          _emailController.text,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        Text(
-                          l10n.passwordResetExpiration,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: LightModeColors.novoPharmaGray,
-                                height: 1.5,
-                              ),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // Resend Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              setState(() {
-                                _emailSent = false;
-                              });
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: LightModeColors.novoPharmaBlue,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: Text(
-                              l10n.sendAgain,
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: LightModeColors.novoPharmaBlue,
-                                  ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Back to Login
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            l10n.backToSignIn,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: LightModeColors.novoPharmaBlue,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 40),
-
-                // Help text
-                if (!_emailSent)
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          'Didn\'t receive the email? Check your spam folder or',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: LightModeColors.novoPharmaGray),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            // Handle contact support
-                          },
-                          child: Text(
-                            'contact support',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: LightModeColors.novoPharmaBlue,
-                                  decoration: TextDecoration.underline,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: 32),
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) {
+                      return l10n.emailRequiredError;
+                    }
+                    if (!RegExp(
+                      r'^[^@]+@[^@]+\.[^@]+',
+                    ).hasMatch(value!)) {
+                      return l10n.emailValidError;
+                    }
+                    return null;
+                  },
+                ),
               ],
             ),
           ),
         ),
       ),
-    );
+      const SizedBox(height: 20),
+      // Outside the card so the long French label has the full width.
+      Entrance(
+        delay: const Duration(milliseconds: 300),
+        child: PrimaryButton.mint(
+          label: l10n.sendResetLink,
+          loading: _isLoading,
+          onPressed: _sendResetEmail,
+        ),
+      ),
+      const SizedBox(height: 24),
+      // Help text
+      Entrance(
+        delay: const Duration(milliseconds: 360),
+        child: Column(
+          children: [
+            Text(
+              'Didn\'t receive the email? Check your spam folder or',
+              textAlign: TextAlign.center,
+              style: AppText.body(size: 13.5, color: soft),
+            ),
+            TextButton(
+              onPressed: () {
+                // Handle contact support
+              },
+              child: Text(
+                'contact support',
+                style: AppText.body(
+                  size: 13.5,
+                  weight: FontWeight.w700,
+                  color: Colors.white,
+                ).copyWith(
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  /// The link is on its way: say so, and where it went.
+  List<Widget> _buildSent(AppLocalizations l10n) {
+    return [
+      Entrance(
+        key: const ValueKey('sent'),
+        offset: const Offset(0, 40),
+        child: Glass(
+          style: GlassStyle.dark,
+          blur: Glass.frost,
+          borderRadius: BorderRadius.circular(AppRadii.xl),
+          padding: const EdgeInsets.fromLTRB(22, 26, 22, 26),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Entrance(
+                delay: Duration(milliseconds: 180),
+                offset: Offset.zero,
+                scaleFrom: 0.5,
+                child: BlisterIcon(
+                  icon: Icons.mark_email_read_rounded,
+                  tone: Tone.mint,
+                  size: 84,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Text(
+                l10n.checkYourEmail,
+                style: AppText.display(
+                  size: 30,
+                  weight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.passwordResetLinkSent,
+                style: AppText.body(
+                  size: 15,
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _emailController.text,
+                style: AppText.body(
+                  size: 16,
+                  weight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                l10n.passwordResetExpiration,
+                style: AppText.body(
+                  size: 13.5,
+                  height: 1.5,
+                  color: Colors.white.withValues(alpha: 0.76),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
+      // Resend Button
+      SecondaryButton(
+        label: l10n.sendAgain,
+        icon: Icons.refresh_rounded,
+        onDark: true,
+        height: 56,
+        onPressed: () {
+          setState(() {
+            _emailSent = false;
+          });
+        },
+      ),
+      const SizedBox(height: 10),
+      // Back to Login
+      Center(
+        child: TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.backToSignIn),
+        ),
+      ),
+    ];
   }
 }

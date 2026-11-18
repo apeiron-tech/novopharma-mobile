@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import 'package:novopharma/design/design.dart';
+import 'package:novopharma/generated/l10n/app_localizations.dart';
 
-/// Standalone animated circular Rewards FAB button (56x56) with red background,
-/// white gift icon, soft shadow, and tiny press scale animation
+/// Standalone Rewards button: the gift sealed in an amber dome (amber is the
+/// colour of points and rewards). Sinks under the finger like every other
+/// control and opens the rewards screen.
 class RewardsFABCore extends StatefulWidget {
   const RewardsFABCore({super.key});
 
@@ -10,83 +12,41 @@ class RewardsFABCore extends StatefulWidget {
   State<RewardsFABCore> createState() => _RewardsFABCoreState();
 }
 
-class _RewardsFABCoreState extends State<RewardsFABCore>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _onTapDown(TapDownDetails details) {
-    _animationController.forward();
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    _animationController.reverse();
-  }
-
-  void _onTapCancel() {
-    _animationController.reverse();
-  }
-
+class _RewardsFABCoreState extends State<RewardsFABCore> {
   void _onTap() {
     Navigator.of(context).pushNamed('/rewards');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 30),
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: GestureDetector(
-              onTapDown: _onTapDown,
-              onTapUp: _onTapUp,
-              onTapCancel: _onTapCancel,
-              onTap: _onTap,
-              child: Container(
-                width: 65,
-                height: 65,
-                decoration: BoxDecoration(
-                  color: LightModeColors.lightError,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: LightModeColors.lightError.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.card_giftcard,
-                  color: LightModeColors.lightOnPrimary,
-                  size: 28,
-                ),
-              ),
-            ),
-          );
-        },
+    final label = AppLocalizations.of(context)?.redeemYourPoints;
+    final button = Pressable(
+      onTap: _onTap,
+      pressedScale: 0.92,
+      semanticLabel: label,
+      child: Container(
+        width: 64,
+        height: 64,
+        // A hairline of light around the dome so it reads as glass when it
+        // floats over content.
+        foregroundDecoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.55),
+            width: 1.2,
+          ),
+        ),
+        child: const BlisterIcon(
+          icon: Icons.card_giftcard_rounded,
+          tone: Tone.amber,
+          size: 64,
+        ),
       ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 30),
+      child: label == null ? button : Tooltip(message: label, child: button),
     );
   }
 }

@@ -6,7 +6,7 @@ import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:novopharma/controllers/formation_provider.dart';
 import 'package:novopharma/models/blog_post.dart';
 import 'package:novopharma/screens/formation_details_screen.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class FormationsScreen extends StatefulWidget {
   const FormationsScreen({super.key});
@@ -19,6 +19,18 @@ class _FormationsScreenState extends State<FormationsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+
+  // How many cards take part in the arrival, and whether it has played.
+  static const int _staggeredItems = 6;
+  bool _arrivalScheduled = false;
+  bool _listArrived = false;
+
+  /// A neutral pill for metadata that should not carry a feature colour.
+  static const Tone _quietTone = Tone(
+    AppColors.textFaint,
+    AppColors.textMuted,
+    AppColors.line,
+  );
 
   @override
   void initState() {
@@ -40,36 +52,23 @@ class _FormationsScreenState extends State<FormationsScreen>
       onTap: (index) {},
       child: Consumer<FormationProvider>(
         builder: (context, formationProvider, child) {
+          // The wrapper paints the pastel canvas; this page only adds the
+          // ink hero and lets its lists run under the glass dock.
           return Scaffold(
-            body: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    LightModeColors.lightBackground,
-                    LightModeColors.lightSurface,
-                    LightModeColors.lightSurfaceVariant,
-                  ],
+            backgroundColor: Colors.transparent,
+            body: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildMesFormationsTab(formationProvider),
+                      _buildVideosTab(formationProvider),
+                    ],
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _buildHeader(),
-                    _buildTabBar(),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildMesFormationsTab(formationProvider),
-                          _buildVideosTab(formationProvider),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
           );
         },
@@ -77,182 +76,97 @@ class _FormationsScreenState extends State<FormationsScreen>
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LightModeColors.novoPharmaBlue,
-            LightModeColors.novoPharmaBlue.withValues(alpha: 0.8),
-            LightModeColors.lightSecondary,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Main content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: LightModeColors.lightOnPrimary.withValues(
-                        alpha: 0.2,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.school_rounded,
-                      color: LightModeColors.lightOnPrimary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Formation',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: LightModeColors.lightOnPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        Text(
-                          'Développez vos compétences',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: LightModeColors.lightOnPrimary.withValues(
-                              alpha: 0.7,
-                            ), // 70% opacity of white
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(
-                    color: LightModeColors.lightOnPrimaryContainer,
-                  ),
-                  onChanged: (value) {
-                    Provider.of<FormationProvider>(
-                      context,
-                      listen: false,
-                    ).searchFormations(value);
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher une formation...',
-                    hintStyle: TextStyle(
-                      color: LightModeColors.lightOnPrimaryContainer
-                          .withValues(alpha: 0.7), // 70% opacity of white
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: LightModeColors.lightOnPrimaryContainer
-                          .withValues(alpha: 0.8), // 80% opacity of white
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+  /// Keeps content at a readable width on tablets.
+  Widget _centered(Widget child) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: child,
       ),
     );
   }
 
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: TabBar(
-          controller: _tabController,
-          labelColor: LightModeColors.lightOnPrimary,
-          unselectedLabelColor: LightModeColors.lightError,
-          indicator: BoxDecoration(
-            color: LightModeColors.lightError,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          indicatorSize: TabBarIndicatorSize.tab,
-          dividerColor: Colors.transparent,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-          tabs: const [
-            Tab(text: 'Mes Formations'),
-            Tab(text: 'Vidéos'),
+  /// Room for the last card to clear the dock the page scrolls under.
+  EdgeInsets _listPadding(BuildContext context) {
+    return EdgeInsets.fromLTRB(
+      AppSpace.page,
+      AppSpace.xl,
+      AppSpace.page,
+      MediaQuery.paddingOf(context).bottom + 20,
+    );
+  }
+
+  Widget _buildHeader() {
+    return InkHero(
+      padding: const EdgeInsets.fromLTRB(AppSpace.page, 10, AppSpace.page, 22),
+      child: _centered(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Entrance(
+              offset: const Offset(0, -12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Formation',
+                    style: AppText.display(size: 30, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Développez vos compétences',
+                    style: AppText.body(
+                      size: 14.5,
+                      weight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.78),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Entrance(
+              delay: const Duration(milliseconds: 80),
+              child: AppSearchField(
+                controller: _searchController,
+                onDark: true,
+                hintText: 'Rechercher une formation...',
+                onChanged: (value) {
+                  Provider.of<FormationProvider>(
+                    context,
+                    listen: false,
+                  ).searchFormations(value);
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Entrance(
+              delay: const Duration(milliseconds: 140),
+              child: _buildTabBar(),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// The two views of the catalogue, on the same controller the pages
+  /// swipe with, so the thumb follows a swipe as well as a tap.
+  Widget _buildTabBar() {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) => SegmentedTabs(
+        labels: const ['Mes Formations', 'Vidéos'],
+        selectedIndex: _tabController.index,
+        onChanged: _tabController.animateTo,
+        onDark: true,
       ),
     );
   }
 
   Widget _buildMesFormationsTab(FormationProvider provider) {
     if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildLoadingSkeleton();
     }
 
     if (provider.hasError) {
@@ -263,13 +177,22 @@ class _FormationsScreenState extends State<FormationsScreen>
       return _buildEmptyState();
     }
 
+    _markListArrived();
     return RefreshIndicator(
       onRefresh: provider.refresh,
+      color: AppColors.indigo,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: _listPadding(context),
         itemCount: provider.formations.length,
         itemBuilder: (context, index) {
-          return _buildFormationCard(provider.formations[index]);
+          // Newest first, so the latest formation leads with a taller cover.
+          return _arriving(
+            index,
+            _buildFormationCard(
+              provider.formations[index],
+              featured: index == 0,
+            ),
+          );
         },
       ),
     );
@@ -277,7 +200,11 @@ class _FormationsScreenState extends State<FormationsScreen>
 
   Widget _buildVideosTab(FormationProvider provider) {
     if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return SkeletonList(
+        count: 4,
+        itemHeight: 112,
+        padding: _listPadding(context),
+      );
     }
 
     final formationsWithVideos = provider.formations
@@ -289,7 +216,7 @@ class _FormationsScreenState extends State<FormationsScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: _listPadding(context),
       itemCount: formationsWithVideos.length,
       itemBuilder: (context, index) {
         return _buildVideoCard(formationsWithVideos[index]);
@@ -297,325 +224,380 @@ class _FormationsScreenState extends State<FormationsScreen>
     );
   }
 
-  Widget _buildFormationCard(BlogPost formation) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LightModeColors.lightSurface,
-            LightModeColors.lightSurface.withValues(alpha: 0.95),
-            LightModeColors.lightSurfaceVariant,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 12),
-            spreadRadius: -5,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  /// The first screenful lifts into place once, when the catalogue first
+  /// shows. Cards built later (scrolling, refreshes, the other tab) appear
+  /// in place.
+  void _markListArrived() {
+    if (_listArrived || _arrivalScheduled) return;
+    _arrivalScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _listArrived = true);
+  }
+
+  Widget _arriving(int index, Widget child) {
+    if (index >= _staggeredItems) return child;
+    final settled = _listArrived;
+    return Entrance(
+      delay: settled
+          ? Duration.zero
+          : Duration(milliseconds: 200 + 70 * index),
+      duration: settled ? Duration.zero : AppMotion.slow,
+      child: child,
+    );
+  }
+
+  /// Placeholders with the cards' own silhouette: cover, pills, title.
+  Widget _buildLoadingSkeleton() {
+    Widget card(double cover) => Padding(
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cover Image with modern overlay
-          if (formation.coverImage != null)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: Stack(
-                children: [
-                  CachedNetworkImage(
-                    imageUrl: formation.coverImage!,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            LightModeColors.lightSurfaceVariant,
-                            LightModeColors.lightSurface,
-                          ],
-                        ),
-                      ),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: LightModeColors.novoPharmaBlue,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.grey.shade200, Colors.grey.shade100],
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: LightModeColors.novoPharmaBlue,
-                      ),
-                    ),
-                  ),
-                  // Gradient overlay for better text readability
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.3),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Modern play button overlay
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.play_arrow_rounded,
-                        color: LightModeColors.novoPharmaBlue,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          SkeletonBox(height: cover, radius: AppRadii.lg),
+          const SizedBox(height: 14),
+          const SkeletonBox(width: 104, height: 24, radius: AppRadii.pill),
+          const SizedBox(height: 12),
+          const SkeletonBox(height: 20),
+          const SizedBox(height: 8),
+          const SkeletonBox(width: 190, height: 14),
+        ],
+      ),
+    );
 
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Modern title with enhanced typography
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: LightModeColors.success.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: LightModeColors.success.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Text(
-                    'FORMATION',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: LightModeColors.success,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  formation.title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: LightModeColors.dashboardTextPrimary,
-                    letterSpacing: -0.5,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
+    return Shimmer(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: _listPadding(context),
+        children: [_centered(card(208)), _centered(card(152))],
+      ),
+    );
+  }
 
-                // Enhanced admin and dates section
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: LightModeColors.lightSurfaceVariant,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: LightModeColors.lightSurfaceVariant,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
+  Widget _coverImage(String imageUrl) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => const SizedBox.expand(
+        child: Shimmer(child: SkeletonBox(radius: 0)),
+      ),
+      errorWidget: (context, url, error) =>
+          const _CoverFallback(icon: Icons.image_not_supported_rounded),
+    );
+  }
+
+  Widget _buildFormationCard(BlogPost formation, {bool featured = false}) {
+    final excerpt = formation.excerpt;
+
+    return _centered(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: SoftCard(
+          padding: EdgeInsets.zero,
+          onTap: () => _startFormation(formation),
+          semanticLabel: formation.title,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Cover image, clipped by the card's own top corners.
+              if (formation.coverImage != null)
+                SizedBox(
+                  height: featured ? 208 : 152,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: LightModeColors.warning.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.person_outline_rounded,
-                              size: 16,
-                              color: LightModeColors.warning,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Speaker',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                Text(
-                                  formation.author ?? 'N/A',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: LightModeColors.dashboardTextPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (formation.startDate != null) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.success.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: LightModeColors.success.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                formation.formattedStartDate,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: LightModeColors.success,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (formation.endDate != null) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 14,
-                              color: LightModeColors.dashboardTextSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Fin: ${formation.formattedEndDate}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: LightModeColors.dashboardTextSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                      _coverImage(formation.coverImage!),
+                      if (formation.hasVideo)
+                        const Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _PlayBadge(),
                         ),
-                      ],
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16),
-
-                // Action buttons - only show if media is available
-                _buildActionButtonsSection(formation),
-
-                const SizedBox(height: 16),
-
-                // Modern main action button with gradient
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: LightModeColors.success,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _startFormation(formation),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.lightOnPrimary
-                                    .withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.rocket_launch_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Commencer la formation',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // What it is, when it runs, what it ends with.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        const TonePill(
+                          label: 'Formation',
+                          icon: Icons.school_rounded,
                         ),
+                        if (formation.startDate != null)
+                          TonePill(
+                            label: formation.formattedStartDate,
+                            tone: Tone.mint,
+                            icon: Icons.event_rounded,
+                          ),
+                        if (formation.endDate != null)
+                          TonePill(
+                            label: 'Fin: ${formation.formattedEndDate}',
+                            tone: _quietTone,
+                            icon: Icons.schedule_rounded,
+                          ),
+                        if (formation.hasQuiz)
+                          const TonePill(
+                            label: 'Quiz de validation',
+                            tone: Tone.amber,
+                            icon: Icons.quiz_rounded,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      formation.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.display(
+                        size: featured ? 21 : 18,
+                        height: 1.15,
+                      ),
+                    ),
+                    if (excerpt != null && excerpt.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        excerpt,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.body(
+                          size: 14.5,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.person_rounded,
+                          size: 16,
+                          color: AppColors.textFaint,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Speaker',
+                                  style: AppText.label(letterSpacing: 0),
+                                ),
+                                const TextSpan(text: '  '),
+                                TextSpan(
+                                  text: formation.author ?? 'N/A',
+                                  style: AppText.label(
+                                    weight: FontWeight.w700,
+                                    color: AppColors.text,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Action buttons - only show if media is available
+                    _buildActionButtonsSection(formation),
+
+                    const SizedBox(height: 10),
+
+                    // The whole card opens the formation; this line says so.
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Commencer la formation',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.label(
+                              size: 14.5,
+                              weight: FontWeight.w700,
+                              color: AppColors.indigo,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: AppColors.indigoTint,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 20,
+                            color: AppColors.indigoDeep,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtonsSection(BlogPost formation) {
+    // Collect available action buttons
+    final List<Widget> buttons = [
+      // Video button (first priority)
+      if (formation.hasVideo)
+        _buildActionButton(
+          'Regarder la vidéo',
+          Icons.play_circle_outline_rounded,
+          () => _showVideoDialog(formation),
+        ),
+
+      // PDF button (second priority)
+      if (formation.hasPdf)
+        _buildActionButton(
+          'Fiche PDF',
+          Icons.picture_as_pdf_rounded,
+          () => _downloadPDF(formation),
+        ),
+
+      // Clinical study button (third priority)
+      if (formation.hasClinicalStudy)
+        _buildActionButton(
+          'Étude clinique',
+          Icons.science_rounded,
+          () => _viewClinicalStudy(formation),
+        ),
+
+      // The quiz is taken from the formation itself, so here it is shown
+      // as a pill beside the dates rather than as a button that does nothing.
+    ];
+
+    // If no buttons available, return empty container
+    if (buttons.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Wrap(spacing: 8, children: buttons),
+    );
+  }
+
+  /// A quiet glass pill for a card's secondary actions: 36pt tall, in a
+  /// 44pt touch target.
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
+    return Pressable(
+      onTap: onPressed,
+      pressedScale: 0.94,
+      semanticLabel: label,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            border: Border.all(color: AppColors.lineStrong),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: AppColors.indigoDeep),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppText.label(
+                  weight: FontWeight.w700,
+                  color: AppColors.indigoDeep,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoCard(BlogPost formation) {
+    return _centered(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: SoftCard(
+          padding: EdgeInsets.zero,
+          onTap: () => _showVideoDialog(formation),
+          semanticLabel: formation.title,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Thumbnail, clipped by the card's own left corners. Its
+                // children are positioned so the text sets the row's height.
+                SizedBox(
+                  width: 118,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: formation.coverImage != null
+                            ? _coverImage(formation.coverImage!)
+                            : const _CoverFallback(
+                                icon: Icons.video_library_rounded,
+                              ),
+                      ),
+                      const Positioned.fill(
+                        child: Center(child: _PlayBadge()),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 112),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const TonePill(
+                            label: 'Vidéo',
+                            icon: Icons.play_circle_outline_rounded,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            formation.title,
+                            style: AppText.display(size: 16.5, height: 1.15),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Par ${formation.author ?? 'N/A'}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.body(
+                              size: 13.5,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -623,420 +605,58 @@ class _FormationsScreenState extends State<FormationsScreen>
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildActionButtonsSection(BlogPost formation) {
-    // Collect available action buttons
-    List<Widget> topRowButtons = [];
-    List<Widget> bottomRowButtons = [];
-
-    // Video button (first priority - top row)
-    if (formation.hasVideo) {
-      topRowButtons.add(
-        Expanded(
-          child: _buildActionButton(
-            'Regarder la vidéo',
-            Icons.play_circle_outline,
-            () => _showVideoDialog(formation),
+  /// Centres a message in the space above the dock, and lets it scroll
+  /// when the keyboard leaves too little room for it.
+  Widget _buildStateArea(Widget child) {
+    final dock = MediaQuery.paddingOf(context).bottom;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final room = constraints.maxHeight - dock;
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: dock),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: room > 0 ? room : 0),
+            child: child,
           ),
-        ),
-      );
-    }
-
-    // PDF button (second priority - top row)
-    if (formation.hasPdf) {
-      if (topRowButtons.isNotEmpty)
-        topRowButtons.add(const SizedBox(width: 12));
-      topRowButtons.add(
-        Expanded(
-          child: _buildActionButton(
-            'Fiche PDF',
-            Icons.picture_as_pdf_outlined,
-            () => _downloadPDF(formation),
-          ),
-        ),
-      );
-    }
-
-    // Clinical study button (third priority - bottom row)
-    if (formation.hasClinicalStudy) {
-      bottomRowButtons.add(
-        Expanded(
-          child: _buildActionButton(
-            'Étude clinique',
-            Icons.science_outlined,
-            () => _viewClinicalStudy(formation),
-          ),
-        ),
-      );
-    }
-
-    // Quiz button (fourth priority - bottom row)
-    if (formation.hasQuiz) {
-      if (bottomRowButtons.isNotEmpty)
-        bottomRowButtons.add(const SizedBox(width: 12));
-      bottomRowButtons.add(
-        Expanded(
-          child: _buildActionButton(
-            'Quiz de validation',
-            Icons.quiz_outlined,
-            () {}, // Disabled
-          ),
-        ),
-      );
-    }
-
-    // If no buttons available, return empty container
-    if (topRowButtons.isEmpty && bottomRowButtons.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      children: [
-        if (topRowButtons.isNotEmpty) ...[
-          Row(children: topRowButtons),
-          if (bottomRowButtons.isNotEmpty) const SizedBox(height: 12),
-        ],
-        if (bottomRowButtons.isNotEmpty) Row(children: bottomRowButtons),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: LightModeColors.dashboardTextSecondary,
-        side: BorderSide(color: LightModeColors.lightSurfaceVariant),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
-  Widget _buildVideoCard(BlogPost formation) {
-    return GestureDetector(
-      onTap: () => _showVideoDialog(formation),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.white.withValues(alpha: 0.95),
-              Colors.grey.shade50,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: LightModeColors.lightSurface.withValues(alpha: 0.6),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-              spreadRadius: -3,
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Modern video thumbnail with play overlay
-            Container(
-              width: 100,
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  colors: [
-                    LightModeColors.lightSurfaceVariant,
-                    LightModeColors.lightSurface,
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Cover image or placeholder
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: formation.coverImage != null
-                        ? CachedNetworkImage(
-                            imageUrl: formation.coverImage!,
-                            width: 100,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.grey.shade200,
-                                    Colors.grey.shade100,
-                                  ],
-                                ),
-                              ),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: LightModeColors.novoPharmaBlue,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.grey.shade200,
-                                    Colors.grey.shade100,
-                                  ],
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: LightModeColors.dashboardTextSecondary,
-                              ),
-                            ),
-                          )
-                        : Container(
-                            width: 100,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  LightModeColors.novoPharmaBlue.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  LightModeColors.novoPharmaBlue.withValues(
-                                    alpha: 0.05,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.video_library,
-                              color: LightModeColors.novoPharmaBlue,
-                              size: 28,
-                            ),
-                          ),
-                  ),
-                  // Modern play button overlay
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.4),
-                          ],
-                        ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: LightModeColors.lightOnPrimary.withValues(
-                              alpha: 0.9,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: LightModeColors.success,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: LightModeColors.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: LightModeColors.success.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.play_circle_outline_rounded,
-                          size: 14,
-                          color: LightModeColors.success,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'VIDÉO',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: LightModeColors.success,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    formation.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Par ${formation.author ?? 'N/A'}',
-                    style: TextStyle(
-                      color: LightModeColors.dashboardTextSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildErrorState(FormationProvider provider) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: LightModeColors.dashboardTextSecondary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Erreur de chargement',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: LightModeColors.dashboardTextSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            provider.error ?? 'Une erreur s\'est produite',
-            style: TextStyle(color: LightModeColors.dashboardTextSecondary),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: provider.refresh,
-            child: const Text('Réessayer'),
-          ),
-        ],
+    return _buildStateArea(
+      EmptyState(
+        icon: Icons.error_outline_rounded,
+        tone: Tone.coral,
+        title: 'Erreur de chargement',
+        message: provider.error ?? 'Une erreur s\'est produite',
+        actionLabel: 'Réessayer',
+        onAction: provider.refresh,
       ),
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.school_outlined,
-            size: 64,
-            color: LightModeColors.dashboardTextSecondary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Aucune formation disponible',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: LightModeColors.dashboardTextSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
+    return _buildStateArea(
+      const EmptyState(
+        icon: Icons.school_rounded,
+        title: 'Aucune formation disponible',
+        message:
             'Les formations apparaîtront ici dès qu\'elles seront publiées',
-            style: TextStyle(color: LightModeColors.dashboardTextSecondary),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildEmptyVideoState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.video_library_outlined,
-            size: 64,
-            color: LightModeColors.dashboardTextSecondary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Aucune vidéo disponible',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: LightModeColors.dashboardTextSecondary,
-            ),
-          ),
-        ],
+    return _buildStateArea(
+      const EmptyState(
+        icon: Icons.video_library_rounded,
+        title: 'Aucune vidéo disponible',
       ),
     );
   }
@@ -1112,8 +732,46 @@ class _FormationsScreenState extends State<FormationsScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: LightModeColors.novoPharmaBlue,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+/// A small smoked-glass disc that marks a cover as playable.
+class _PlayBadge extends StatelessWidget {
+  const _PlayBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.ink.withValues(alpha: 0.62),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.38)),
+      ),
+      child: const Icon(
+        Icons.play_arrow_rounded,
+        color: Colors.white,
+        size: 22,
+      ),
+    );
+  }
+}
+
+/// What a cover shows when there is no image, or it failed to load.
+class _CoverFallback extends StatelessWidget {
+  final IconData icon;
+  const _CoverFallback({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.indigoTint,
+      child: Center(
+        child: Icon(icon, size: 30, color: AppColors.lineStrong),
       ),
     );
   }

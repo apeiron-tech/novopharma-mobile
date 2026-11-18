@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../theme.dart';
+import 'package:novopharma/design/design.dart';
 
+/// Progress drawn as a ring: a tinted track, a rounded stroke that fills with
+/// a soft gradient of [progressColor], and the percentage in display type.
 class ProgressRing extends StatefulWidget {
   final double progress; // 0.0 to 1.0
   final double size;
@@ -16,8 +18,8 @@ class ProgressRing extends StatefulWidget {
     required this.progress,
     this.size = 64.0,
     this.strokeWidth = 6.0,
-    this.trackColor = LightModeColors.lightOutline,
-    this.progressColor = LightModeColors.lightPrimary,
+    this.trackColor = AppColors.indigoTint,
+    this.progressColor = AppColors.indigo,
     this.showPercentage = true,
     this.textStyle,
   });
@@ -35,13 +37,25 @@ class _ProgressRingState extends State<ProgressRing>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: AppMotion.hero,
       vsync: this,
     );
     _animation = Tween<double>(begin: 0.0, end: widget.progress).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+      CurvedAnimation(
+        parent: _animationController,
+        curve: AppMotion.emphasized,
+      ),
     );
     _animationController.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion: show the final value straight away.
+    if (AppMotion.reduced(context)) {
+      _animationController.value = 1;
+    }
   }
 
   @override
@@ -52,11 +66,15 @@ class _ProgressRingState extends State<ProgressRing>
           .animate(
             CurvedAnimation(
               parent: _animationController,
-              curve: Curves.easeOutCubic,
+              curve: AppMotion.emphasized,
             ),
           );
       _animationController.reset();
-      _animationController.forward();
+      if (AppMotion.reduced(context)) {
+        _animationController.value = 1;
+      } else {
+        _animationController.forward();
+      }
     }
   }
 
@@ -68,44 +86,52 @@ class _ProgressRingState extends State<ProgressRing>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedBuilder(
-            animation: _animation,
-            builder: (context, child) {
-              return CustomPaint(
-                size: Size(widget.size, widget.size),
-                painter: ProgressRingPainter(
-                  progress: _animation.value,
-                  strokeWidth: widget.strokeWidth,
-                  trackColor: widget.trackColor,
-                  progressColor: widget.progressColor,
-                ),
-              );
-            },
-          ),
-          if (widget.showPercentage)
+    final target =
+        widget.progress.isNaN ? 0.0 : widget.progress.clamp(0.0, 1.0);
+    return Semantics(
+      value: '${(target * 100).round()}%',
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
             AnimatedBuilder(
               animation: _animation,
               builder: (context, child) {
-                final percentage = (_animation.value * 100).round();
-                return Text(
-                  '$percentage%',
-                  style:
-                      widget.textStyle ??
-                      TextStyle(
-                        fontSize: widget.size * 0.2,
-                        fontWeight: FontWeight.w600,
-                        color: LightModeColors.dashboardTextPrimary,
-                      ),
+                return CustomPaint(
+                  size: Size(widget.size, widget.size),
+                  painter: ProgressRingPainter(
+                    progress: _animation.value,
+                    strokeWidth: widget.strokeWidth,
+                    trackColor: widget.trackColor,
+                    progressColor: widget.progressColor,
+                  ),
                 );
               },
             ),
-        ],
+            if (widget.showPercentage)
+              AnimatedBuilder(
+                animation: _animation,
+                builder: (context, child) {
+                  final percentage = (_animation.value * 100).round();
+                  return ExcludeSemantics(
+                    child: Text(
+                      '$percentage%',
+                      maxLines: 1,
+                      softWrap: false,
+                      style:
+                          widget.textStyle ??
+                          AppText.display(
+                            size: widget.size * 0.24,
+                            color: AppColors.text,
+                          ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -128,6 +154,7 @@ class ProgressRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
+    final bounds = Rect.fromCircle(center: center, radius: radius);
 
     // Draw track
     final trackPaint = Paint()
@@ -139,16 +166,26 @@ class ProgressRingPainter extends CustomPainter {
     canvas.drawCircle(center, radius, trackPaint);
 
     // Draw progress
-    if (progress > 0) {
+    final value = progress.isNaN ? 0.0 : progress.clamp(0.0, 1.0);
+    if (value > 0) {
+      // Lit from the top-left like every other filled shape in the app, so
+      // the stroke has no seam when the ring closes.
       final progressPaint = Paint()
-        ..color = progressColor
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(progressColor, Colors.white, 0.32)!,
+            progressColor,
+          ],
+        ).createShader(bounds.inflate(strokeWidth / 2))
         ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
 
-      final sweepAngle = 2 * math.pi * progress;
+      final sweepAngle = 2 * math.pi * value;
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
+        bounds,
         -math.pi / 2, // Start from top
         sweepAngle,
         false,

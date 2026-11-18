@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
 import 'package:novopharma/models/quiz.dart';
-import 'package:novopharma/theme.dart';
 
 class QuizResultsScreen extends StatefulWidget {
   final Quiz quiz;
@@ -34,15 +33,19 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
       final bool hasWon =
           widget.correctAnswers >= widget.quiz.effectiveMinCorrectAnswers;
       if (hasWon && widget.totalQuestions > 0) {
+        // The earned win: capsules rain over the congratulation dialog.
+        celebrate(context);
         showDialog(
           context: context,
           barrierDismissible: true,
+          barrierColor: AppColors.ink.withValues(alpha: 0.5),
           builder: (context) => const _CongratulationDialog(),
         );
       } else {
         showDialog(
           context: context,
           barrierDismissible: true,
+          barrierColor: AppColors.ink.withValues(alpha: 0.5),
           builder: (context) => const _SorryDialog(),
         );
       }
@@ -56,54 +59,52 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
         : 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.quizResults),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        automaticallyImplyLeading: false,
-      ),
-      body: Column(
-        children: [
-          _buildHeader(context, scorePercentage),
-          const Divider(height: 1),
-          if (widget.quiz.isAvailable)
-            _buildHiddenReviewNotice(context)
-          else ...[
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                AppLocalizations.of(context)!.reviewYourAnswers,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
+      backgroundColor: AppColors.canvas,
+      extendBody: true,
+      // The page is one scroll: the score on ink, then what there is to
+      // review. It slides under the frosted bar that holds the way out.
+      body: AppBackground(
+        child: Builder(
+          builder: (context) => CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _buildHeader(context, scorePercentage),
+              ),
+              if (widget.quiz.isAvailable)
+                _buildHiddenReviewNotice(context)
+              else ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      24,
+                      AppSpace.page,
+                      12,
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.reviewYourAnswers,
+                      style: AppText.display(size: 20),
+                    ),
+                  ),
+                ),
+                _buildAnswerReviewList(),
+              ],
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.paddingOf(context).bottom + 20,
                 ),
               ),
-            ),
-            Expanded(child: _buildAnswerReviewList()),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
+      bottomNavigationBar: GlassBottomBar(
+        child: PrimaryButton(
+          label: AppLocalizations.of(context)!.done,
           onPressed: () {
             int popCount = 0;
             Navigator.of(context).popUntil((_) => popCount++ >= 2);
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: LightModeColors.novoPharmaBlue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: Text(
-            AppLocalizations.of(context)!.done,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
         ),
       ),
     );
@@ -112,50 +113,109 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
   Widget _buildHeader(BuildContext context, double scorePercentage) {
     final bool hasWon =
         widget.correctAnswers >= widget.quiz.effectiveMinCorrectAnswers;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      color: Colors.white,
+    final Tone tone = hasWon ? Tone.mint : Tone.coral;
+    return InkHero(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.page,
+        AppSpace.lg,
+        AppSpace.page,
+        AppSpace.xxl,
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            hasWon
-                ? AppLocalizations.of(context)!.congratulations
-                : AppLocalizations.of(context)!.goodEffort,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: LightModeColors.dashboardTextPrimary,
+          Entrance(
+            offset: const Offset(0, -12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.quizResults,
+                        style: AppText.label(
+                          size: 14,
+                          color: Colors.white.withValues(alpha: 0.78),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        hasWon
+                            ? AppLocalizations.of(context)!.congratulations
+                            : AppLocalizations.of(context)!.goodEffort,
+                        style: AppText.display(size: 28, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                BlisterIcon(
+                  icon: hasWon
+                      ? Icons.emoji_events_rounded
+                      : Icons.sentiment_dissatisfied_rounded,
+                  tone: tone,
+                  size: 56,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          Entrance(
+            delay: const Duration(milliseconds: 120),
+            scaleFrom: 0.94,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  CountUp(
+                    value: widget.correctAnswers,
+                    style: AppText.display(
+                      size: 108,
+                      weight: FontWeight.w800,
+                      color: hasWon ? AppColors.mintBright : Colors.white,
+                      height: 1,
+                    ),
+                  ),
+                  Text(
+                    '/${widget.totalQuestions}',
+                    style: AppText.display(
+                      size: 42,
+                      color: Colors.white.withValues(alpha: 0.7),
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 120,
-                height: 120,
-                child: CircularProgressIndicator(
-                  value: scorePercentage,
-                  strokeWidth: 8,
-                  backgroundColor: Colors.grey.shade200,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    hasWon ? Colors.green : Colors.orange,
+          Entrance(
+            delay: const Duration(milliseconds: 200),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: CapsuleProgress(
+                    value: scorePercentage,
+                    tone: tone,
+                    trackColor: Colors.white.withValues(alpha: 0.16),
                   ),
                 ),
-              ),
-              Text(
-                '${widget.correctAnswers}/${widget.totalQuestions}',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 18),
+                _PointsPill(
+                  label: AppLocalizations.of(
+                    context,
+                  )!.youEarnedPoints(widget.pointsEarned),
+                  earned: widget.pointsEarned > 0,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context)!.youEarnedPoints(widget.pointsEarned),
-            style: const TextStyle(fontSize: 18, color: Colors.grey),
+              ],
+            ),
           ),
         ],
       ),
@@ -163,85 +223,57 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
   }
 
   Widget _buildHiddenReviewNotice(BuildContext context) {
-    return Expanded(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Container(
-            padding: const EdgeInsets.all(24.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.blue.shade100, width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(AppSpace.page, 22, AppSpace.page, 0),
+        child: Entrance(
+          delay: const Duration(milliseconds: 280),
+          child: SoftCard(
+            padding: const EdgeInsets.all(22),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock_clock_rounded,
-                    color: LightModeColors.novoPharmaBlue,
-                    size: 44,
-                  ),
-                ),
+                const BlisterIcon(icon: Icons.lock_clock_rounded, size: 56),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   "Corrections masquées",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF102132),
-                  ),
+                  style: AppText.display(size: 21),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   "Afin de garantir l'équité entre tous les participants, les bonnes réponses et les corrections détaillées seront disponibles une fois le quiz clôturé.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    height: 1.4,
+                  style: AppText.body(
+                    size: 14.5,
+                    color: AppColors.textMuted,
+                    height: 1.45,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: 10,
+                    vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.shade200),
+                    color: AppColors.amberTint,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.notifications_active_outlined,
-                        color: Colors.amber.shade800,
+                      const Icon(
+                        Icons.notifications_active_rounded,
+                        color: AppColors.amberDeep,
                         size: 20,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           "Vous recevrez une notification automatique pour découvrir les réponses correctes !",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.amber.shade900,
+                          style: AppText.body(
+                            size: 13,
+                            weight: FontWeight.w600,
+                            color: AppColors.text,
+                            height: 1.35,
                           ),
                         ),
                       ),
@@ -257,29 +289,76 @@ class _QuizResultsScreenState extends State<QuizResultsScreen> {
   }
 
   Widget _buildAnswerReviewList() {
-    return ListView.builder(
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: widget.quiz.questions.length,
-      itemBuilder: (context, index) {
-        final question = widget.quiz.questions[index];
-        final userAnswers = widget.selectedAnswers[index] ?? [];
-        final correctAnswers = question.correctAnswers;
+      sliver: SliverList.builder(
+        itemCount: widget.quiz.questions.length,
+        itemBuilder: (context, index) {
+          final question = widget.quiz.questions[index];
+          final userAnswers = widget.selectedAnswers[index] ?? [];
+          final correctAnswers = question.correctAnswers;
 
-        userAnswers.sort();
-        correctAnswers.sort();
+          userAnswers.sort();
+          correctAnswers.sort();
 
-        final bool isCorrect = const ListEquality().equals(
-          userAnswers,
-          correctAnswers,
-        );
+          final bool isCorrect = const ListEquality().equals(
+            userAnswers,
+            correctAnswers,
+          );
 
-        return _AnswerReviewCard(
-          questionNumber: index + 1,
-          question: question,
-          userAnswers: userAnswers,
-          isCorrect: isCorrect,
-        );
-      },
+          return _AnswerReviewCard(
+            questionNumber: index + 1,
+            question: question,
+            userAnswers: userAnswers,
+            isCorrect: isCorrect,
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// What the quiz paid: a glowing amber pill when points were earned, a
+/// quiet glass one when they were not.
+class _PointsPill extends StatelessWidget {
+  final String label;
+  final bool earned;
+
+  const _PointsPill({required this.label, required this.earned});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color foreground = earned ? AppColors.ink : Colors.white;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: earned ? AppGradients.amber : null,
+        color: earned ? null : Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: earned ? 0.4 : 0.2),
+        ),
+        boxShadow: earned
+            ? AppShadows.glow(AppColors.amber, strength: 0.3)
+            : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.star_rounded,
+            size: 20,
+            color: earned ? AppColors.ink : AppColors.amber,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              style: AppText.display(size: 16, color: foreground, height: 1.2),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -291,80 +370,14 @@ class _CongratulationDialog extends StatefulWidget {
   State<_CongratulationDialog> createState() => _CongratulationDialogState();
 }
 
-class _CongratulationDialogState extends State<_CongratulationDialog>
-    with TickerProviderStateMixin {
-  late AnimationController _entranceController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-
-  late AnimationController _loopController;
-  late Animation<double> _rotationAnimation;
-  late Animation<double> _pulseAnimation;
-
+class _CongratulationDialogState extends State<_CongratulationDialog> {
   Timer? _countdownTimer;
   int _secondsLeft = 10;
   final int _totalSeconds = 10;
 
-  late List<_ConfettiParticle> _particles;
-
   @override
   void initState() {
     super.initState();
-
-    // Entrance animation
-    _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _scaleAnimation = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.elasticOut,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.easeIn,
-    );
-    _entranceController.forward();
-
-    // Loop animation for sunburst rotation and trophy pulse
-    _loopController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-
-    _rotationAnimation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(_loopController);
-    _pulseAnimation =
-        TweenSequence<double>([
-          TweenSequenceItem(
-            tween: Tween<double>(begin: 1.0, end: 1.15),
-            weight: 50,
-          ),
-          TweenSequenceItem(
-            tween: Tween<double>(begin: 1.15, end: 1.0),
-            weight: 50,
-          ),
-        ]).animate(
-          CurvedAnimation(parent: _loopController, curve: Curves.easeInOut),
-        );
-
-    // Initialize confetti particles
-    final random = math.Random();
-    _particles = List.generate(45, (index) {
-      return _ConfettiParticle(
-        x: random.nextDouble() * 300,
-        y: random.nextDouble() * -200,
-        color: Colors.primaries[random.nextInt(Colors.primaries.length)]
-            .withValues(alpha: 0.8),
-        size: random.nextDouble() * 8 + 4,
-        speedY: random.nextDouble() * 1.5 + 1.0,
-        swaySpeed: random.nextDouble() * 2 + 1.0,
-        swayWidth: random.nextDouble() * 15 + 5,
-        rotationSpeed: random.nextDouble() * 0.1 - 0.05,
-      );
-    });
 
     // Countdown and dismiss timer
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -383,319 +396,69 @@ class _CongratulationDialogState extends State<_CongratulationDialog>
   @override
   void dispose() {
     _countdownTimer?.cancel();
-    _entranceController.dispose();
-    _loopController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+    return _ResultDialog(
+      // Close X button
+      onClose: () => Navigator.of(context).pop(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 6),
+          // Trophy
+          Center(
+            child: Sheen(
+              borderRadius: BorderRadius.circular(48),
+              child: const BlisterIcon(
+                icon: Icons.emoji_events_rounded,
+                tone: Tone.amber,
+                size: 96,
+              ),
+            ),
           ),
-          clipBehavior: Clip.antiAlias,
-          elevation: 12,
-          backgroundColor: Colors.white,
-          child: Stack(
-            children: [
-              // Confetti particle layer
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _loopController,
-                  builder: (context, child) {
-                    for (var particle in _particles) {
-                      particle.update(_loopController.value);
-                    }
-                    return CustomPaint(
-                      painter: _ConfettiPainter(particles: _particles),
-                    );
-                  },
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 32.0,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Sunburst background + Pulsing Trophy Icon
-                    SizedBox(
-                      height: 160,
-                      width: 160,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          AnimatedBuilder(
-                            animation: _rotationAnimation,
-                            builder: (context, child) {
-                              return Transform.rotate(
-                                angle: _rotationAnimation.value,
-                                child: Container(
-                                  width: 140,
-                                  height: 140,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: RadialGradient(
-                                      colors: [
-                                        Colors.amber.withValues(alpha: 0.4),
-                                        Colors.amber.withValues(alpha: 0.1),
-                                        Colors.transparent,
-                                      ],
-                                      stops: const [0.3, 0.7, 1.0],
-                                    ),
-                                  ),
-                                  child: CustomPaint(
-                                    painter: _SunburstPainter(),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          ScaleTransition(
-                            scale: _pulseAnimation,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.amber.shade50,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.amber.withValues(alpha: 0.3),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              padding: const EdgeInsets.all(20),
-                              child: const Icon(
-                                Icons.emoji_events_rounded,
-                                color: Colors.amber,
-                                size: 68,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Congrats message
-                    const Text(
-                      "wwwelyé vous gagné le quiz",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: LightModeColors.novoPharmaBlue,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Bravo pour votre sans-faute !",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    // Countdown timer badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.timer_outlined,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              "Fermeture dans $_secondsLeft s",
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Done Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: LightModeColors.novoPharmaBlue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 2,
-                        ),
-                        child: const Text(
-                          "Super !",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Close X button
-              Positioned(
-                top: 12,
-                right: 12,
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close, color: Colors.grey),
-                  splashRadius: 20,
-                ),
-              ),
-
-              // Animated countdown linear progress indicator at the very bottom
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: SizedBox(
-                  height: 6,
-                  child: LinearProgressIndicator(
-                    value: _secondsLeft / _totalSeconds,
-                    backgroundColor: Colors.grey.shade100,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.amber,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 20),
+          // Congrats message
+          Text(
+            "wwwelyé vous gagné le quiz",
+            textAlign: TextAlign.center,
+            style: AppText.display(size: 25, color: Colors.white),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            "Bravo pour votre sans-faute !",
+            textAlign: TextAlign.center,
+            style: AppText.body(
+              size: 15,
+              color: Colors.white.withValues(alpha: 0.84),
+            ),
+          ),
+          const SizedBox(height: 22),
+          // Countdown timer badge
+          Center(
+            child: _CountdownPill(label: "Fermeture dans $_secondsLeft s"),
+          ),
+          const SizedBox(height: 12),
+          // Countdown progress
+          CapsuleProgress(
+            value: _secondsLeft / _totalSeconds,
+            tone: Tone.amber,
+            trackColor: Colors.white.withValues(alpha: 0.14),
+            height: 6,
+          ),
+          const SizedBox(height: 22),
+          // Done Button
+          PrimaryButton.mint(
+            label: "Super !",
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
       ),
     );
   }
-}
-
-class _ConfettiParticle {
-  double x;
-  double y;
-  final Color color;
-  final double size;
-  final double speedY;
-  final double swaySpeed;
-  final double swayWidth;
-  final double rotationSpeed;
-  double angle = 0;
-
-  _ConfettiParticle({
-    required this.x,
-    required this.y,
-    required this.color,
-    required this.size,
-    required this.speedY,
-    required this.swaySpeed,
-    required this.swayWidth,
-    required this.rotationSpeed,
-  });
-
-  void update(double progress) {
-    y += speedY;
-    angle += rotationSpeed;
-    // Reset to top if it reaches the bottom of typical dialog height (~400px)
-    if (y > 450) {
-      y = -20;
-    }
-  }
-}
-
-class _ConfettiPainter extends CustomPainter {
-  final List<_ConfettiParticle> particles;
-
-  _ConfettiPainter({required this.particles});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    for (var p in particles) {
-      paint.color = p.color;
-      canvas.save();
-      // Sway left/right based on Y coordinate to look organic
-      final double swayX =
-          p.x + math.sin(p.y * 0.05 * p.swaySpeed) * p.swayWidth;
-      canvas.translate(swayX % size.width, p.y);
-      canvas.rotate(p.angle);
-
-      // Draw rectangular or circular confetti alternately
-      if (p.size.toInt() % 2 == 0) {
-        canvas.drawRect(
-          Rect.fromLTWH(-p.size / 2, -p.size / 2, p.size, p.size * 1.5),
-          paint,
-        );
-      } else {
-        canvas.drawCircle(Offset.zero, p.size / 2, paint);
-      }
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _SunburstPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.amber.withValues(alpha: 0.25)
-      ..style = PaintingStyle.fill;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.max(size.width, size.height);
-    const int rayCount = 12;
-    const double angleStep = 2 * math.pi / rayCount;
-
-    for (int i = 0; i < rayCount; i++) {
-      final path = Path()
-        ..moveTo(center.dx, center.dy)
-        ..arcTo(
-          Rect.fromCircle(center: center, radius: radius),
-          i * angleStep - angleStep / 4,
-          angleStep / 2,
-          false,
-        )
-        ..close();
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _SorryDialog extends StatefulWidget {
@@ -705,15 +468,7 @@ class _SorryDialog extends StatefulWidget {
   State<_SorryDialog> createState() => _SorryDialogState();
 }
 
-class _SorryDialogState extends State<_SorryDialog>
-    with TickerProviderStateMixin {
-  late AnimationController _entranceController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-
-  late AnimationController _loopController;
-  late Animation<double> _pulseAnimation;
-
+class _SorryDialogState extends State<_SorryDialog> {
   Timer? _countdownTimer;
   int _secondsLeft = 10;
   final int _totalSeconds = 10;
@@ -721,41 +476,6 @@ class _SorryDialogState extends State<_SorryDialog>
   @override
   void initState() {
     super.initState();
-
-    // Entrance animation
-    _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _scaleAnimation = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.elasticOut,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.easeIn,
-    );
-    _entranceController.forward();
-
-    // Loop animation for icon pulse
-    _loopController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-
-    _pulseAnimation =
-        TweenSequence<double>([
-          TweenSequenceItem(
-            tween: Tween<double>(begin: 1.0, end: 1.1),
-            weight: 50,
-          ),
-          TweenSequenceItem(
-            tween: Tween<double>(begin: 1.1, end: 1.0),
-            weight: 50,
-          ),
-        ]).animate(
-          CurvedAnimation(parent: _loopController, curve: Curves.easeInOut),
-        );
 
     // Countdown and dismiss timer
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -774,165 +494,143 @@ class _SorryDialogState extends State<_SorryDialog>
   @override
   void dispose() {
     _countdownTimer?.cancel();
-    _entranceController.dispose();
-    _loopController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          clipBehavior: Clip.antiAlias,
-          elevation: 12,
-          backgroundColor: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 32.0,
+    return _ResultDialog(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Sorry Icon
+          const Center(
+            child: BlisterIcon(
+              icon: Icons.sentiment_very_dissatisfied_rounded,
+              tone: Tone.coral,
+              size: 88,
             ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Pulsing Sorry Icon
-                    SizedBox(
-                      height: 120,
-                      width: 120,
-                      child: Center(
-                        child: ScaleTransition(
-                          scale: _pulseAnimation,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.red.shade50,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.red.withValues(alpha: 0.15),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(20),
-                            child: Icon(
-                              Icons.sentiment_very_dissatisfied_rounded,
-                              color: Colors.red.shade400,
-                              size: 60,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Congrats message
-                    const Text(
-                      "Dommage",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Vous n'avez pas gagné cette fois-ci",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    // Countdown timer badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.timer_outlined,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              "Fermeture dans $_secondsLeft s",
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Done Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade800,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 2,
-                        ),
-                        child: const Text(
-                          "Fermer",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Dommage",
+            textAlign: TextAlign.center,
+            style: AppText.display(size: 27, color: AppColors.coral),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Vous n'avez pas gagné cette fois-ci",
+            textAlign: TextAlign.center,
+            style: AppText.body(
+              size: 15,
+              color: Colors.white.withValues(alpha: 0.84),
+            ),
+          ),
+          const SizedBox(height: 22),
+          // Countdown timer badge
+          Center(
+            child: _CountdownPill(label: "Fermeture dans $_secondsLeft s"),
+          ),
+          const SizedBox(height: 12),
+          // Countdown progress
+          CapsuleProgress(
+            value: _secondsLeft / _totalSeconds,
+            tone: Tone.coral,
+            trackColor: Colors.white.withValues(alpha: 0.14),
+            height: 6,
+          ),
+          const SizedBox(height: 22),
+          // Done Button
+          SecondaryButton(
+            label: "Fermer",
+            onDark: true,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                // Animated countdown linear progress indicator at the very bottom
+/// The shell both result dialogs share: a pane of smoked glass that rises
+/// into place, so white text stays readable whether it lands over the ink
+/// hero or the pastel canvas.
+class _ResultDialog extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onClose;
+
+  const _ResultDialog({required this.child, this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return Entrance(
+      scaleFrom: 0.92,
+      offset: const Offset(0, 18),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Glass(
+          style: GlassStyle.smoked,
+          blur: Glass.frost,
+          borderRadius: BorderRadius.circular(AppRadii.xl),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
+                child: child,
+              ),
+              if (onClose != null)
                 Positioned(
-                  left: -24,
-                  right: -24,
-                  bottom: -32,
-                  child: SizedBox(
-                    height: 6,
-                    child: LinearProgressIndicator(
-                      value: _secondsLeft / _totalSeconds,
-                      backgroundColor: Colors.grey.shade100,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.red,
-                      ),
-                    ),
+                  top: 8,
+                  right: 8,
+                  child: GlassIconButton(
+                    icon: Icons.close_rounded,
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).closeButtonTooltip,
+                    onTap: onClose,
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CountdownPill extends StatelessWidget {
+  final String label;
+
+  const _CountdownPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.timer_outlined,
+            size: 16,
+            color: Colors.white.withValues(alpha: 0.86),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: AppText.label(size: 13, color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -953,34 +651,41 @@ class _AnswerReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: SoftCard(
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppLocalizations.of(
-                context,
-              )!.questionNumber(questionNumber, question.text),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.questionNumber(questionNumber, question.text),
+                    style: AppText.display(size: 17, height: 1.22),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TintIcon(
+                  icon: isCorrect ? Icons.check_rounded : Icons.close_rounded,
+                  tone: isCorrect ? Tone.mint : Tone.coral,
+                  size: 32,
+                ),
+              ],
             ),
             if (userAnswers.isEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.noAnswerSelected,
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+              const SizedBox(height: 10),
+              TonePill(
+                label: AppLocalizations.of(context)!.noAnswerSelected,
+                tone: Tone.coral,
+                icon: Icons.remove_circle_outline_rounded,
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             ...List.generate(question.options.length, (index) {
               final isUserAnswer = userAnswers.contains(index);
               final isCorrectAnswer = question.correctAnswers.contains(index);
@@ -991,7 +696,7 @@ class _AnswerReviewCard extends StatelessWidget {
               );
             }),
             if (question.explanation.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _buildExplanationBox(),
             ],
           ],
@@ -1007,22 +712,34 @@ class _AnswerReviewCard extends StatelessWidget {
   }) {
     IconData icon;
     Color color;
-    FontWeight fontWeight = FontWeight.normal;
+    Color textColor = AppColors.textMuted;
+    Color? fill;
+    FontWeight fontWeight = FontWeight.w500;
 
     if (isCorrectAnswer) {
-      icon = Icons.check_circle;
-      color = Colors.green;
-      fontWeight = FontWeight.bold;
+      icon = Icons.check_circle_rounded;
+      color = AppColors.mintDeep;
+      textColor = AppColors.text;
+      fill = AppColors.mintTint;
+      fontWeight = FontWeight.w700;
     } else if (isUserAnswer && !isCorrectAnswer) {
-      icon = Icons.cancel;
-      color = Colors.red;
+      icon = Icons.cancel_rounded;
+      color = AppColors.coralDeep;
+      textColor = AppColors.text;
+      fill = AppColors.coralTint;
+      fontWeight = FontWeight.w600;
     } else {
-      icon = Icons.radio_button_unchecked;
-      color = Colors.grey;
+      icon = Icons.radio_button_unchecked_rounded;
+      color = AppColors.textFaint;
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppRadii.sm),
+      ),
       child: Row(
         children: [
           Icon(icon, color: color, size: 20),
@@ -1030,7 +747,12 @@ class _AnswerReviewCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontWeight: fontWeight, color: color),
+              style: AppText.body(
+                size: 14.5,
+                weight: fontWeight,
+                color: textColor,
+                height: 1.3,
+              ),
             ),
           ),
         ],
@@ -1042,18 +764,26 @@ class _AnswerReviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.indigoTint,
+        borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.lightbulb_outline, color: Colors.blue, size: 20),
+          const Icon(
+            Icons.lightbulb_rounded,
+            color: AppColors.indigo,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               question.explanation,
-              style: TextStyle(color: Colors.blue.shade800, height: 1.5),
+              style: AppText.body(
+                size: 14,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
             ),
           ),
         ],

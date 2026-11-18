@@ -97,19 +97,18 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/images/introductionScreen/
     - assets/flags/
     - assets/logo/
     - .env
 
 flutter_native_splash:
-  color: "#3A39EE"
-  image: assets/logo/splashLogo.png
+  color: "#0F0D45"
+  image: assets/logo/splashMark.png
   
   # Android 12+ parameters
   android_12:
-    color: "#3A39EE"
-    image: assets/logo/splashLogo.png
+    color: "#0F0D45"
+    image: assets/logo/splashMarkAndroid12.png
 
 flutter_icons:
   android: true

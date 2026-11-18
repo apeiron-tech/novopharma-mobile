@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/pluxee_redemption_provider.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/screens/pluxee_history_screen.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
@@ -39,317 +38,507 @@ class _PluxeeRedemptionScreenState extends State<PluxeeRedemptionScreen> {
     _pointsController.clear();
     _selectedPoints = 0.0;
 
+    // The sheet's own MediaQuery has the status bar inset removed, so read it
+    // from the page to keep the sheet clear of it when the keyboard is up.
+    final topInset = MediaQuery.paddingOf(context).top;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 24,
-        ),
-        child: StatefulBuilder(
-          builder: (context, setModalState) {
-            final availablePoints = currentUser.points - pluxeeProvider.totalPendingPoints;
-            final pluxeeCredits = pluxeeProvider.calculatePluxeeCredits(
-              _selectedPoints,
-            );
+      builder: (ctx) {
+        final media = MediaQuery.of(ctx);
+        // Room left for the form once the keyboard, the status bar and the
+        // sheet's own chrome (handle, padding, home indicator) are taken out.
+        final roomForBody =
+            media.size.height - media.viewInsets.bottom - topInset - 96;
+        final maxBodyHeight = roomForBody < 160 ? 160.0 : roomForBody;
 
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    l10n.redeemPluxeeCredits,
-                    style: GoogleFonts.montserrat(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: LightModeColors.novoPharmaLightBlue,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+        return Padding(
+          padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+          child: GlassSheet(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxBodyHeight),
+              child: StatefulBuilder(
+                builder: (context, setModalState) {
+                  final availablePoints =
+                      currentUser.points - pluxeeProvider.totalPendingPoints;
+                  final pluxeeCredits = pluxeeProvider.calculatePluxeeCredits(
+                    _selectedPoints,
+                  );
+                  final belowMinimum =
+                      _selectedPoints > 0 && _selectedPoints < 50;
+                  final canSubmit =
+                      _selectedPoints >= 50 &&
+                      _selectedPoints <= availablePoints &&
+                      !_isSubmitting;
+
+                  return SingleChildScrollView(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          l10n.usablePoints,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                          ),
+                          l10n.redeemPluxeeCredits,
+                          style: AppText.display(size: 22),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$availablePoints',
-                          style: GoogleFonts.inter(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: LightModeColors.novoPharmaBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: _pointsController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.pointsToRedeem,
-                      hintText: l10n.enterAmount,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.stars),
-                      suffixText: 'pts',
-                    ),
-                    onChanged: (value) {
-                      setModalState(() {
-                        _selectedPoints = double.tryParse(value) ?? 0.0;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.minimumRedemptionAmount(50),
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: _selectedPoints > 0 && _selectedPoints < 50
-                          ? LightModeColors.lightError
-                          : LightModeColors.dashboardTextSecondary,
-                      fontWeight: _selectedPoints > 0 && _selectedPoints < 50
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.youWillReceive,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        Text(
-                          l10n.pluxeeCreditsAmount(
-                            pluxeeCredits.toStringAsFixed(2),
-                          ),
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: LightModeColors.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.conversionRate(pluxeeProvider.conversionRate.toInt()),
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: LightModeColors.dashboardTextSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: LightModeColors.novoPharmaBlue
-                                    .withValues(alpha: 0.3),
+                        const SizedBox(height: 16),
+
+                        // What can be spent.
+                        _SheetPanel(
+                          child: Row(
+                            children: [
+                              const TintIcon(
+                                icon: Icons.account_balance_wallet_rounded,
+                                tone: Tone.amber,
+                                size: 40,
                               ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  l10n.usablePoints,
+                                  style: AppText.label(
+                                    size: 13.5,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                formatPoints(availablePoints),
+                                style: AppText.display(size: 24),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // The amount.
+                        TextField(
+                          controller: _pointsController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: AppText.display(size: 22),
+                          cursorColor: AppColors.coral,
+                          decoration: InputDecoration(
+                            labelText: l10n.pointsToRedeem,
+                            hintText: l10n.enterAmount,
+                            filled: true,
+                            fillColor: Colors.white.withValues(alpha: 0.72),
+                            prefixIcon: const Icon(
+                              Icons.stars_rounded,
+                              color: AppColors.amber,
                             ),
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                side: BorderSide.none,
-                                foregroundColor: LightModeColors.novoPharmaBlue,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                overlayColor: LightModeColors.novoPharmaBlue
-                                    .withValues(alpha: 0.1),
-                              ),
-                              child: Text(
-                                l10n.cancel,
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  color: LightModeColors.novoPharmaBlue,
-                                ),
-                              ),
+                            suffixText: 'pts',
+                            suffixStyle: AppText.label(size: 14),
+                          ),
+                          onChanged: (value) {
+                            setModalState(() {
+                              _selectedPoints = double.tryParse(value) ?? 0.0;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            l10n.minimumRedemptionAmount(50),
+                            style: AppText.label(
+                              size: 12.5,
+                              letterSpacing: 0,
+                              color: belowMinimum
+                                  ? AppColors.coralDeep
+                                  : AppColors.textMuted,
+                              weight: belowMinimum
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow:
-                                  _selectedPoints >= 50 &&
-                                      _selectedPoints <= availablePoints &&
-                                      !_isSubmitting
-                                  ? [
-                                      BoxShadow(
-                                        color: LightModeColors.novoPharmaBlue
-                                            .withValues(alpha: 0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                        const SizedBox(height: 14),
+
+                        // What it becomes, live as the amount changes.
+                        _SheetPanel(
+                          tint: AppColors.mintTint,
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.youWillReceive,
+                                style: AppText.label(
+                                  size: 13,
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: _RollingAmount(
+                                  value: pluxeeCredits,
+                                  style: AppText.display(size: 28),
+                                  format: (v) => l10n.pluxeeCreditsAmount(
+                                    v.toStringAsFixed(2),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.swap_horiz_rounded,
+                                    size: 18,
+                                    color: AppColors.mintDeep,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.conversionRate(
+                                        pluxeeProvider.conversionRate.toInt(),
                                       ),
-                                    ]
-                                  : [],
-                            ),
-                            child: ElevatedButton(
-                              onPressed:
-                                  (_selectedPoints >= 50 &&
-                                      _selectedPoints <= availablePoints &&
-                                      !_isSubmitting)
-                                  ? () async {
-                                      setState(() => _isSubmitting = true);
-
-                                      final error = await pluxeeProvider
-                                          .createRedemptionRequest(
-                                            _selectedPoints,
-                                          );
-
-                                      setState(() => _isSubmitting = false);
-
-                                      if (mounted) {
-                                        Navigator.pop(ctx);
-
-                                        if (error == null) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                l10n.requestSubmittedSuccess,
-                                              ),
-                                              backgroundColor:
-                                                  LightModeColors.success,
-                                              duration: const Duration(
-                                                seconds: 3,
-                                              ),
-                                            ),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(error),
-                                              backgroundColor:
-                                                  LightModeColors.lightError,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    }
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    _selectedPoints >= 50 &&
-                                        _selectedPoints <= availablePoints &&
-                                        !_isSubmitting
-                                    ? LightModeColors.novoPharmaBlue
-                                    : Colors.grey.shade400,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                shadowColor:
-                                    _selectedPoints >= 50 &&
-                                        _selectedPoints <= availablePoints &&
-                                        !_isSubmitting
-                                    ? LightModeColors.novoPharmaBlue
-                                          .withValues(alpha: 0.3)
-                                    : Colors.transparent,
-                                elevation:
-                                    _selectedPoints >= 50 &&
-                                        _selectedPoints <= availablePoints &&
-                                        !_isSubmitting
-                                    ? 4.0
-                                    : 0.0,
-                                overlayColor:
-                                    _selectedPoints >= 50 &&
-                                        _selectedPoints <= availablePoints &&
-                                        !_isSubmitting
-                                    ? LightModeColors.novoPharmaBlue
-                                          .withValues(alpha: 0.2)
-                                    : Colors.grey.shade400.withValues(alpha: 0.2),
-                              ),
-                              child: _isSubmitting
-                                  ? const Center(
-                                      child: SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
-                                              ),
-                                        ),
-                                      ),
-                                    )
-                                  : Text(
-                                      l10n.submitRequest,
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                      style: AppText.label(
+                                        size: 12.5,
+                                        letterSpacing: 0,
                                       ),
                                     ),
-                            ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
+                        const SizedBox(height: 20),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: SecondaryButton(
+                                label: l10n.cancel,
+                                onPressed: () => Navigator.pop(ctx),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: PrimaryButton.coral(
+                                label: l10n.submitRequest,
+                                height: 52,
+                                loading: _isSubmitting,
+                                onPressed: canSubmit
+                                    ? () async {
+                                        setState(() => _isSubmitting = true);
+
+                                        final error = await pluxeeProvider
+                                            .createRedemptionRequest(
+                                              _selectedPoints,
+                                            );
+
+                                        setState(() => _isSubmitting = false);
+
+                                        if (mounted) {
+                                          Navigator.pop(ctx);
+
+                                          if (error == null) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  l10n.requestSubmittedSuccess,
+                                                ),
+                                                backgroundColor:
+                                                    AppColors.mintDeep,
+                                                duration: const Duration(
+                                                  seconds: 3,
+                                                ),
+                                              ),
+                                            );
+                                            celebrate(this.context);
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(error),
+                                                backgroundColor:
+                                                    AppColors.coralDeep,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
                       ],
                     ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final media = MediaQuery.of(context);
+    final maxWidth = media.size.width > 600 ? 640.0 : double.infinity;
+
+    Widget centered(Widget child) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        );
+
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: AppBackground(
+        accent: Tone.amber,
+        child: Consumer2<AuthProvider, PluxeeRedemptionProvider>(
+          builder: (context, authProvider, pluxeeProvider, child) {
+            final currentUser = authProvider.userProfile;
+
+            if (currentUser == null) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkHero(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      10,
+                      AppSpace.page,
+                      22,
+                    ),
+                    child: _buildTopBar(context, l10n),
                   ),
-                  const SizedBox(height: 24),
+                  Expanded(
+                    child: EmptyState(
+                      icon: Icons.lock_outline_rounded,
+                      title: l10n.signIn,
+                      tone: Tone.amber,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            final availablePoints =
+                currentUser.points - pluxeeProvider.totalPendingPoints;
+            final pendingPoints = pluxeeProvider.totalPendingPoints;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: media.padding.bottom + 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Ink hero: what you have, what it is worth, spend it.
+                  InkHero(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      10,
+                      AppSpace.page,
+                      26,
+                    ),
+                    child: centered(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Entrance(
+                            offset: const Offset(0, -12),
+                            child: _buildTopBar(context, l10n),
+                          ),
+                          const SizedBox(height: 26),
+                          Entrance(
+                            delay: const Duration(milliseconds: 100),
+                            scaleFrom: 0.96,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.points,
+                                  style: AppText.label(
+                                    size: 14,
+                                    letterSpacing: 0,
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: CountUp(
+                                    value: availablePoints,
+                                    style: AppText.display(
+                                      size: 68,
+                                      weight: FontWeight.w800,
+                                      color: Colors.white,
+                                      height: 1.0,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Entrance(
+                            delay: const Duration(milliseconds: 180),
+                            child: _buildRateCard(
+                              l10n,
+                              pluxeeProvider,
+                              pendingPoints,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Entrance(
+                            delay: const Duration(milliseconds: 240),
+                            child: PrimaryButton.coral(
+                              label: l10n.redeemPointsNow,
+                              icon: Icons.card_giftcard_rounded,
+                              onPressed: availablePoints > 0
+                                  ? () => _showRedemptionDialog(context)
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // On the canvas: how it works, and where past requests live.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      24,
+                      AppSpace.page,
+                      0,
+                    ),
+                    child: centered(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Entrance(
+                            delay: const Duration(milliseconds: 300),
+                            child: Text(
+                              l10n.redeemPluxeeCredits,
+                              style: AppText.display(size: 22),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Entrance(
+                            delay: const Duration(milliseconds: 360),
+                            child: SoftCard(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                20,
+                                20,
+                                8,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const BlisterIcon(
+                                        icon: Icons.card_giftcard_rounded,
+                                        tone: Tone.amber,
+                                        size: 48,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.howItWorks,
+                                          style: AppText.display(
+                                            size: 18,
+                                            height: 1.18,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _buildInfoStep(
+                                    '1',
+                                    l10n.choosePointsToConvert,
+                                  ),
+                                  _buildInfoStep('2', l10n.submitForReview),
+                                  _buildInfoStep(
+                                    '3',
+                                    Localizations.localeOf(
+                                              context,
+                                            ).languageCode ==
+                                            'fr'
+                                        ? 'Votre demande sera prise en charge et une réponse vous sera communiquée sous 72 heures ouvrées.'
+                                        : 'Your request will be processed and a response will be provided within 72 business hours.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Entrance(
+                            delay: const Duration(milliseconds: 420),
+                            child: SoftCard(
+                              radius: AppRadii.md,
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                14,
+                                12,
+                                14,
+                              ),
+                              semanticLabel: l10n.viewRedemptionHistory,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PluxeeHistoryScreen(),
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  const TintIcon(
+                                    icon: Icons.history_rounded,
+                                    tone: Tone.amber,
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.viewRedemptionHistory,
+                                      style: AppText.body(
+                                        size: 15.5,
+                                        weight: FontWeight.w700,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -359,373 +548,126 @@ class _PluxeeRedemptionScreenState extends State<PluxeeRedemptionScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Scaffold(
-      backgroundColor: LightModeColors.lightBackground,
-      appBar: AppBar(
-        backgroundColor: LightModeColors.lightSurface,
-        elevation: 0,
-        surfaceTintColor: LightModeColors.lightSurface,
-        scrolledUnderElevation: 6.0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: LightModeColors.lightSurfaceVariant,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: LightModeColors.dashboardTextPrimary,
-              size: 18,
+  /// Back button and the screen's name, on ink.
+  Widget _buildTopBar(BuildContext context, AppLocalizations l10n) {
+    return Row(
+      children: [
+        GlassIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onTap: () => Navigator.pop(context),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            l10n.pluxeeCredits,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.display(
+              size: 20,
+              color: Colors.white,
+              height: 1.12,
             ),
           ),
-          onPressed: () => Navigator.pop(context),
-          iconSize: 20,
-          splashRadius: 20,
         ),
-        title: Text(
-          l10n.pluxeeCredits,
-          style: GoogleFonts.montserrat(
-            color: LightModeColors.dashboardTextPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: Consumer2<AuthProvider, PluxeeRedemptionProvider>(
-        builder: (context, authProvider, pluxeeProvider, child) {
-          final currentUser = authProvider.userProfile;
+      ],
+    );
+  }
 
-          if (currentUser == null) {
-            return Center(child: Text(l10n.signIn));
-          }
-
-          final availablePoints = currentUser.points - pluxeeProvider.totalPendingPoints;
-          final pendingPoints = pluxeeProvider.totalPendingPoints;
-
-          return SingleChildScrollView(
-            child: Column(
+  /// The exchange rate and, when there are any, the points already tied up
+  /// in requests awaiting approval.
+  Widget _buildRateCard(
+    AppLocalizations l10n,
+    PluxeeRedemptionProvider pluxeeProvider,
+    double pendingPoints,
+  ) {
+    return SoftCard(
+      style: GlassStyle.dark,
+      blur: Glass.frost,
+      radius: AppRadii.md,
+      shadow: false,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
               children: [
-                // Header Section with Dark Gradient
-                Container(
-                  width: double.infinity,
-
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 40,
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.lightOnPrimary.withValues(
-                            alpha: 0.1,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: LightModeColors.lightOnPrimary.withValues(
-                              alpha: 0.2,
-                            ),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          l10n.points.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            color: LightModeColors.lightOnPrimaryContainer,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '$availablePoints',
-                        style: GoogleFonts.inter(
-                          color: LightModeColors.lightOnPrimaryContainer,
-                          fontSize: 56,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -2,
-                        ),
-                      ),
-                      if (pendingPoints > 0) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.schedule_rounded,
-                                color: LightModeColors.warning,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                l10n.pointsPendingApproval(pendingPoints),
-                                style: GoogleFonts.inter(
-                                  color: LightModeColors.warning,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 28),
-                      Material(
-                        color: LightModeColors.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const PluxeeHistoryScreen(),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: LightModeColors.success.withValues(alpha: 0.2),
-                                width: 1.5,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.history_rounded,
-                                  color: LightModeColors.success,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  l10n.viewRedemptionHistory,
-                                  style: GoogleFonts.inter(
-                                    color: LightModeColors.success,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                const Icon(
+                  Icons.swap_horiz_rounded,
+                  color: AppColors.mintBright,
+                  size: 22,
                 ),
-
-                // Main Content
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.redeemPluxeeCredits,
-                        style: GoogleFonts.inter(
-                          color: LightModeColors.dashboardTextPrimary,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Info Card with Dark Layered Design
-                      Container(
-                        padding: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.warning,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.lightOnPrimary
-                                    .withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.card_giftcard_rounded,
-                                size: 48,
-                                color: LightModeColors.lightOnPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              l10n.howItWorks,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            _buildInfoStep('1', l10n.choosePointsToConvert),
-                            const SizedBox(height: 4),
-                            _buildInfoStep('2', l10n.submitForReview),
-                            const SizedBox(height: 4),
-                            _buildInfoStep(
-                              '3',
-                              Localizations.localeOf(context).languageCode ==
-                                      'fr'
-                                  ? 'Votre demande sera prise en charge et une réponse vous sera communiquée sous 72 heures ouvrées.'
-                                  : 'Your request will be processed and a response will be provided within 72 business hours.',
-                            ),
-                            const SizedBox(height: 20),
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.lightOnPrimary
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: LightModeColors.lightOnPrimary
-                                      .withValues(alpha: 0.2),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: LightModeColors.lightOnPrimary
-                                          .withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(
-                                      Icons.info_rounded,
-                                      size: 20,
-                                      color: LightModeColors.lightOnPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      l10n.conversionRate(
-                                        pluxeeProvider.conversionRate.toInt(),
-                                      ),
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: LightModeColors.lightOnPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // Redeem Button with Blue Gradient
-                      Container(
-                        decoration: BoxDecoration(
-                          color: LightModeColors.lightError,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: availablePoints > 0
-                                ? () => _showRedemptionDialog(context)
-                                : null,
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.card_giftcard_rounded,
-                                    color: availablePoints > 0
-                                        ? LightModeColors.lightOnPrimary
-                                        : LightModeColors.lightSurfaceVariant,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    l10n.redeemPointsNow,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w700,
-                                      color: availablePoints > 0
-                                          ? LightModeColors.lightOnPrimary
-                                          : LightModeColors.lightSurfaceVariant,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-                    ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.conversionRate(pluxeeProvider.conversionRate.toInt()),
+                    style: AppText.body(
+                      size: 14.5,
+                      weight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.25,
+                    ),
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          if (pendingPoints > 0) ...[
+            Container(
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.16),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.schedule_rounded,
+                    color: AppColors.amber,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.pointsPendingApproval(pendingPoints),
+                      style: AppText.body(
+                        size: 14,
+                        weight: FontWeight.w600,
+                        color: AppColors.amber,
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
   Widget _buildInfoStep(String number, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
+            decoration: const BoxDecoration(
+              color: AppColors.amberTint,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 number,
-                style: GoogleFonts.inter(
-                  color: LightModeColors.lightOnPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                style: AppText.display(
+                  size: 15,
+                  color: AppColors.amberDeep,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -733,20 +675,67 @@ class _PluxeeRedemptionScreenState extends State<PluxeeRedemptionScreen> {
           const SizedBox(width: 14),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 5),
               child: Text(
                 text,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: LightModeColors.lightOnPrimary.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w500,
-                  height: 1.5,
-                ),
+                style: AppText.body(size: 14.5, height: 1.45),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A tinted inset inside the redemption sheet. No blur of its own: the sheet
+/// behind it is already frosted.
+class _SheetPanel extends StatelessWidget {
+  final Widget child;
+  final Color tint;
+  final EdgeInsetsGeometry padding;
+
+  const _SheetPanel({
+    required this.child,
+    this.tint = Colors.white,
+    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Rolls a decimal amount to its new value without rounding it on the way,
+/// so a credit figure stays exact while it moves.
+class _RollingAmount extends StatelessWidget {
+  final double value;
+  final TextStyle style;
+  final String Function(double) format;
+
+  const _RollingAmount({
+    required this.value,
+    required this.style,
+    required this.format,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value),
+      duration: AppMotion.reduced(context) ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      builder: (context, v, _) =>
+          Text(format(v), style: style, maxLines: 1, softWrap: false),
     );
   }
 }

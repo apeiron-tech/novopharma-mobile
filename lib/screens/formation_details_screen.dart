@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +12,7 @@ import 'package:novopharma/screens/quiz_correction_screen.dart';
 import 'package:novopharma/models/quiz.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:novopharma/services/chottu_link_service.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 // Helper class for formation steps
 class FormationStep {
@@ -58,14 +59,14 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         FormationStep(
           title: 'La vidéo de formation',
           description: 'Regarder la vidéo de formation',
-          icon: Icons.play_circle_outline,
+          icon: Icons.play_circle_outline_rounded,
           isCompleted: false,
           onTap: () => _showVideosSection(),
         ),
       FormationStep(
         title: 'Contenu de formation',
         description: 'Lire le contenu détaillé',
-        icon: Icons.article_outlined,
+        icon: Icons.article_rounded,
         isCompleted: false,
         onTap: () => _showContent(),
       ),
@@ -73,7 +74,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         FormationStep(
           title: 'Quiz de validation',
           description: 'Valider vos connaissances',
-          icon: Icons.quiz_outlined,
+          icon: Icons.quiz_rounded,
           isCompleted: false,
           onTap: () => _startQuiz(),
         ),
@@ -81,397 +82,255 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
     _stepCompletions = List.generate(_steps.length, (index) => false);
   }
 
+  // How far the title sheet rides up over the hero's bottom edge.
+  static const double _sheetOverlap = 48;
+
+  /// A neutral tone for metadata that should not carry a feature colour.
+  static const Tone _quietTone = Tone(
+    AppColors.textFaint,
+    AppColors.textMuted,
+    AppColors.line,
+  );
+
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final heroHeight =
+        media.padding.top + (widget.formation.coverImage != null ? 250.0 : 140.0);
+
     return Scaffold(
-      backgroundColor: LightModeColors.lightBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                LightModeColors.novoPharmaBlue,
-                LightModeColors.novoPharmaBlue.withValues(alpha: 0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+      backgroundColor: AppColors.canvas,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: AppBackground(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: media.padding.bottom + 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Formation Header
+                      _buildFormationHeader(heroHeight),
+
+                      // Progress Indicator
+                      _buildProgressIndicator(),
+
+                      // Formation Steps
+                      _buildFormationSteps(),
+
+                      // Attachments Section
+                      _buildAttachmentsSection(),
+                    ],
+                  ),
+                ),
+              ),
+
+              // An ink mist behind the status bar, so its icons stay
+              // readable once the page has scrolled up underneath them.
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: media.padding.top + 28,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.ink.withValues(alpha: 0.5),
+                          AppColors.ink.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Back and share, floating over the cover on smoked glass.
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: _GlassCrumb(
+                            label: 'Formation',
+                            onBack: () => Navigator.of(context).pop(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Glass(
+                          style: GlassStyle.smoked,
+                          blur: Glass.frost,
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                          padding: const EdgeInsets.all(4),
+                          child: GlassIconButton(
+                            icon: Icons.share_rounded,
+                            tooltip: MaterialLocalizations.of(
+                              context,
+                            ).shareButtonLabel,
+                            onTap: () => _shareFormation(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.white,
-              size: 20,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        title: Text(
-          'Formation',
-          style: const TextStyle(
-            color: LightModeColors.lightOnPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.share_outlined,
-                color: LightModeColors.lightOnPrimary,
-                size: 20,
-              ),
-              onPressed: () => _shareFormation(),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Formation Header
-            _buildFormationHeader(),
-
-            // Progress Indicator
-            _buildProgressIndicator(),
-
-            // Formation Steps
-            _buildFormationSteps(),
-
-            // Attachments Section
-            _buildAttachmentsSection(),
-
-            const SizedBox(height: 20),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildFormationHeader() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            LightModeColors.lightSurface,
-            LightModeColors.lightSurface.withValues(alpha: 0.95),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.05),
-            blurRadius: 30,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
-          width: 1.5,
-        ),
+  /// Keeps the reading column at a comfortable measure on tablets.
+  Widget _column(Widget child) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: child,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Cover Image
-              if (widget.formation.coverImage != null)
-                Container(
-                  height: 220,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
+    );
+  }
+
+  /// The cover as the page's hero — or the aurora when the formation has
+  /// none — with the title sheet overlapping its bottom edge.
+  Widget _buildFormationHeader(double heroHeight) {
+    return Stack(
+      children: [
+        // Cover Image
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(AppRadii.xl),
+          ),
+          child: SizedBox(
+            height: heroHeight,
+            width: double.infinity,
+            child: widget.formation.coverImage != null
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: widget.formation.coverImage!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const SizedBox.expand(
+                          child: Shimmer(child: SkeletonBox(radius: 0)),
+                        ),
+                        errorWidget: (context, url, error) =>
+                            const SizedBox.expand(
+                              child: AuroraBackground(animate: false),
+                            ),
                       ),
+                      // Play icon for video indication
+                      if (widget.formation.hasVideo)
+                        const Positioned(
+                          right: 20,
+                          bottom: _sheetOverlap + 14,
+                          child: _PlayBadge(),
+                        ),
                     ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
+                  )
+                : const AuroraBackground(),
+          ),
+        ),
+
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, heroHeight - _sheetOverlap, 16, 0),
+          child: _column(
+            // Frosted for real: this pane floats over the picture.
+            SoftCard(
+              blur: Glass.frost,
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              child: Entrance(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // What it is and when it runs
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        CachedNetworkImage(
-                          imageUrl: widget.formation.coverImage!,
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            height: 220,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.grey.shade200,
-                                  Colors.grey.shade100,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  LightModeColors.novoPharmaBlue,
-                                ),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            height: 220,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.grey.shade200,
-                                  Colors.grey.shade100,
-                                ],
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.image_not_supported_outlined,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
-                          ),
+                        const TonePill(
+                          label: 'Formation',
+                          icon: Icons.school_rounded,
                         ),
-                        // Gradient overlay
-                        Container(
-                          height: 220,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.1),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
+                        if (widget.formation.startDate != null)
+                          TonePill(
+                            label: widget.formation.formattedStartDate,
+                            tone: Tone.mint,
+                            icon: Icons.calendar_today_rounded,
                           ),
-                        ),
-                        // Play icon for video indication
-                        if (widget.formation.hasVideo)
-                          Positioned(
-                            top: 16,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Icon(
-                                Icons.play_arrow,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
+                        if (widget.formation.endDate != null)
+                          TonePill(
+                            label: 'Fin: ${widget.formation.formattedEndDate}',
+                            tone: _quietTone,
+                            icon: Icons.event_available_rounded,
                           ),
                       ],
                     ),
-                  ),
-                ),
-              const SizedBox(height: 20),
+                    const SizedBox(height: 14),
 
-              // Title and metadata
-              Text(
-                widget.formation.title,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: LightModeColors.dashboardTextPrimary,
-                  letterSpacing: -0.5,
-                  height: 1.2,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Metadata row with enhanced styling
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: LightModeColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.person_outline,
-                        size: 16,
-                        color: LightModeColors.warning,
-                      ),
+                    // Title and metadata
+                    Text(
+                      widget.formation.title,
+                      style: AppText.display(size: 26, height: 1.12),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Par ${widget.formation.author ?? 'N/A'}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: LightModeColors.dashboardTextSecondary,
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.person_rounded,
+                          size: 16,
+                          color: AppColors.textFaint,
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Par ${widget.formation.author ?? 'N/A'}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.label(letterSpacing: 0),
+                          ),
+                        ),
+                      ],
                     ),
-                    if (widget.formation.startDate != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.success.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.calendar_today_outlined,
-                              size: 14,
-                              color: LightModeColors.success,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              widget.formation.formattedStartDate,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: LightModeColors.success,
-                              ),
-                            ),
-                          ],
-                        ),
+
+                    // Tags
+                    if (widget.formation.tags.isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      Text(
+                        'Catégories',
+                        style: AppText.label(letterSpacing: 0),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: widget.formation.tags.map((tag) {
+                          return TonePill(label: tag, tone: _quietTone);
+                        }).toList(),
                       ),
                     ],
                   ],
                 ),
               ),
-
-              if (widget.formation.endDate != null) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.event_available,
-                      size: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Fin: ${widget.formation.formattedEndDate}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: LightModeColors.dashboardTextSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-
-              // Tags
-              if (widget.formation.tags.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                const Text(
-                  'Catégories',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: LightModeColors.dashboardTextPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: widget.formation.tags.map((tag) {
-                    final colors = [
-                      [const Color(0xFF667EEA), const Color(0xFF764BA2)],
-                      [const Color(0xFFF093FB), const Color(0xFFF5576C)],
-                      [const Color(0xFF4FACFE), const Color(0xFF00F2FE)],
-                      [const Color(0xFF43E97B), const Color(0xFF38F9D7)],
-                      [const Color(0xFFFA709A), const Color(0xFFFEE140)],
-                    ];
-                    final colorIndex = tag.hashCode % colors.length;
-
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: colors[colorIndex],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(25),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors[colorIndex][0].withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        tag,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: LightModeColors.lightOnPrimary,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -483,103 +342,81 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         .length;
     final progress = completedSteps / _steps.length;
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            LightModeColors.lightSurface,
-            LightModeColors.lightSurface.withValues(alpha: 0.9),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: _column(
+        SoftCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Progression',
+                      style: AppText.display(size: 18),
+                    ),
+                  ),
+                  TonePill(
+                    label: '$completedSteps/${_steps.length} étapes',
+                    tone: Tone.mint,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              CapsuleProgress(
+                value: progress,
+                tone: progress < 1.0 ? Tone.indigo : Tone.mint,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                progress == 1.0
+                    ? 'Formation terminée! 🎉'
+                    : '${(progress * 100).toInt()}% complété',
+                style: AppText.display(
+                  size: 15,
+                  weight: FontWeight.w600,
+                  color: progress == 1.0
+                      ? AppColors.mintDeep
+                      : AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
-        ],
-        border: Border.all(
-          color: LightModeColors.lightSurfaceVariant,
-          width: 1,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  /// The formation as a sequence: numbered markers joined by a line, mint
+  /// once a step is done, indigo on the step that comes next.
+  Widget _buildFormationSteps() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 26, 16, 0),
+      child: _column(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Progression',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2D3748),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        LightModeColors.success,
-                        LightModeColors.success.withValues(alpha: 0.8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                const TintIcon(icon: Icons.school_rounded, size: 36),
+                const SizedBox(width: 12),
+                Expanded(
                   child: Text(
-                    '$completedSteps/${_steps.length} étapes',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    'Étapes de formation',
+                    style: AppText.display(size: 20),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Container(
-              height: 12,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    progress < 1.0
-                        ? LightModeColors.novoPharmaBlue
-                        : LightModeColors.success,
-                  ),
-                  minHeight: 12,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              progress == 1.0
-                  ? 'Formation terminée! 🎉'
-                  : '${(progress * 100).toInt()}% complété',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: progress == 1.0
-                    ? LightModeColors.success
-                    : LightModeColors.dashboardTextSecondary,
+            const SizedBox(height: 14),
+            SoftCard(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  for (var index = 0; index < _steps.length; index++)
+                    _buildStepRow(index),
+                ],
               ),
             ),
           ],
@@ -588,235 +425,119 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
     );
   }
 
-  Widget _buildFormationSteps() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, Colors.white.withValues(alpha: 0.95)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildStepRow(int index) {
+    final step = _steps[index];
+    final isCompleted = _stepCompletions[index];
+    final isActive = index == _currentStep;
+    final isLast = index == _steps.length - 1;
+
+    return Pressable(
+      onTap: step.onTap,
+      pressedScale: 0.98,
+      child: AnimatedContainer(
+        duration: AppMotion.medium,
+        curve: AppMotion.emphasized,
+        padding: const EdgeInsets.fromLTRB(10, 10, 6, 0),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.indigoTint.withValues(alpha: 0.75)
+              : AppColors.indigoTint.withValues(alpha: 0),
+          borderRadius: BorderRadius.circular(AppRadii.md),
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        LightModeColors.warning,
-                        LightModeColors.warning.withValues(alpha: 0.8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Numbered marker, and the line down to the next one.
+              Column(
+                children: [
+                  _StepMarker(
+                    number: index + 1,
+                    completed: isCompleted,
+                    active: isActive,
                   ),
-                  child: const Icon(
-                    Icons.school_outlined,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Text(
-                    'Étapes de formation',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF2D3748),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _steps.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final step = _steps[index];
-                final isCompleted = _stepCompletions[index];
-                final isActive = index == _currentStep;
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: InkWell(
-                    onTap: step.onTap,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: isActive
-                            ? LinearGradient(
-                                colors: [
-                                  LightModeColors.lightwarning.withValues(alpha: 0.1),
-                                  LightModeColors.lightwarning.withValues(
-                                    alpha: 0.05,
-                                  ),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : LinearGradient(
-                                colors: [
-                                  LightModeColors.lightSurfaceVariant,
-                                  LightModeColors.lightSurface,
-                                ],
-                              ),
-                        border: Border.all(
-                          color: isActive
-                              ? LightModeColors.lightwarning.withValues(alpha: 0.3)
-                              : LightModeColors.lightSurfaceVariant,
-                          width: 1.5,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          if (isActive)
-                            BoxShadow(
-                              color: LightModeColors.lightwarning.withValues(
-                                alpha: 0.1,
-                              ),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                  Expanded(
+                    child: isLast
+                        ? const SizedBox.shrink()
+                        : Container(
+                            width: 2,
+                            margin: const EdgeInsets.only(top: 4),
+                            decoration: BoxDecoration(
+                              color: isCompleted
+                                  ? AppColors.mint
+                                  : AppColors.lineStrong,
+                              borderRadius: BorderRadius.circular(2),
                             ),
-                        ],
+                          ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(width: 14),
+
+              // Step Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 1, bottom: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        step.title,
+                        style: AppText.display(size: 16.5, height: 1.15),
                       ),
-                      child: Row(
+                      const SizedBox(height: 5),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Step Icon with enhanced design
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: isCompleted
-                                  ? const LinearGradient(
-                                      colors: [
-                                        LightModeColors.success,
-                                        LightModeColors.success,
-                                      ],
-                                    )
-                                  : isActive
-                                  ? LinearGradient(
-                                      colors: [
-                                        LightModeColors.lightwarning,
-                                        LightModeColors.warning.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                      ],
-                                    )
-                                  : LinearGradient(
-                                      colors: [
-                                        Colors.grey.shade300,
-                                        Colors.grey.shade400,
-                                      ],
-                                    ),
-                              shape: BoxShape.circle,
-                            ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 1),
                             child: Icon(
-                              isCompleted ? Icons.check_rounded : step.icon,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-
-                          const SizedBox(width: 20),
-
-                          // Step Content
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${index + 1} - ${step.title}',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: isActive
-                                        ? LightModeColors.warning
-                                        : const Color(0xFF2D3748),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  step.description,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                if (isCompleted) ...[
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Text(
-                                      'Terminé',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: LightModeColors.success,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-
-                          // Arrow Icon with enhanced styling
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? LightModeColors.warning.withValues(
-                                      alpha: 0.1,
-                                    )
-                                  : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.arrow_forward_ios_rounded,
+                              step.icon,
                               size: 16,
                               color: isActive
-                                  ? LightModeColors.warning
-                                  : Colors.grey.shade500,
+                                  ? AppColors.indigo
+                                  : AppColors.textFaint,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              step.description,
+                              style: AppText.body(
+                                size: 14,
+                                color: AppColors.textMuted,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
+                      if (isCompleted) ...[
+                        const SizedBox(height: 8),
+                        const TonePill(
+                          label: 'Terminé',
+                          tone: Tone.mint,
+                          icon: Icons.check_rounded,
+                        ),
+                      ],
+                    ],
                   ),
-                );
-              },
-            ),
-          ],
+                ),
+              ),
+
+              // Arrow Icon
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Center(
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 24,
+                    color: isActive ? AppColors.indigo : AppColors.textFaint,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -830,8 +551,8 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
       attachments.add({
         'title': pdfFile.name,
         'type': 'PDF • ${pdfFile.formattedSize}',
-        'icon': Icons.picture_as_pdf,
-        'color': Colors.red,
+        'icon': Icons.picture_as_pdf_rounded,
+        'tone': Tone.coral,
         'file': pdfFile,
         'onTap': () => _openPDF(pdfFile),
       });
@@ -841,9 +562,9 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
     for (final imageFile in widget.formation.imageFiles) {
       attachments.add({
         'title': imageFile.name,
-        'type': 'IMAGE • ${imageFile.formattedSize}',
-        'icon': Icons.image,
-        'color': Colors.green,
+        'type': 'Image • ${imageFile.formattedSize}',
+        'icon': Icons.image_rounded,
+        'tone': Tone.mint,
         'file': imageFile,
         'onTap': () => _openImage(imageFile),
       });
@@ -851,21 +572,21 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
 
     // Add other file attachments
     for (final otherFile in widget.formation.otherFiles) {
-      IconData icon = Icons.attachment;
-      Color color = Colors.grey;
+      IconData icon = Icons.attachment_rounded;
+      Tone tone = _quietTone;
 
       if (otherFile.name.toLowerCase().contains('clinical') ||
           otherFile.name.toLowerCase().contains('study') ||
           otherFile.name.toLowerCase().contains('etude')) {
-        icon = Icons.science;
-        color = Colors.blue;
+        icon = Icons.science_rounded;
+        tone = Tone.indigo;
       }
 
       attachments.add({
         'title': otherFile.name,
         'type': '${otherFile.type.toUpperCase()} • ${otherFile.formattedSize}',
         'icon': icon,
-        'color': color,
+        'tone': tone,
         'file': otherFile,
         'onTap': () => _openAttachment(otherFile),
       });
@@ -873,63 +594,31 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
 
     if (attachments.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, Colors.white.withValues(alpha: 0.95)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 26, 16, 0),
+      child: _column(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade400, Colors.orange.shade500],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.attachment_outlined,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                const TintIcon(
+                  icon: Icons.attachment_rounded,
+                  tone: Tone.peach,
+                  size: 36,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Pièces jointes',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2D3748),
-                        ),
-                      ),
+                      Text('Pièces jointes', style: AppText.display(size: 20)),
+                      const SizedBox(height: 2),
                       Text(
                         '${attachments.length} fichier${attachments.length > 1 ? 's' : ''} disponible${attachments.length > 1 ? 's' : ''}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
+                        style: AppText.body(
+                          size: 13.5,
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ],
@@ -937,116 +626,55 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
             ...attachments.map(
-              (attachment) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: attachment['onTap'],
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.grey.shade50, Colors.white],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+              (attachment) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SoftCard(
+                  radius: AppRadii.md,
+                  padding: const EdgeInsets.all(12),
+                  semanticLabel: attachment['title'] as String,
+                  onTap: attachment['onTap'] as VoidCallback,
+                  child: Row(
+                    children: [
+                      TintIcon(
+                        icon: attachment['icon'] as IconData,
+                        tone: attachment['tone'] as Tone,
+                        size: 48,
                       ),
-                      border: Border.all(
-                        color: Colors.grey.shade200,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                attachment['color'],
-                                (attachment['color'] as Color).withValues(
-                                  alpha: 0.8,
-                                ),
-                              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              attachment['title'] as String,
+                              style: AppText.body(
+                                size: 15,
+                                weight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (attachment['color'] as Color)
-                                    .withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
+                            const SizedBox(height: 6),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: TonePill(
+                                label: attachment['type'] as String,
+                                tone: attachment['tone'] as Tone,
                               ),
-                            ],
-                          ),
-                          child: Icon(
-                            attachment['icon'],
-                            color: Colors.white,
-                            size: 24,
-                          ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                attachment['title'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                  color: Color(0xFF2D3748),
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: (attachment['color'] as Color)
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  attachment['type'],
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: attachment['color'],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.download_outlined,
-                            size: 20,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.download_rounded,
+                        size: 22,
+                        color: AppColors.textFaint,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1120,218 +748,130 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.7),
+      barrierColor: AppColors.ink.withValues(alpha: 0.55),
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        child: Container(
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+        child: Glass(
+          blur: Glass.frost,
+          borderRadius: BorderRadius.circular(AppRadii.xl),
           width: double.infinity,
           height: MediaQuery.of(context).size.height * 0.8,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Colors.white.withValues(alpha: 0.95)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              ),
-            ],
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Column(
-              children: [
-                // Header with gradient
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        LightModeColors.novoPharmaBlue,
-                        LightModeColors.novoPharmaBlue.withValues(alpha: 0.8),
-                      ],
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 14, 8),
+                child: Row(
+                  children: [
+                    const TintIcon(
+                      icon: Icons.video_library_rounded,
+                      size: 40,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.video_library,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Vidéos de formation',
+                        style: AppText.display(size: 20),
                       ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Text(
-                          'Vidéos de formation',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    _QuietIconButton(
+                      icon: Icons.close_rounded,
+                      tooltip:
+                          MaterialLocalizations.of(context).closeButtonTooltip,
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                // Content area
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: ListView.builder(
-                      itemCount: videoFiles.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: MediaQuery.of(context).size.width * 0.1,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Colors.white, Colors.grey.shade50],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (widget.formation.coverImage != null)
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: CachedNetworkImage(
+              ),
+              // Content area
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                  itemCount: videoFiles.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: SoftCard(
+                        padding: EdgeInsets.zero,
+                        shadow: false,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(
+                              height: 150,
+                              child: widget.formation.coverImage != null
+                                  ? CachedNetworkImage(
                                       imageUrl: widget.formation.coverImage!,
                                       width: double.infinity,
                                       height: 150,
                                       fit: BoxFit.cover,
-                                      placeholder: (context, url) => Container(
-                                        width: double.infinity,
-                                        height: 150,
-                                        color: Colors.grey.shade200,
-                                        child: const Icon(Icons.video_library),
-                                      ),
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    width: double.infinity,
-                                    height: 150,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.video_library,
-                                      size: 48,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                const SizedBox(height: 8),
-                                Column(
-                                  children: [
-                                    Text(
-                                      videoFiles[index].name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      videoFiles[index].formattedSize,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 20),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () =>
-                                            _playVideo(videoFiles[index]),
-                                        icon: const Icon(
-                                          Icons.play_arrow_rounded,
-                                          size: 24,
-                                        ),
-                                        label: const Text(
-                                          'Regarder la vidéo',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              LightModeColors.novoPharmaBlue,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 16,
-                                            horizontal: 24,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
+                                      placeholder: (context, url) =>
+                                          const SizedBox.expand(
+                                            child: Shimmer(
+                                              child: SkeletonBox(radius: 0),
                                             ),
                                           ),
-                                          elevation: 4,
+                                    )
+                                  : const ColoredBox(
+                                      color: AppColors.indigoTint,
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.video_library_rounded,
+                                          size: 44,
+                                          color: AppColors.lineStrong,
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ],
                             ),
-                          ),
-                        );
-                      },
-                    ), // ListView.builder
-                  ), // Padding
-                ), // Expanded
-              ],
-            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                14,
+                                16,
+                                16,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    videoFiles[index].name,
+                                    style: AppText.display(
+                                      size: 16.5,
+                                      height: 1.15,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    videoFiles[index].formattedSize,
+                                    style: AppText.display(
+                                      size: 13,
+                                      weight: FontWeight.w600,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  PrimaryButton(
+                                    label: 'Regarder la vidéo',
+                                    icon: Icons.play_arrow_rounded,
+                                    height: 50,
+                                    onPressed: () =>
+                                        _playVideo(videoFiles[index]),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ), // ListView.builder
+              ), // Expanded
+            ],
           ),
         ),
       ),
@@ -1371,8 +911,9 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
   void _showVideoPlayer(MediaFile videoFile) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.9),
+      barrierColor: AppColors.ink.withValues(alpha: 0.9),
       builder: (context) => Dialog.fullscreen(
+        backgroundColor: AppColors.ink,
         child: VideoPlayerDialog(
           videoUrl: videoFile.url,
           videoTitle: videoFile.name,
@@ -1386,26 +927,47 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
   }
 
   void _showContent() {
-    showDialog(
+    showGlassDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(widget.formation.title),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: SingleChildScrollView(child: Text(widget.formation.content)),
+      child: Builder(
+        builder: (context) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.formation.title,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.display(size: 21),
+            ),
+            const SizedBox(height: 14),
+            // The lesson itself, at a reading size. It takes what height the
+            // screen can spare and scrolls beyond that.
+            Flexible(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    widget.formation.content,
+                    style: AppText.body(size: 16, height: 1.55),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            PrimaryButton(
+              label: 'Fermer',
+              onPressed: () {
+                Navigator.of(context).pop();
+                _completeStep(
+                  _steps.indexWhere((s) => s.title == 'Contenu de formation'),
+                );
+              },
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _completeStep(
-                _steps.indexWhere((s) => s.title == 'Contenu de formation'),
-              );
-            },
-            child: const Text('Fermer'),
-          ),
-        ],
       ),
     );
   }
@@ -1427,7 +989,9 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (context) => const Center(
+          child: CapsuleLoader(left: Colors.white, right: AppColors.mint),
+        ),
       );
 
       final quizProvider = Provider.of<QuizProvider>(context, listen: false);
@@ -1472,45 +1036,62 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         return;
       }
 
-      showDialog(
+      showGlassDialog<void>(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Quiz de validation'),
-            content: Column(
+        child: Builder(
+          builder: (BuildContext context) {
+            return Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Formation: ${widget.formation.title}'),
+                Row(
+                  children: [
+                    const BlisterIcon(
+                      icon: Icons.quiz_rounded,
+                      tone: Tone.amber,
+                      size: 48,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Quiz de validation',
+                        style: AppText.display(size: 21),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Formation: ${widget.formation.title}',
+                  style: AppText.body(size: 15, weight: FontWeight.w600),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Condition de réussite: minimum ${quiz.effectiveMinCorrectAnswers} bonnes réponses sur ${quiz.questions.length}',
+                  style: AppText.body(size: 14.5, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Êtes-vous prêt(e) à commencer le quiz de validation ?',
+                  style: AppText.body(size: 15),
+                ),
+                const SizedBox(height: 22),
+                PrimaryButton(
+                  label: 'Commencer',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _navigateToQuiz(quiz);
+                  },
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Annuler'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Annuler'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _navigateToQuiz(quiz);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: LightModeColors.novoPharmaBlue,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Commencer'),
-              ),
-            ],
-          );
-        },
+            );
+          },
+        ),
       );
     } catch (e) {
       _showSnackBar('Erreur lors du chargement du quiz: $e');
@@ -1693,8 +1274,160 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: LightModeColors.novoPharmaBlue,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+/// Back button and screen name in one smoked-glass pill. It stays put while
+/// the page scrolls, so it is frosted and dark enough to read over the
+/// cover and over the page alike.
+class _GlassCrumb extends StatelessWidget {
+  final String label;
+  final VoidCallback onBack;
+
+  const _GlassCrumb({required this.label, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Glass(
+      style: GlassStyle.smoked,
+      blur: Glass.frost,
+      borderRadius: BorderRadius.circular(AppRadii.pill),
+      padding: const EdgeInsets.fromLTRB(4, 4, 18, 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GlassIconButton(
+            icon: Icons.arrow_back_rounded,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onTap: onBack,
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label(
+                size: 14,
+                weight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small smoked-glass disc that marks a cover as playable.
+class _PlayBadge extends StatelessWidget {
+  const _PlayBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.ink.withValues(alpha: 0.62),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.38)),
+      ),
+      child: const Icon(
+        Icons.play_arrow_rounded,
+        color: Colors.white,
+        size: 22,
+      ),
+    );
+  }
+}
+
+/// A step's place in the sequence: mint once it is done, indigo while it
+/// is the one to do next, quiet until then.
+class _StepMarker extends StatelessWidget {
+  final int number;
+  final bool completed;
+  final bool active;
+
+  const _StepMarker({
+    required this.number,
+    required this.completed,
+    required this.active,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Gradient? gradient = completed
+        ? AppGradients.mint
+        : active
+        ? AppGradients.indigo
+        : null;
+    final Color foreground = completed
+        ? AppColors.ink
+        : active
+        ? Colors.white
+        : AppColors.textMuted;
+
+    return AnimatedContainer(
+      duration: AppMotion.medium,
+      curve: AppMotion.emphasized,
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: gradient,
+        color: gradient == null ? Colors.white.withValues(alpha: 0.8) : null,
+        border: gradient == null
+            ? Border.all(color: AppColors.lineStrong, width: 1.4)
+            : null,
+        boxShadow: completed
+            ? AppShadows.glow(AppColors.mint, strength: 0.28)
+            : const [],
+      ),
+      child: Text(
+        '$number',
+        style: AppText.display(size: 16, color: foreground),
+      ),
+    );
+  }
+}
+
+/// A round icon button for light glass, where [GlassIconButton]'s white
+/// glyph would vanish.
+class _QuietIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _QuietIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Pressable(
+        onTap: onTap,
+        pressedScale: 0.9,
+        semanticLabel: tooltip,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.ink.withValues(alpha: 0.06),
+          ),
+          child: Icon(icon, color: AppColors.text, size: 22),
+        ),
       ),
     );
   }

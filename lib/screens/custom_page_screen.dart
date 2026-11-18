@@ -2,9 +2,10 @@ import 'package:novopharma/screens/product_screen.dart';
 import 'package:novopharma/widgets/app_network_image.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:novopharma/models/custom_page_model.dart';
 import 'package:novopharma/services/custom_page_service.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -205,114 +206,48 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
     );
   }
 
+  // How far the title sheet rides up over the hero's bottom edge.
+  static const double _sheetOverlap = 48;
+
   Widget _buildScaffold(Widget? youtubePlayerWidget) {
+    // While the page loads (or fails) there is no imagery yet, so its name
+    // sits in an ink bar. Once it is ready the gallery becomes the hero and
+    // the title moves onto the glass sheet below it.
+    final showBar = _isLoading || _errorMessage != null;
     return Scaffold(
-      backgroundColor: LightModeColors.lightSurfaceVariant,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: _isLoading
-                  ? _buildLoadingWidget()
-                  : _errorMessage != null
-                      ? _buildErrorWidget()
-                      : _buildMainContent(youtubePlayerWidget),
-            ),
-          ],
-        ),
+      backgroundColor: AppColors.canvas,
+      appBar: showBar ? _buildHeader(context) : null,
+      body: AppBackground(
+        child: _isLoading
+            ? _buildLoadingWidget()
+            : _errorMessage != null
+                ? _buildErrorWidget()
+                : _buildMainContent(youtubePlayerWidget),
       ),
     );
   }
 
-  // Header Gradient Bar
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LightModeColors.novoPharmaBlue,
-            LightModeColors.novoPharmaBlue.withValues(alpha: 0.85),
-            LightModeColors.lightSecondary,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _page?.title ?? 'Page Personnalisée',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: -0.3,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (_page?.marqueName != null && _page!.marqueName!.isNotEmpty)
-                  Text(
-                    _page!.marqueName!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  // Ink bar shown until the page's own hero is ready
+  PreferredSizeWidget _buildHeader(BuildContext context) {
+    return InkAppBar(
+      title: _page?.title ?? 'Page Personnalisée',
+      subtitle: _page?.marqueName != null && _page!.marqueName!.isNotEmpty
+          ? _page!.marqueName!
+          : null,
+      onBack: () => Navigator.of(context).pop(),
     );
   }
 
   Widget _buildLoadingWidget() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: LightModeColors.lightPrimary),
-          SizedBox(height: 16),
+          const CapsuleLoader(),
+          const SizedBox(height: 16),
           Text(
             "Chargement de la page...",
-            style: TextStyle(
-              color: LightModeColors.dashboardTextSecondary,
-              fontSize: 14,
-            ),
+            style: AppText.body(size: 14, color: AppColors.textMuted),
           ),
         ],
       ),
@@ -320,40 +255,221 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
   }
 
   Widget _buildErrorWidget() {
+    return EmptyState(
+      icon: Icons.info_outline_rounded,
+      tone: Tone.coral,
+      title: _errorMessage ?? "Une erreur s'est produite",
+      actionLabel: "Réessayer",
+      onAction: _fetchPageData,
+    );
+  }
+
+  /// Keeps the reading column at a comfortable measure on tablets.
+  Widget _column(Widget child) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildMainContent(Widget? youtubePlayerWidget) {
+    final page = _page!;
+    final media = MediaQuery.of(context);
+    final hasGallery = page.imageUrls.isNotEmpty;
+    final heroHeight = media.padding.top + (hasGallery ? 250.0 : 140.0);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.only(bottom: media.padding.bottom + 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. Hero: the Image Gallery Carousel (or the aurora when
+                  // the page has no images), with the title sheet — Logo,
+                  // Marque, Title — overlapping its bottom edge.
+                  Stack(
+                    children: [
+                      if (hasGallery)
+                        _buildGallerySection(page, heroHeight)
+                      else
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(AppRadii.xl),
+                          ),
+                          child: SizedBox(
+                            height: heroHeight,
+                            width: double.infinity,
+                            child: const AuroraBackground(),
+                          ),
+                        ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          heroHeight - _sheetOverlap,
+                          16,
+                          0,
+                        ),
+                        child: _column(_buildHeroCard(page)),
+                      ),
+                    ],
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+                    child: _column(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 2. Main Rich Text Description Card
+                          _buildDescriptionCard(page),
+
+                          // 3. Video Player Card
+                          if (page.videoUrl != null &&
+                              page.videoUrl!.isNotEmpty) ...[
+                            const SizedBox(height: 26),
+                            _buildVideoSection(page, youtubePlayerWidget),
+                          ],
+
+                          // 4. PDF Attachment Card
+                          if (page.attachmentUrl != null &&
+                              page.attachmentUrl!.isNotEmpty) ...[
+                            const SizedBox(height: 26),
+                            _buildPdfSection(page),
+                          ],
+
+                          // 5. Products Section
+                          if (page.products.isNotEmpty) ...[
+                            const SizedBox(height: 26),
+                            _buildProductsSection(page.products),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // An ink mist behind the status bar, so its icons stay readable
+          // once the page has scrolled up underneath them.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: media.padding.top + 28,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.ink.withValues(alpha: 0.5),
+                      AppColors.ink.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // The way back, floating over the hero on smoked glass.
+          Positioned(
+            top: 0,
+            left: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Glass(
+                  style: GlassStyle.smoked,
+                  blur: Glass.frost,
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  child: GlassIconButton(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip:
+                        MaterialLocalizations.of(context).backButtonTooltip,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Title sheet: Logo, Marque & Title on frosted glass
+  Widget _buildHeroCard(CustomPageModel page) {
+    final hasLogo = page.logoUrl != null && page.logoUrl!.isNotEmpty;
+
+    // Frosted for real: this pane floats over the picture.
+    return SoftCard(
+      blur: Glass.frost,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      child: Entrance(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                shape: BoxShape.circle,
+            if (hasLogo) ...[
+              Container(
+                height: 64,
+                width: 64,
+                margin: const EdgeInsets.only(right: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadii.sm + 2),
+                  border: Border.all(color: AppColors.line),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadii.sm + 2),
+                  child: CachedNetworkImage(
+                    imageUrl: page.logoUrl!,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const SizedBox.expand(
+                      child: Shimmer(child: SkeletonBox(radius: 0)),
+                    ),
+                    errorWidget: (context, url, error) => const Icon(
+                      Icons.business_rounded,
+                      size: 30,
+                      color: AppColors.lineStrong,
+                    ),
+                  ),
+                ),
               ),
-              child: Icon(Icons.info_outline_rounded, size: 50, color: Colors.red.shade400),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _errorMessage ?? "Une erreur s'est produite",
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: LightModeColors.dashboardTextPrimary,
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (page.marqueName != null &&
+                      page.marqueName!.isNotEmpty) ...[
+                    // Scales down rather than overflowing on a long name.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: TonePill(
+                        label: page.marqueName!,
+                        icon: Icons.local_offer_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  Text(
+                    page.title,
+                    style: AppText.display(size: 24, height: 1.12),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _fetchPageData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LightModeColors.lightPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text("Réessayer", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -361,183 +477,28 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
     );
   }
 
-  Widget _buildMainContent(Widget? youtubePlayerWidget) {
-    final page = _page!;
+  // Gallery Section — the page's hero
+  Widget _buildGallerySection(CustomPageModel page, double height) {
+    final hasTitle =
+        page.galleryTitle != null && page.galleryTitle!.trim().isNotEmpty;
+    final topInset = MediaQuery.paddingOf(context).top;
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Hero Card: Logo, Marque, Title & Chips
-          _buildHeroCard(page),
-
-          const SizedBox(height: 18),
-
-          // 2. Image Gallery Carousel
-          if (page.imageUrls.isNotEmpty) ...[
-            _buildGallerySection(page),
-            const SizedBox(height: 20),
-          ],
-
-          // 3. Main Rich Text Description Card
-          _buildDescriptionCard(page),
-
-          const SizedBox(height: 20),
-
-          // 4. Video Player Card
-          if (page.videoUrl != null && page.videoUrl!.isNotEmpty) ...[
-            _buildVideoSection(page, youtubePlayerWidget),
-            const SizedBox(height: 20),
-          ],
-
-          // 5. PDF Attachment Card
-          if (page.attachmentUrl != null && page.attachmentUrl!.isNotEmpty) ...[
-            _buildPdfSection(page),
-            const SizedBox(height: 20),
-          ],
-
-          // 6. Products Section
-          if (page.products.isNotEmpty) ...[
-            _buildProductsSection(page.products),
-            const SizedBox(height: 20),
-          ],
-        ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        bottom: Radius.circular(AppRadii.xl),
       ),
-    );
-  }
-
-  // Hero Header Card Component
-  Widget _buildHeroCard(CustomPageModel page) {
-    final hasLogo = page.logoUrl != null && page.logoUrl!.isNotEmpty;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (hasLogo) ...[
-                Container(
-                  height: 64,
-                  width: 64,
-                  margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: CachedNetworkImage(
-                      imageUrl: page.logoUrl!,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.business, size: 30, color: Colors.grey),
-                    ),
-                  ),
-                ),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (page.marqueName != null && page.marqueName!.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.local_offer, size: 12, color: LightModeColors.novoPharmaBlue),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                page.marqueName!,
-                                style: const TextStyle(
-                                  color: LightModeColors.novoPharmaBlue,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    Text(
-                      page.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: LightModeColors.dashboardTextPrimary,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Gallery Section
-  Widget _buildGallerySection(CustomPageModel page) {
-    final hasTitle = page.galleryTitle != null && page.galleryTitle!.trim().isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (hasTitle) ...[
-          _buildSectionHeader(
-            title: page.galleryTitle!.trim(),
-            icon: Icons.collections_rounded,
-          ),
-          const SizedBox(height: 10),
-        ],
-        Stack(
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: Stack(
           alignment: Alignment.center,
           children: [
             CarouselSlider.builder(
               carouselController: _carouselController,
               itemCount: page.imageUrls.length,
               options: CarouselOptions(
-                height: 250,
-                viewportFraction: 0.95,
-                enlargeCenterPage: true,
+                height: height,
+                viewportFraction: 1,
                 enableInfiniteScroll: page.imageUrls.length > 1,
                 onPageChanged: (index, reason) {
                   setState(() {
@@ -547,38 +508,25 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
               ),
               itemBuilder: (context, index, realIndex) {
                 final imageUrl = page.imageUrls[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: AppNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 800,
-                      memCacheHeight: 550,
-                      errorIcon: Icons.broken_image_rounded,
-                      errorIconSize: 44,
-                    ),
-                  ),
+                return AppNetworkImage(
+                  imageUrl: imageUrl,
+                  width: double.infinity,
+                  height: height,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 800,
+                  memCacheHeight: 550,
+                  errorIcon: Icons.broken_image_rounded,
+                  errorIconSize: 44,
                 );
               },
             ),
 
-            // Animated Arrow Navigation Buttons (Left & Right)
+            // Arrow Navigation Buttons (Left & Right)
             if (page.imageUrls.length > 1) ...[
               Positioned(
-                left: 12,
+                left: 8,
                 child: _AnimatingArrowButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
+                  icon: Icons.chevron_left_rounded,
                   isLeft: true,
                   onPressed: () {
                     _carouselController.previousPage(
@@ -589,9 +537,9 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                 ),
               ),
               Positioned(
-                right: 12,
+                right: 8,
                 child: _AnimatingArrowButton(
-                  icon: Icons.arrow_forward_ios_rounded,
+                  icon: Icons.chevron_right_rounded,
                   isLeft: false,
                   onPressed: () {
                     _carouselController.nextPage(
@@ -606,47 +554,103 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
             // Top Right Indicator Chip (1/N)
             if (page.imageUrls.length > 1)
               Positioned(
-                top: 12,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.65),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                top: topInset + 16,
+                right: 16,
+                child: _buildSmokedChip(
                   child: Text(
                     '${_currentCarouselIndex + 1} / ${page.imageUrls.length}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppText.display(size: 13, color: Colors.white),
+                  ),
+                ),
+              ),
+
+            // Caption and page dots, kept clear of the title sheet.
+            if (hasTitle || page.imageUrls.length > 1)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: _sheetOverlap + 12,
+                child: IgnorePointer(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasTitle)
+                        _buildSmokedChip(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.collections_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  page.galleryTitle!.trim(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppText.label(
+                                    weight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (hasTitle && page.imageUrls.length > 1)
+                        const SizedBox(height: 10),
+                      if (page.imageUrls.length > 1)
+                        Center(
+                          child: _buildSmokedChip(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: page.imageUrls.asMap().entries.map((
+                                entry,
+                              ) {
+                                final active =
+                                    _currentCarouselIndex == entry.key;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  width: active ? 18.0 : 6.0,
+                                  height: 6.0,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 2.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    color: Colors.white.withValues(
+                                      alpha: active ? 1.0 : 0.45,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
           ],
         ),
-        if (page.imageUrls.length > 1) ...[
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: page.imageUrls.asMap().entries.map((entry) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: _currentCarouselIndex == entry.key ? 20.0 : 8.0,
-                height: 8.0,
-                margin: const EdgeInsets.symmetric(horizontal: 3.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: LightModeColors.novoPharmaBlue.withValues(
-                    alpha: _currentCarouselIndex == entry.key ? 1.0 : 0.25,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ],
+      ),
+    );
+  }
+
+  /// A small ink pill for labels that sit on imagery.
+  Widget _buildSmokedChip({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.ink.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: child,
     );
   }
 
@@ -668,7 +672,10 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // Description Card Component
   Widget _buildDescriptionCard(CustomPageModel page) {
-    final hasTitle = page.descriptionTitle != null && page.descriptionTitle!.trim().isNotEmpty;
+    final hasTitle =
+        page.descriptionTitle != null &&
+        page.descriptionTitle!.trim().isNotEmpty;
+    final headingFamily = AppText.display().fontFamily;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,62 +685,56 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
             title: page.descriptionTitle!.trim(),
             icon: Icons.article_rounded,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
         ],
-        Container(
+        SizedBox(
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+          child: SoftCard(
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
             child: Html(
               data: _cleanHtml(page.description),
               onLinkTap: (url, _, __) async {
                 if (url != null && await canLaunchUrl(Uri.parse(url))) {
-                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                  await launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
                 }
               },
+              // Reading size: 16 on a 1.55 line, headings in the display face.
               style: {
                 "body": Style(
-                  fontSize: FontSize(15),
-                  color: LightModeColors.dashboardTextSecondary,
-                  lineHeight: const LineHeight(1.6),
+                  fontSize: FontSize(16),
+                  color: AppColors.text,
+                  lineHeight: const LineHeight(1.55),
                   margin: Margins.zero,
                   padding: HtmlPaddings.zero,
                 ),
                 "p": Style(
                   margin: Margins.only(bottom: 12),
-                  lineHeight: const LineHeight(1.6),
+                  lineHeight: const LineHeight(1.55),
                 ),
-                "span": Style(
-                  backgroundColor: Colors.transparent,
-                ),
+                "span": Style(backgroundColor: Colors.transparent),
                 "h1": Style(
-                  fontSize: FontSize(22),
-                  fontWeight: FontWeight.bold,
-                  color: LightModeColors.dashboardTextPrimary,
+                  fontSize: FontSize(24),
+                  fontWeight: FontWeight.w700,
+                  fontFamily: headingFamily,
+                  color: AppColors.text,
                 ),
                 "h2": Style(
-                  fontSize: FontSize(19),
-                  fontWeight: FontWeight.bold,
-                  color: LightModeColors.dashboardTextPrimary,
+                  fontSize: FontSize(21),
+                  fontWeight: FontWeight.w700,
+                  fontFamily: headingFamily,
+                  color: AppColors.text,
                 ),
                 "h3": Style(
-                  fontSize: FontSize(17),
-                  fontWeight: FontWeight.bold,
-                  color: LightModeColors.dashboardTextPrimary,
+                  fontSize: FontSize(18),
+                  fontWeight: FontWeight.w700,
+                  fontFamily: headingFamily,
+                  color: AppColors.text,
                 ),
                 "a": Style(
-                  color: LightModeColors.novoPharmaBlue,
+                  color: AppColors.indigo,
                   textDecoration: TextDecoration.underline,
                 ),
               },
@@ -746,55 +747,56 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   // Video Section Component
   Widget _buildVideoSection(CustomPageModel page, Widget? youtubePlayerWidget) {
-    final hasTitle = page.videoTitle != null && page.videoTitle!.trim().isNotEmpty;
+    final hasTitle =
+        page.videoTitle != null && page.videoTitle!.trim().isNotEmpty;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (hasTitle) ...[
           _buildSectionHeader(
             title: page.videoTitle!.trim(),
             icon: Icons.ondemand_video_rounded,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
         ],
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: !page.isVideoFile
-                ? (youtubePlayerWidget ??
-                    Container(
-                      height: 210,
-                      color: Colors.black,
-                      child: const Center(
-                        child: Text(
-                          "Impossible de charger la vidéo YouTube",
-                          style: TextStyle(color: Colors.white),
+        // Every state sits in the same ink glass frame; the YouTube player
+        // brings its own.
+        if (!page.isVideoFile)
+          youtubePlayerWidget ??
+              PlayerFrame(
+                child: SizedBox(
+                  height: 210,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        "Impossible de charger la vidéo YouTube",
+                        textAlign: TextAlign.center,
+                        style: AppText.body(
+                          size: 14.5,
+                          weight: FontWeight.w500,
+                          color: Colors.white,
                         ),
                       ),
-                    ))
-                : (_isVideoInitialized && _videoPlayerController != null
-                    ? _buildNativeVideoPlayer(_videoPlayerController!)
-                    : Container(
-                        height: 210,
-                        color: Colors.black,
-                        child: const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                      )),
+                    ),
+                  ),
+                ),
+              )
+        else
+          PlayerFrame(
+            child: _isVideoInitialized && _videoPlayerController != null
+                ? _buildNativeVideoPlayer(_videoPlayerController!)
+                : const SizedBox(
+                    height: 210,
+                    child: Center(
+                      child: CapsuleLoader(
+                        left: Colors.white,
+                        right: AppColors.mint,
+                      ),
+                    ),
+                  ),
           ),
-        ),
       ],
     );
   }
@@ -824,17 +826,21 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                   color: Colors.transparent,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: AppColors.ink.withValues(alpha: 0.55),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.38),
+                        ),
                       ),
                       child: Icon(
                         value.isPlaying
                             ? Icons.pause_rounded
                             : Icons.play_arrow_rounded,
                         color: Colors.white,
-                        size: 44,
+                        size: 36,
                       ),
                     ),
                   ),
@@ -846,14 +852,14 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.only(left: 14, right: 2),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.85),
-                        Colors.transparent,
+                        AppColors.ink.withValues(alpha: 0.88),
+                        AppColors.ink.withValues(alpha: 0),
                       ],
                     ),
                   ),
@@ -861,10 +867,10 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                     children: [
                       Text(
                         _formatDuration(position),
-                        style: const TextStyle(
+                        style: AppText.display(
+                          size: 12,
+                          weight: FontWeight.w600,
                           color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -872,28 +878,36 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                         child: VideoProgressIndicator(
                           controller,
                           allowScrubbing: true,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          colors: const VideoProgressColors(
-                            playedColor: LightModeColors.novoPharmaBlue,
-                            bufferedColor: Colors.white30,
-                            backgroundColor: Colors.white12,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          colors: VideoProgressColors(
+                            playedColor: AppColors.mintBright,
+                            bufferedColor: Colors.white.withValues(alpha: 0.38),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.18,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _formatDuration(duration),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        style: AppText.display(
+                          size: 12,
+                          weight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.78),
                         ),
                       ),
-                      const SizedBox(width: 4),
                       IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: const EdgeInsets.all(4),
-                        icon: const Icon(Icons.fullscreen_rounded, color: Colors.white, size: 20),
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.fullscreen_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                         onPressed: _openVideoDialog,
                       ),
                     ],
@@ -924,180 +938,156 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
     final hasTitle = page.pdfTitle != null && page.pdfTitle!.trim().isNotEmpty;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (hasTitle) ...[
           _buildSectionHeader(
             title: page.pdfTitle!.trim(),
             icon: Icons.picture_as_pdf_rounded,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
         ],
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                if (_isDownloadingPdf) ...[
-                  Container(
-                    height: 200,
-                    alignment: Alignment.center,
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: LightModeColors.novoPharmaBlue),
-                        SizedBox(height: 14),
-                        Text(
-                          "Chargement du document PDF...",
-                          style: TextStyle(
-                            color: LightModeColors.dashboardTextSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
+        SoftCard(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              if (_isDownloadingPdf) ...[
+                SizedBox(
+                  height: 200,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CapsuleLoader(),
+                      const SizedBox(height: 14),
+                      Text(
+                        "Chargement du document PDF...",
+                        style: AppText.body(
+                          size: 14,
+                          weight: FontWeight.w500,
+                          color: AppColors.textMuted,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ] else if (_localPdfPath != null) ...[
-                  Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: _openFullPdfViewer,
-                      child: Container(
-                        height: 380,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Stack(
-                            children: [
-                              PDFView(
-                                filePath: _localPdfPath,
-                                enableSwipe: false,
-                                swipeHorizontal: false,
-                                autoSpacing: true,
-                                pageFling: false,
-                                onRender: (pages) {
-                                  if (mounted) {
-                                    setState(() {
-                                      _pdfTotalPages = pages ?? 0;
-                                    });
-                                  }
-                                },
-                                onPageChanged: (page, total) {
-                                  if (mounted) {
-                                    setState(() {
-                                      _pdfCurrentPage = page ?? 0;
-                                      if (total != null) _pdfTotalPages = total;
-                                    });
-                                  }
-                                },
-                              ),
-                              Positioned.fill(
-                                child: Container(
-                                  color: Colors.transparent,
-                                ),
-                              ),
-                              if (_pdfTotalPages > 0)
-                                Positioned(
-                                  bottom: 12,
-                                  left: 0,
-                                  right: 0,
-                                  child: IgnorePointer(
-                                    child: Center(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 5,
+                ),
+              ] else if (_localPdfPath != null) ...[
+                // The preview is a native view: it answers the tap without
+                // the usual press-in, which would distort it.
+                Pressable(
+                  pressedScale: 1,
+                  onTap: _openFullPdfViewer,
+                  child: Container(
+                    height: 380,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadii.md - 4),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadii.md - 4),
+                      child: Stack(
+                        children: [
+                          PDFView(
+                            filePath: _localPdfPath,
+                            enableSwipe: false,
+                            swipeHorizontal: false,
+                            autoSpacing: true,
+                            pageFling: false,
+                            onRender: (pages) {
+                              if (mounted) {
+                                setState(() {
+                                  _pdfTotalPages = pages ?? 0;
+                                });
+                              }
+                            },
+                            onPageChanged: (page, total) {
+                              if (mounted) {
+                                setState(() {
+                                  _pdfCurrentPage = page ?? 0;
+                                  if (total != null) _pdfTotalPages = total;
+                                });
+                              }
+                            },
+                          ),
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          if (_pdfTotalPages > 0)
+                            Positioned(
+                              bottom: 12,
+                              left: 0,
+                              right: 0,
+                              child: IgnorePointer(
+                                child: Center(
+                                  child: _buildSmokedChip(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.picture_as_pdf_rounded,
+                                          color: Colors.white,
+                                          size: 14,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.7),
-                                          borderRadius: BorderRadius.circular(20),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(alpha: 0.15),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          "Page ${_pdfCurrentPage + 1} sur $_pdfTotalPages",
+                                          style: AppText.display(
+                                            size: 12.5,
+                                            weight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.picture_as_pdf_rounded,
-                                              color: Colors.white,
-                                              size: 13,
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Text(
-                                              "Page ${_pdfCurrentPage + 1} sur $_pdfTotalPages",
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.2,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
-                        ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-                ] else if (_pdfError) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.warning_amber_rounded, color: Colors.red),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            "Impossible de prévisualiser le document.",
-                            style: TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final Uri uri = Uri.parse(page.attachmentUrl!);
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            }
-                          },
-                          icon: const Icon(Icons.download, size: 16),
-                          label: const Text("Télécharger"),
-                        ),
-                      ],
-                    ),
+                ),
+              ] else if (_pdfError) ...[
+                Container(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.coralTint,
+                    borderRadius: BorderRadius.circular(AppRadii.md - 4),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppColors.coralDeep,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Impossible de prévisualiser le document.",
+                          style: AppText.body(size: 13.5),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final Uri uri = Uri.parse(page.attachmentUrl!);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.download_rounded, size: 18),
+                        label: const Text("Télécharger"),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ],
@@ -1106,89 +1096,39 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   Widget _buildSectionHeader({required String title, required IconData icon}) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon, size: 20, color: LightModeColors.novoPharmaBlue),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: LightModeColors.dashboardTextPrimary,
-              letterSpacing: -0.2,
-            ),
-          ),
-        ),
+        TintIcon(icon: icon, size: 36),
+        const SizedBox(width: 12),
+        Expanded(child: Text(title, style: AppText.display(size: 20))),
       ],
     );
   }
 
   // Products Section Component
   Widget _buildProductsSection(List<CustomPageProductItem> products) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return SoftCard(
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Section Header with count badge
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.inventory_2_rounded,
-                  size: 20,
-                  color: LightModeColors.novoPharmaBlue,
-                ),
-              ),
+              const TintIcon(icon: Icons.inventory_2_rounded, size: 36),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  "Produits associés",
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: LightModeColors.dashboardTextPrimary,
-                    letterSpacing: -0.2,
+              Expanded(
+                // Scales down a touch on narrow phones instead of wrapping.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Produits associés",
+                    style: AppText.display(size: 19),
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  "${products.length} produits",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: LightModeColors.novoPharmaBlue,
-                  ),
-                ),
-              ),
+              const SizedBox(width: 8),
+              TonePill(label: "${products.length} produits"),
             ],
           ),
 
@@ -1219,12 +1159,12 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                 },
               ),
 
-              // Animated Arrow Navigation Buttons (Left & Right) like the image carousel
+              // Arrow Navigation Buttons (Left & Right) like the image carousel
               if (products.length > 1) ...[
                 Positioned(
-                  left: -6,
+                  left: -8,
                   child: _AnimatingArrowButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
+                    icon: Icons.chevron_left_rounded,
                     isLeft: true,
                     onPressed: () {
                       _productCarouselController.previousPage(
@@ -1235,9 +1175,9 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
                   ),
                 ),
                 Positioned(
-                  right: -6,
+                  right: -8,
                   child: _AnimatingArrowButton(
-                    icon: Icons.arrow_forward_ios_rounded,
+                    icon: Icons.chevron_right_rounded,
                     isLeft: false,
                     onPressed: () {
                       _productCarouselController.nextPage(
@@ -1256,138 +1196,128 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
   }
 
   Widget _buildCarouselProductCard(CustomPageProductItem product) {
-    return Container(
-      margin: const EdgeInsets.only(right: 10, bottom: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200, width: 1.1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductScreen(id: product.id),
+    return Padding(
+      padding: const EdgeInsets.only(right: 10, bottom: 4),
+      child: SoftCard(
+        radius: AppRadii.md,
+        shadow: false,
+        padding: const EdgeInsets.all(10),
+        semanticLabel: product.name,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductScreen(id: product.id),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image
+            Container(
+              height: 105,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadii.sm),
               ),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadii.sm),
+                child: AppNetworkImage(
+                  imageUrl: product.imageUrl,
+                  fit: BoxFit.contain,
+                  memCacheWidth: 260,
+                  memCacheHeight: 260,
+                  errorIcon: Icons.inventory_2_outlined,
+                  errorIconSize: 30,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Brand
+            if (product.marque.isNotEmpty)
+              Text(
+                product.marque,
+                style: AppText.label(
+                  size: 11,
+                  weight: FontWeight.w700,
+                  color: AppColors.indigo,
+                  letterSpacing: 0,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            const SizedBox(height: 2),
+
+            // Product Name
+            Expanded(
+              child: Text(
+                product.name,
+                style: AppText.body(
+                  size: 13,
+                  weight: FontWeight.w700,
+                  height: 1.25,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Price & Points
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Product Image
-                Container(
-                  height: 105,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: LightModeColors.lightBackground,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: AppNetworkImage(
-                      imageUrl: product.imageUrl,
-                      fit: BoxFit.contain,
-                      memCacheWidth: 260,
-                      memCacheHeight: 260,
-                      errorIcon: Icons.inventory_2_outlined,
-                      errorIconSize: 30,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Brand
-                if (product.marque.isNotEmpty)
-                  Text(
-                    product.marque.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                      color: LightModeColors.novoPharmaBlue,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                const SizedBox(height: 2),
-
-                // Product Name
-                Expanded(
-                  child: Text(
-                    product.name,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: LightModeColors.dashboardTextPrimary,
-                      height: 1.25,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Price & Points
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (product.price > 0)
-                      Text(
+                if (product.price > 0)
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
                         "${product.price.toStringAsFixed(2)} DT",
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: LightModeColors.novoPharmaBlue,
-                        ),
-                      )
-                    else
-                      const SizedBox.shrink(),
-                    if (product.points > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.success.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: LightModeColors.success.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Text(
-                          "+${product.points % 1 == 0 ? product.points.toInt() : product.points} pts",
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: LightModeColors.success,
-                          ),
+                        style: AppText.display(
+                          size: 14,
+                          color: AppColors.indigoDeep,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
+                if (product.points > 0)
+                  Container(
+                    margin: const EdgeInsets.only(left: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.amberTint,
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                    ),
+                    child: Text(
+                      "+${product.points % 1 == 0 ? product.points.toInt() : product.points} pts",
+                      style: AppText.display(
+                        size: 11,
+                        color: AppColors.amberDeep,
+                      ),
+                    ),
+                  ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _AnimatingArrowButton extends StatefulWidget {
+/// A round glass button that steps a carousel. It rests still: the old
+/// endless nudge is gone, a press is feedback enough.
+class _AnimatingArrowButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
   final bool isLeft;
@@ -1399,67 +1329,23 @@ class _AnimatingArrowButton extends StatefulWidget {
   });
 
   @override
-  State<_AnimatingArrowButton> createState() => _AnimatingArrowButtonState();
-}
-
-class _AnimatingArrowButtonState extends State<_AnimatingArrowButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _translationAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-
-    _translationAnimation = Tween<double>(
-      begin: 0.0,
-      end: widget.isLeft ? -5.0 : 5.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _translationAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(_translationAnimation.value, 0),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.85),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: InkWell(
-              onTap: widget.onPressed,
-              borderRadius: BorderRadius.circular(16),
-              child: Icon(
-                widget.icon,
-                color: LightModeColors.novoPharmaBlue,
-                size: 18,
-              ),
-            ),
-          ),
-        );
-      },
+    final l10n = MaterialLocalizations.of(context);
+    // 36pt disc in a 44pt touch target.
+    return Pressable(
+      onTap: onPressed,
+      pressedScale: 0.9,
+      semanticLabel: isLeft ? l10n.previousPageTooltip : l10n.nextPageTooltip,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Glass(
+          style: GlassStyle.smoked,
+          width: 36,
+          height: 36,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+      ),
     );
   }
 }
@@ -1484,40 +1370,29 @@ class _FullPdfScreenState extends State<_FullPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = MaterialLocalizations.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: LightModeColors.novoPharmaBlue,
-        foregroundColor: Colors.white,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (_totalPages > 0)
-              Text(
-                'Page ${_currentPage + 1} / $_totalPages',
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-          ],
-        ),
+      backgroundColor: AppColors.canvas,
+      appBar: InkAppBar(
+        title: widget.title,
+        subtitle: _totalPages > 0
+            ? 'Page ${_currentPage + 1} / $_totalPages'
+            : null,
         actions: [
           if (_totalPages > 1) ...[
-            IconButton(
-              icon: const Icon(Icons.keyboard_arrow_up),
-              onPressed: () {
+            GlassIconButton(
+              icon: Icons.keyboard_arrow_up_rounded,
+              tooltip: l10n.previousPageTooltip,
+              onTap: () {
                 if (_currentPage > 0) {
                   _pdfViewController?.setPage(_currentPage - 1);
                 }
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.keyboard_arrow_down),
-              onPressed: () {
+            GlassIconButton(
+              icon: Icons.keyboard_arrow_down_rounded,
+              tooltip: l10n.nextPageTooltip,
+              onTap: () {
                 if (_currentPage < _totalPages - 1) {
                   _pdfViewController?.setPage(_currentPage + 1);
                 }

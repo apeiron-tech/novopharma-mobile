@@ -7,7 +7,7 @@ import 'package:novopharma/services/product_service.dart';
 import 'package:novopharma/screens/brand_stock_input_screen.dart';
 import 'package:novopharma/screens/stock_barcode_scanner_screen.dart';
 import 'package:novopharma/widgets/expiration_dialog.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 
 class StockBrandSelectionScreen extends StatefulWidget {
   final String pharmacyId;
@@ -127,7 +127,7 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Aucun produit trouvé avec le SKU: $scannedSku"),
-            backgroundColor: LightModeColors.lightError,
+            backgroundColor: AppColors.coralDeep,
           ),
         );
       }
@@ -176,6 +176,24 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
     _loadData();
   }
 
+  // Presentation only: the first screenful of rows arrives once per visit.
+  // Rows built later (scrolling back up, returning from a brand) appear in
+  // place.
+  bool _rowsArrived = false;
+
+  Widget _arrive(int index, Widget child) {
+    if (index >= 8) return child;
+    final play = !_rowsArrived;
+    if (play) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _rowsArrived = true);
+    }
+    return Entrance(
+      delay: play ? Duration(milliseconds: 50 * index) : Duration.zero,
+      duration: play ? AppMotion.slow : Duration.zero,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final int totalTracked = _draftProducts.values.fold<int>(0, (sum, item) => sum + (item.totalQuantity ?? 0));
@@ -183,141 +201,169 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
     final int priceOnlyCount = _draftProducts.values.where((item) => item.isPriceOnly || item.totalQuantity == null).length;
 
     return Scaffold(
-      backgroundColor: LightModeColors.novoPharmaLightGray,
-      appBar: AppBar(
-        title: const Text("Audit Stock - Marques", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: LightModeColors.dashboardTextPrimary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-          onPressed: () => Navigator.pop(context),
+      backgroundColor: AppColors.canvas,
+      appBar: InkAppBar(
+        title: "Audit Stock - Marques",
+        subtitle: widget.pharmacyName,
+        leading: GlassIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onTap: () => Navigator.pop(context),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Info Banner
-                Container(
-                  width: double.infinity,
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+      body: AppBackground(
+        child: _isLoading
+            ? const SkeletonList(
+                count: 6,
+                itemHeight: 72,
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
+              )
+            : Column(
+                children: [
+                  // Info Banner
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+                    child: Entrance(
+                      child: SoftCard(
+                        padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
+                        radius: 24,
+                        child: Row(
                           children: [
-                            Text(
-                              widget.pharmacyName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: LightModeColors.dashboardTextPrimary),
-                              overflow: TextOverflow.ellipsis,
+                            Expanded(
+                              child: Text(
+                                "Sélectionnez une marque pour saisir l'inventaire",
+                                style: AppText.body(
+                                  size: 14,
+                                  color: AppColors.textMuted,
+                                  height: 1.35,
+                                ),
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            const Text("Sélectionnez une marque pour saisir l'inventaire", style: TextStyle(fontSize: 12, color: LightModeColors.novoPharmaGray)),
+                            const SizedBox(width: 14),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.indigoTint,
+                                borderRadius: BorderRadius.circular(AppRadii.sm),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    "$distinctItems prod.",
+                                    style: AppText.display(size: 18, color: AppColors.indigoDeep),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    priceOnlyCount > 0 && totalTracked == 0
+                                        ? "$priceOnlyCount prix"
+                                        : (priceOnlyCount > 0 ? "$totalTracked Q (${priceOnlyCount}P)" : "Total: $totalTracked Q"),
+                                    style: AppText.label(size: 12, color: AppColors.indigoDeep, letterSpacing: 0),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightBlue,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              "$distinctItems prod.",
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: LightModeColors.novoPharmaBlue),
-                            ),
-                            Text(
-                              priceOnlyCount > 0 && totalTracked == 0
-                                  ? "$priceOnlyCount prix"
-                                  : (priceOnlyCount > 0 ? "$totalTracked Q (${priceOnlyCount}P)" : "Total: $totalTracked Q"),
-                              style: const TextStyle(fontSize: 11, color: LightModeColors.novoPharmaBlue, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                
-                // Brands List
-                Expanded(
-                  child: _brands.isEmpty
-                      ? const Center(child: Text("Aucune marque disponible", style: TextStyle(color: LightModeColors.novoPharmaGray)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          itemCount: _brands.length,
-                          itemBuilder: (context, index) {
-                            final brand = _brands[index];
-                            
-                            // Calculate how many products of this brand are in draft
-                            final brandProducts = _allProducts.where((p) => p.marque == brand).map((p) => p.id);
-                            final brandDraftCount = _draftProducts.keys.where((id) => brandProducts.contains(id)).length;
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: LightModeColors.lightOutlineVariant),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4)),
-                                ],
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: LightModeColors.novoPharmaLightGray,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    brand.isNotEmpty ? brand[0].toUpperCase() : 'B',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: LightModeColors.novoPharmaBlue, fontSize: 16),
-                                  ),
-                                ),
-                                title: Text(
-                                  brand,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: LightModeColors.dashboardTextPrimary),
-                                ),
-                                subtitle: brandDraftCount > 0
-                                    ? Container(
-                                        margin: const EdgeInsets.only(top: 6),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.check_circle, color: LightModeColors.success, size: 14),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              "$brandDraftCount produit(s) saisi(s)",
-                                              style: const TextStyle(fontSize: 12, color: LightModeColors.success, fontWeight: FontWeight.w600),
+                  // Brands List
+                  Expanded(
+                    child: _brands.isEmpty
+                        ? const EmptyState(
+                            icon: Icons.inventory_2_outlined,
+                            title: "Aucune marque disponible",
+                          )
+                        : ListView.builder(
+                            // Room for the floating scan button.
+                            padding: EdgeInsets.fromLTRB(
+                              20,
+                              8,
+                              20,
+                              MediaQuery.paddingOf(context).bottom + 96,
+                            ),
+                            itemCount: _brands.length,
+                            itemBuilder: (context, index) {
+                              final brand = _brands[index];
+
+                              // Calculate how many products of this brand are in draft
+                              final brandProducts = _allProducts.where((p) => p.marque == brand).map((p) => p.id);
+                              final brandDraftCount = _draftProducts.keys.where((id) => brandProducts.contains(id)).length;
+                              final hasEntries = brandDraftCount > 0;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _arrive(
+                                  index,
+                                  SoftCard(
+                                    onTap: () => _onBrandSelected(brand),
+                                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                                    radius: 24,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: hasEntries ? AppColors.mintTint : AppColors.indigoTint,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Text(
+                                            brand.isNotEmpty ? brand[0].toUpperCase() : 'B',
+                                            style: AppText.display(
+                                              size: 19,
+                                              color: hasEntries ? AppColors.mintDeep : AppColors.indigoDeep,
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      )
-                                    : const Text("Aucune saisie", style: TextStyle(fontSize: 12, color: LightModeColors.novoPharmaGray)),
-                                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: LightModeColors.novoPharmaGray),
-                                onTap: () => _onBrandSelected(brand),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-      floatingActionButton: FloatingActionButton.extended(
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                brand,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppText.body(size: 16, weight: FontWeight.w700, height: 1.2),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                hasEntries ? "$brandDraftCount produit(s) saisi(s)" : "Aucune saisie",
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppText.label(
+                                                  size: 13,
+                                                  color: hasEntries ? AppColors.mintDeep : AppColors.textMuted,
+                                                  letterSpacing: 0,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        hasEntries
+                                            ? const Icon(Icons.check_circle_rounded, color: AppColors.mint, size: 26)
+                                            : const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint, size: 24),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+      ),
+      floatingActionButton: PrimaryButton.mint(
+        label: "Scanner SKU",
+        icon: Icons.qr_code_scanner_rounded,
         onPressed: _scanSKU,
-        backgroundColor: LightModeColors.novoPharmaBlue,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.qr_code_scanner_rounded),
-        label: const Text("Scanner SKU", style: TextStyle(fontWeight: FontWeight.bold)),
+        expand: false,
       ),
     );
   }

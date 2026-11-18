@@ -6,7 +6,7 @@ import 'package:novopharma/models/pharmacy.dart';
 import 'package:novopharma/services/pharmacy_service.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/screens/pharmacy_profile_screen.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 
@@ -94,111 +94,55 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
 
   Future<void> _showGPSDisabledDialog() async {
     if (!mounted) return;
-    await showGeneralDialog<void>(
+    await showGlassDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "GPS désactivé",
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
+      child: Builder(
+        builder: (context) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: LightModeColors.lightErrorContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.location_off_rounded,
-                      color: LightModeColors.lightError,
-                      size: 32,
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: BlisterIcon(
+                      icon: Icons.location_off_rounded,
+                      tone: Tone.coral,
+                      size: 56,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "GPS désactivé",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 18),
+                  Text("GPS désactivé", style: AppText.display(size: 22)),
+                  const SizedBox(height: 8),
+                  Text(
                     "Votre GPS semble être désactivé. Veuillez l'activer dans les paramètres de votre téléphone pour utiliser cette fonctionnalité.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: LightModeColors.novoPharmaGray,
-                    ),
+                    style: AppText.body(size: 14.5),
                   ),
-                  const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(color: LightModeColors.novoPharmaBlue),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Annuler",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await Geolocator.openLocationSettings();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LightModeColors.novoPharmaBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Paramètres",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 24),
+                  PrimaryButton(
+                    label: "Paramètres",
+                    icon: Icons.settings_rounded,
+                    height: 52,
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await Geolocator.openLocationSettings();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48,
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -314,64 +258,46 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
 
       if (activeVisitsQuery.docs.length > 1) {
         if (mounted) {
-          showDialog(
+          showGlassDialog<void>(
             context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.white,
-              contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-              title: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: const BoxDecoration(
-                      color: LightModeColors.lightErrorContainer,
-                      shape: BoxShape.circle,
+            child: Builder(
+              builder: (context) => ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(
+                      child: BlisterIcon(
+                        icon: Icons.error_outline_rounded,
+                        tone: Tone.coral,
+                        size: 64,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.error_outline_rounded,
-                      color: LightModeColors.lightError,
-                      size: 36,
+                    const SizedBox(height: 16),
+                    Text(
+                      "Visites actives multiples",
+                      textAlign: TextAlign.center,
+                      style: AppText.display(size: 21),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Visites actives multiples",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.lightError,
+                    const SizedBox(height: 10),
+                    Text(
+                      "Vous avez plusieurs visites actives enregistrées. Veuillez fermer vos anciennes visites ou contacter votre responsable pour les fermer.",
+                      textAlign: TextAlign.center,
+                      style: AppText.body(
+                        size: 14.5,
+                        color: AppColors.textMuted,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              content: const Text(
-                "Vous avez plusieurs visites actives enregistrées. Veuillez fermer vos anciennes visites ou contacter votre responsable pour les fermer.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
-                  color: LightModeColors.novoPharmaGray,
+                    const SizedBox(height: 22),
+                    PrimaryButton(
+                      label: "OK",
+                      height: 50,
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
               ),
-              actionsPadding: const EdgeInsets.only(right: 16, bottom: 12),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    "OK",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.lightError,
-                    ),
-                  ),
-                ),
-              ],
             ),
           );
         }
@@ -387,339 +313,254 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
       selectedPointOfSale = pharmacy.pointsOfSale.first.name;
     }
 
-    final confirm = await showGeneralDialog<bool>(
+    final confirm = await showGlassDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "Confirmation",
-      pageBuilder: (context, anim1, anim2) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Align(
-              alignment: Alignment.center,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(22),
-                constraints: const BoxConstraints(maxWidth: 400),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.all(22),
+      child: StatefulBuilder(
+        builder: (context, setDialogState) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Row(
                     children: [
-                      // Header icon badge
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightBlue,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.15),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          color: LightModeColors.novoPharmaBlue,
-                          size: 28,
-                        ),
+                      const BlisterIcon(
+                        icon: Icons.location_on_rounded,
+                        tone: Tone.mint,
+                        size: 52,
                       ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        "Confirmer le Check-in",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: LightModeColors.dashboardTextPrimary,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          "Confirmer le Check-in",
+                          style: AppText.display(size: 21),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Pharmacy card info
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: LightModeColors.novoPharmaLightGray,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: LightModeColors.lightOutlineVariant),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.novoPharmaLightBlue,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.local_pharmacy_rounded,
-                                size: 16,
-                                color: LightModeColors.novoPharmaBlue,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Pharmacie cible",
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: LightModeColors.novoPharmaGray,
-                                    ),
-                                  ),
-                                  Text(
-                                    pharmacy.name,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: LightModeColors.dashboardTextPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (hasPOS) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.store_rounded,
-                              size: 15,
-                              color: LightModeColors.novoPharmaBlue,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              "Sélectionner le point de vente",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: LightModeColors.dashboardTextPrimary,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: LightModeColors.novoPharmaLightBlue,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                "${pharmacy.pointsOfSale.length}",
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.novoPharmaBlue,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 180),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: pharmacy.pointsOfSale.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
-                            itemBuilder: (context, idx) {
-                              final pos = pharmacy.pointsOfSale[idx];
-                              final isSelected = selectedPointOfSale == pos.name;
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    setDialogState(() {
-                                      selectedPointOfSale = pos.name;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 180),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? LightModeColors.novoPharmaLightBlue.withValues(alpha: 0.55)
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? LightModeColors.novoPharmaBlue
-                                            : LightModeColors.lightOutlineVariant,
-                                        width: isSelected ? 1.6 : 1.0,
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
-                                                blurRadius: 6,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(7),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? LightModeColors.novoPharmaBlue
-                                                : LightModeColors.novoPharmaLightGray,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.storefront_rounded,
-                                            size: 15,
-                                            color: isSelected ? Colors.white : LightModeColors.novoPharmaGray,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                pos.name,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                                  color: isSelected
-                                                      ? LightModeColors.novoPharmaDarkBlue
-                                                      : LightModeColors.dashboardTextPrimary,
-                                                ),
-                                              ),
-                                              if (pos.city.isNotEmpty) ...[
-                                                const SizedBox(height: 2),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.place_outlined,
-                                                      size: 11,
-                                                      color: isSelected
-                                                          ? LightModeColors.novoPharmaBlue
-                                                          : LightModeColors.novoPharmaGray,
-                                                    ),
-                                                    const SizedBox(width: 3),
-                                                    Text(
-                                                      pos.city,
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: isSelected
-                                                            ? LightModeColors.novoPharmaBlue
-                                                            : LightModeColors.novoPharmaGray,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(
-                                          isSelected
-                                              ? Icons.check_circle_rounded
-                                              : Icons.radio_button_unchecked_rounded,
-                                          size: 20,
-                                          color: isSelected
-                                              ? LightModeColors.novoPharmaBlue
-                                              : LightModeColors.novoPharmaGray.withValues(alpha: 0.4),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ] else ...[
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Voulez-vous enregistrer votre Check-in pour cette pharmacie ?",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: LightModeColors.novoPharmaGray,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 22),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                side: const BorderSide(color: LightModeColors.lightOutlineVariant, width: 1.2),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                "Annuler",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: LightModeColors.novoPharmaGray,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: LightModeColors.novoPharmaBlue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.check_rounded, size: 18),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    "Confirmer",
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  // Pharmacy card info
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.66),
+                      borderRadius: BorderRadius.circular(AppRadii.md),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const TintIcon(
+                          icon: Icons.local_pharmacy_rounded,
+                          tone: Tone.mint,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Pharmacie cible",
+                                style: AppText.label(size: 12),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                pharmacy.name,
+                                style: AppText.display(size: 16),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (hasPOS) ...[
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.store_rounded,
+                          size: 18,
+                          color: AppColors.mintDeep,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Sélectionner le point de vente",
+                            style: AppText.body(
+                              size: 14.5,
+                              weight: FontWeight.w700,
+                              height: 1.25,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TonePill(
+                          label: "${pharmacy.pointsOfSale.length}",
+                          tone: Tone.mint,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: pharmacy.pointsOfSale.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, idx) {
+                          final pos = pharmacy.pointsOfSale[idx];
+                          final isSelected = selectedPointOfSale == pos.name;
+                          return Semantics(
+                            selected: isSelected,
+                            child: Pressable(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedPointOfSale = pos.name;
+                                });
+                              },
+                              pressedScale: 0.98,
+                              child: AnimatedContainer(
+                                duration: AppMotion.fast,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.mintTint
+                                      : Colors.white.withValues(alpha: 0.66),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.sm,
+                                  ),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.mint
+                                        : AppColors.line,
+                                    width: isSelected ? 1.6 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.mint
+                                            : AppColors.surfaceSunken,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.storefront_rounded,
+                                        size: 17,
+                                        color: isSelected
+                                            ? AppColors.ink
+                                            : AppColors.textMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            pos.name,
+                                            style: AppText.body(
+                                              size: 14.5,
+                                              weight: isSelected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w600,
+                                              height: 1.25,
+                                            ),
+                                          ),
+                                          if (pos.city.isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.place_outlined,
+                                                  size: 13,
+                                                  color: isSelected
+                                                      ? AppColors.mintDeep
+                                                      : AppColors.textMuted,
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Flexible(
+                                                  child: Text(
+                                                    pos.city,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: AppText.label(
+                                                      size: 12.5,
+                                                      color: isSelected
+                                                          ? AppColors.mintDeep
+                                                          : AppColors.textMuted,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      isSelected
+                                          ? Icons.check_circle_rounded
+                                          : Icons.radio_button_unchecked_rounded,
+                                      size: 22,
+                                      color: isSelected
+                                          ? AppColors.mintDeep
+                                          : AppColors.textFaint,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      "Voulez-vous enregistrer votre Check-in pour cette pharmacie ?",
+                      style: AppText.body(size: 14.5),
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  PrimaryButton.mint(
+                    label: "Confirmer",
+                    icon: Icons.check_rounded,
+                    height: 52,
+                    onPressed: () => Navigator.pop(context, true),
+                  ),
+                  const SizedBox(height: 10),
+                  SecondaryButton(
+                    label: "Annuler",
+                    height: 48,
+                    onPressed: () => Navigator.pop(context, false),
+                  ),
+                ],
               ),
-            );
-          },
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
 
     if (confirm != true) return;
@@ -803,469 +644,390 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
       currentIndex: 0,
       onTap: (index) {},
       child: Scaffold(
-        backgroundColor: LightModeColors.novoPharmaLightGray,
-        appBar: AppBar(
-        title: const Text(
-          "Sélection Pharmacie",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: LightModeColors.dashboardTextPrimary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : !_locationPermissionGranted
-              ? _buildGPSBlocker()
-              : Column(
-                  children: [
-                    // Premium Header Banner
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(24),
+        // The wrapper paints the pastel canvas; this page stays clear glass.
+        backgroundColor: Colors.transparent,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Ink hero: where you are, and the search that narrows the list.
+            InkHero(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpace.page,
+                10,
+                AppSpace.page,
+                22,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Entrance(
+                    offset: const Offset(0, -12),
+                    child: Row(
+                      children: [
+                        GlassIconButton(
+                          icon: Icons.arrow_back_rounded,
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
+                          onTap: () => Navigator.pop(context),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "Sélection Pharmacie",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.display(
+                              size: 24,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Search bar. Shown but inert while the list is loading, so
+                  // the hero keeps its height; hidden when GPS is blocked.
+                  if (_isLoading || _locationPermissionGranted) ...[
+                    const SizedBox(height: 18),
+                    Entrance(
+                      delay: const Duration(milliseconds: 80),
+                      child: IgnorePointer(
+                        ignoring: _isLoading,
+                        child: AnimatedOpacity(
+                          duration: AppMotion.fast,
+                          opacity: _isLoading ? 0.55 : 1,
+                          child: AppSearchField(
+                            controller: _searchController,
+                            onDark: true,
+                            hintText:
+                                "Rechercher une pharmacie par nom ou adresse...",
+                          ),
                         ),
                       ),
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                      child: Column(
-                        children: [
-                          // Segmented Pill Filter Control
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: LightModeColors.novoPharmaLightGray,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: LightModeColors.lightOutlineVariant),
-                            ),
-                            child: Row(
-                              children: [
-                                // Segment 1: Toutes
-                                Expanded(
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: () {
-                                      if (_isNearbyOnly) {
-                                        setState(() => _isNearbyOnly = false);
-                                        _applyFilters();
-                                      }
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                      decoration: BoxDecoration(
-                                        color: !_isNearbyOnly ? LightModeColors.novoPharmaBlue : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: !_isNearbyOnly
-                                            ? [
-                                                BoxShadow(
-                                                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.25),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : [],
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.storefront_rounded,
-                                            size: 16,
-                                            color: !_isNearbyOnly ? Colors.white : LightModeColors.novoPharmaGray,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Flexible(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                "Toutes",
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: !_isNearbyOnly ? Colors.white : LightModeColors.dashboardTextPrimary,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                // Segment 2: À proximité (1 km)
-                                Expanded(
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: _toggleNearbyFilter,
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                      decoration: BoxDecoration(
-                                        color: _isNearbyOnly ? LightModeColors.novoPharmaBlue : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: _isNearbyOnly
-                                            ? [
-                                                BoxShadow(
-                                                  color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.25),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : [],
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.near_me_rounded,
-                                            size: 16,
-                                            color: _isNearbyOnly ? Colors.white : LightModeColors.novoPharmaGray,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Flexible(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                "À proximité (1 km)",
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: _isNearbyOnly ? Colors.white : LightModeColors.dashboardTextPrimary,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          // Search bar
-                          Material(
-                            elevation: 0,
-                            borderRadius: BorderRadius.circular(14),
-                            child: TextField(
-                              controller: _searchController,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: LightModeColors.dashboardTextPrimary,
-                              ),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: LightModeColors.novoPharmaLightGray,
-                                hintText: "Rechercher une pharmacie par nom ou adresse...",
-                                hintStyle: const TextStyle(
-                                  color: LightModeColors.novoPharmaGray,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.search_rounded,
-                                  color: LightModeColors.novoPharmaBlue,
-                                  size: 20,
-                                ),
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? IconButton(
-                                        icon: const Icon(
-                                          Icons.cancel_rounded,
-                                          color: LightModeColors.novoPharmaGray,
-                                          size: 18,
-                                        ),
-                                        onPressed: () {
-                                          _searchController.clear();
-                                        },
-                                      )
-                                    : null,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: LightModeColors.lightOutlineVariant),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: LightModeColors.novoPharmaBlue, width: 1.5),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-
-                    // Title section with count badge
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                _isNearbyOnly ? Icons.near_me_rounded : Icons.storefront_rounded,
-                                size: 18,
-                                color: LightModeColors.novoPharmaBlue,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isNearbyOnly ? "Pharmacies à moins de 1 km" : "Toutes les pharmacies",
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: LightModeColors.dashboardTextPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: LightModeColors.novoPharmaLightBlue,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              "${_filteredPharmacies.length}",
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: LightModeColors.novoPharmaBlue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // List view of pharmacies
-                    Expanded(
-                      child: _errorMessage != null
-                          ? Center(
-                              child: Text(
-                                _errorMessage!,
-                                style: const TextStyle(color: LightModeColors.lightError),
-                              ),
-                            )
-                          : _filteredPharmacies.isEmpty
-                              ? Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                                    child: Text(
-                                      _isNearbyOnly
-                                          ? "Aucune pharmacie à proximité (moins de 1 km).\nCliquer sur 'Toutes les pharmacies' pour voir la liste complète."
-                                          : "Aucune pharmacie trouvée.",
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(color: LightModeColors.novoPharmaGray, height: 1.4),
-                                    ),
+                  ],
+                ],
+              ),
+            ),
+            Expanded(
+              child: Entrance(
+                delay: const Duration(milliseconds: 160),
+                // Builder: below the wrapper, the bottom padding is the
+                // height of the glass dock the list scrolls under.
+                child: Builder(
+                  builder: (context) {
+                    final dockInset = MediaQuery.paddingOf(context).bottom;
+                    return _isLoading
+                        ? (_allPharmacies.isEmpty
+                              ? SkeletonList(
+                                  count: 6,
+                                  itemHeight: 84,
+                                  padding: EdgeInsets.fromLTRB(
+                                    20,
+                                    20,
+                                    20,
+                                    dockInset + 20,
                                   ),
                                 )
-                              : ListView.builder(
-                                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                                  itemCount: _filteredPharmacies.length,
-                                  itemBuilder: (context, index) {
-                                    final pharmacy = _filteredPharmacies[index];
-                                    double? dist;
-                                    if (_locationPermissionGranted &&
-                                        _currentPosition != null &&
-                                        pharmacy.location.latitude != 0.0 &&
-                                        pharmacy.location.longitude != 0.0) {
-                                      dist = Geolocator.distanceBetween(
-                                        _currentPosition!.latitude,
-                                        _currentPosition!.longitude,
-                                        pharmacy.location.latitude,
-                                        pharmacy.location.longitude,
-                                      );
-                                    }
+                              : Padding(
+                                  padding: EdgeInsets.only(bottom: dockInset),
+                                  child: const Center(child: CapsuleLoader()),
+                                ))
+                        : !_locationPermissionGranted
+                        ? _buildGPSBlocker()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Filter pills: all pharmacies or within 1 km
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  16,
+                                  20,
+                                  0,
+                                ),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    // Pill 1: Toutes
+                                    SelectPill(
+                                      label: "Toutes",
+                                      icon: Icons.storefront_rounded,
+                                      selected: !_isNearbyOnly,
+                                      onTap: () {
+                                        if (_isNearbyOnly) {
+                                          setState(() => _isNearbyOnly = false);
+                                          _applyFilters();
+                                        }
+                                      },
+                                    ),
+                                    // Pill 2: À proximité (1 km)
+                                    SelectPill(
+                                      label: "À proximité (1 km)",
+                                      icon: Icons.near_me_rounded,
+                                      selected: _isNearbyOnly,
+                                      onTap: _toggleNearbyFilter,
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.02),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                        border: Border.all(color: LightModeColors.lightOutlineVariant),
+                              // Title section with count badge
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  18,
+                                  20,
+                                  6,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: SectionHeader(
+                                        title: _isNearbyOnly
+                                            ? "Pharmacies à moins de 1 km"
+                                            : "Toutes les pharmacies",
                                       ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Theme(
-                                          data: Theme.of(context).copyWith(
-                                            dividerColor: Colors.transparent,
-                                          ),
-                                          child: ListTile(
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                            leading: Container(
-                                              padding: const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(
-                                                color: LightModeColors.novoPharmaLightBlue,
-                                                borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 11,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.mintTint,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadii.pill,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "${_filteredPharmacies.length}",
+                                        style: AppText.display(
+                                          size: 14,
+                                          color: AppColors.mintDeep,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // List view of pharmacies
+                              Expanded(
+                                child: _errorMessage != null
+                                    ? SingleChildScrollView(
+                                        padding: EdgeInsets.fromLTRB(
+                                          20,
+                                          8,
+                                          20,
+                                          dockInset + 20,
+                                        ),
+                                        child: SoftCard(
+                                          tint: AppColors.coralTint,
+                                          radius: AppRadii.md,
+                                          padding: const EdgeInsets.all(16),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const BlisterIcon(
+                                                icon:
+                                                    Icons.error_outline_rounded,
+                                                tone: Tone.coral,
+                                                size: 40,
+                                                glow: false,
                                               ),
-                                              child: const Icon(
-                                                Icons.local_hospital_rounded,
-                                                color: LightModeColors.novoPharmaBlue,
-                                                size: 24,
-                                              ),
-                                            ),
-                                            title: Text(
-                                              pharmacy.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                                color: LightModeColors.dashboardTextPrimary,
-                                              ),
-                                            ),
-                                            subtitle: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  pharmacy.address.isNotEmpty ? pharmacy.address : "Pas d'adresse spécifiée",
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: LightModeColors.novoPharmaGray,
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 2,
+                                                      ),
+                                                  child: Text(
+                                                    _errorMessage!,
+                                                    style: AppText.body(
+                                                      size: 14,
+                                                      weight: FontWeight.w600,
+                                                    ),
                                                   ),
                                                 ),
-                                                if (dist != null) ...[
-                                                  const SizedBox(height: 6),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                                    decoration: BoxDecoration(
-                                                      color: LightModeColors.novoPharmaLightBlue,
-                                                      borderRadius: BorderRadius.circular(6),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : _filteredPharmacies.isEmpty
+                                    ? Center(
+                                        child: SingleChildScrollView(
+                                          padding: EdgeInsets.only(
+                                            bottom: dockInset,
+                                          ),
+                                          child: EmptyState(
+                                            icon: _isNearbyOnly
+                                                ? Icons.near_me_disabled_rounded
+                                                : Icons.search_off_rounded,
+                                            tone: Tone.mint,
+                                            title: _isNearbyOnly
+                                                ? "Aucune pharmacie à proximité (moins de 1 km)."
+                                                : "Aucune pharmacie trouvée.",
+                                            message: _isNearbyOnly
+                                                ? "Cliquer sur 'Toutes les pharmacies' pour voir la liste complète."
+                                                : null,
+                                          ),
+                                        ),
+                                      )
+                                    : ListView.builder(
+                                        padding: EdgeInsets.fromLTRB(
+                                          20,
+                                          8,
+                                          20,
+                                          dockInset + 20,
+                                        ),
+                                        itemCount: _filteredPharmacies.length,
+                                        itemBuilder: (context, index) {
+                                          final pharmacy =
+                                              _filteredPharmacies[index];
+                                          double? dist;
+                                          if (_locationPermissionGranted &&
+                                              _currentPosition != null &&
+                                              pharmacy.location.latitude !=
+                                                  0.0 &&
+                                              pharmacy.location.longitude !=
+                                                  0.0) {
+                                            dist = Geolocator.distanceBetween(
+                                              _currentPosition!.latitude,
+                                              _currentPosition!.longitude,
+                                              pharmacy.location.latitude,
+                                              pharmacy.location.longitude,
+                                            );
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: SoftCard(
+                                              onTap: () =>
+                                                  _handleCheckIn(pharmacy),
+                                              semanticLabel: pharmacy.name,
+                                              radius: 24,
+                                              padding: const EdgeInsets.all(14),
+                                              child: Row(
+                                                children: [
+                                                  const TintIcon(
+                                                    icon: Icons
+                                                        .local_pharmacy_rounded,
+                                                    tone: Tone.mint,
+                                                    size: 48,
+                                                  ),
+                                                  const SizedBox(width: 14),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
                                                       children: [
-                                                        const Icon(
-                                                          Icons.directions_walk,
-                                                          size: 12,
-                                                          color: LightModeColors.novoPharmaBlue,
-                                                        ),
-                                                        const SizedBox(width: 4),
                                                         Text(
-                                                          dist < 1000
-                                                              ? "${dist.toStringAsFixed(0)} m"
-                                                              : "${(dist / 1000).toStringAsFixed(1)} km",
-                                                          style: const TextStyle(
-                                                            fontSize: 11,
-                                                            fontWeight: FontWeight.w600,
-                                                            color: LightModeColors.novoPharmaBlue,
+                                                          pharmacy.name,
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              AppText.display(
+                                                                size: 16.5,
+                                                                height: 1.15,
+                                                              ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 4,
+                                                        ),
+                                                        Text(
+                                                          pharmacy
+                                                                  .address
+                                                                  .isNotEmpty
+                                                              ? pharmacy.address
+                                                              : "Pas d'adresse spécifiée",
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: AppText.body(
+                                                            size: 13,
+                                                            color: AppColors
+                                                                .textMuted,
                                                           ),
                                                         ),
+                                                        if (dist != null) ...[
+                                                          const SizedBox(
+                                                            height: 8,
+                                                          ),
+                                                          TonePill(
+                                                            tone: Tone.mint,
+                                                            icon: Icons
+                                                                .directions_walk_rounded,
+                                                            label: dist < 1000
+                                                                ? "${dist.toStringAsFixed(0)} m"
+                                                                : "${(dist / 1000).toStringAsFixed(1)} km",
+                                                          ),
+                                                        ],
                                                       ],
                                                     ),
                                                   ),
+                                                  const SizedBox(width: 10),
+                                                  // Check-in affordance
+                                                  Container(
+                                                    width: 42,
+                                                    height: 42,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                          shape:
+                                                              BoxShape.circle,
+                                                          gradient:
+                                                              AppGradients.mint,
+                                                        ),
+                                                    child: const Icon(
+                                                      Icons.login_rounded,
+                                                      size: 20,
+                                                      color: AppColors.ink,
+                                                    ),
+                                                  ),
                                                 ],
-                                              ],
-                                            ),
-                                            trailing: Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: LightModeColors.novoPharmaLightGray,
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: const Icon(
-                                                Icons.login_rounded,
-                                                size: 18,
-                                                color: LightModeColors.novoPharmaBlue,
                                               ),
                                             ),
-                                            onTap: () => _handleCheckIn(pharmacy),
-                                          ),
-                                        ),
+                                          );
+                                        },
                                       ),
-                                    );
-                                  },
-                                ),
-                    ),
-                  ],
-                ),
-    ),
-    );
-  }
-
-  Widget _buildGPSBlocker() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: LightModeColors.lightError.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.location_off_rounded,
-                color: LightModeColors.lightError,
-                size: 56,
-              ),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              "Localisation GPS Requise",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: LightModeColors.dashboardTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "L'accès à la position GPS de votre téléphone est requis pour utiliser le Check-in / Check-out.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: LightModeColors.novoPharmaGray,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 36),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _initLocationAndFetchPharmacies,
-                icon: const Icon(Icons.settings, color: Colors.white, size: 18),
-                label: const Text(
-                  "Autoriser / Réessayer",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: LightModeColors.novoPharmaBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
+                              ),
+                            ],
+                          );
+                  },
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGPSBlocker() {
+    return Builder(
+      builder: (context) => Center(
+        child: SingleChildScrollView(
+          // Keeps the message clear of the glass dock.
+          padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+          child: EmptyState(
+            icon: Icons.location_off_rounded,
+            tone: Tone.coral,
+            title: "Localisation GPS Requise",
+            message:
+                "L'accès à la position GPS de votre téléphone est requis pour utiliser le Check-in / Check-out.",
+            actionLabel: "Autoriser / Réessayer",
+            onAction: _initLocationAndFetchPharmacies,
+          ),
         ),
       ),
     );

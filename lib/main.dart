@@ -28,6 +28,7 @@ import 'package:novopharma/firebase_options.dart';
 import 'package:novopharma/navigation.dart';
 import 'package:novopharma/navigation_observer.dart';
 import 'package:novopharma/theme.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/screens/dashboard_home_screen.dart';
 import 'package:novopharma/screens/leaderboard_screen.dart';
 import 'package:novopharma/screens/profile_screen.dart';
@@ -151,7 +152,8 @@ class NovoPharmaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: ThemeMode.system,
+      // Screens are designed for a light canvas under ink headers.
+      themeMode: ThemeMode.light,
       localizationsDelegates: const [
         ...AppLocalizations.localizationsDelegates,
         // Needed by material_ui widgets (YouTube player controls/sheets).
@@ -181,7 +183,7 @@ class NovoPharmaApp extends StatelessWidget {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
+                    body: Center(child: CapsuleLoader()),
                   );
                 }
                 if (snapshot.hasError ||

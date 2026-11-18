@@ -1,8 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
 import 'package:novopharma/controllers/leaderboard_provider.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/models/user_model.dart';
-import 'package:novopharma/theme.dart';
 import 'package:novopharma/widgets/bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
@@ -17,22 +19,19 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   late final ScrollController _scrollController;
 
-  final List<List<Color>> _avatarGradients = [
-    [Colors.blue.shade300, Colors.blue.shade600],
-    [Colors.green.shade300, Colors.green.shade600],
-    [Colors.purple.shade300, Colors.purple.shade600],
-    [Colors.orange.shade300, Colors.orange.shade600],
-    [Colors.teal.shade300, Colors.teal.shade600],
-    [Colors.pink.shade300, Colors.pink.shade600],
-  ];
+  /// Rows that arrive with the screen. The rest of the ranking is built
+  /// lazily and does not animate.
+  static const int _leadRows = 6;
 
-  String _formatPoints(num value) {
-    final double d = value.toDouble();
-    if (d % 1 == 0) {
-      return d.toInt().toString();
-    }
-    return d.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
-  }
+  // Deep variants of the feature tones, so white initials stay readable.
+  static const List<Tone> _avatarTones = [
+    Tone.indigo,
+    Tone(AppColors.mintDeep, AppColors.mintDeep, AppColors.mintTint),
+    Tone(AppColors.coralDeep, AppColors.coralDeep, AppColors.coralTint),
+    Tone(AppColors.amberDeep, AppColors.amberDeep, AppColors.amberTint),
+    Tone(AppColors.indigoBright, AppColors.indigo, AppColors.indigoTint),
+    Tone(AppColors.inkLine, AppColors.inkSoft, AppColors.indigoTint),
+  ];
 
   @override
   void initState() {
@@ -79,9 +78,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     return '';
   }
 
-  List<Color> _getAvatarGradient(String userId) {
-    final index = userId.hashCode.abs() % _avatarGradients.length;
-    return _avatarGradients[index];
+  Tone _getAvatarTone(String userId) {
+    final index = userId.hashCode.abs() % _avatarTones.length;
+    return _avatarTones[index];
+  }
+
+  /// "VOTRE RANG" -> "Votre rang". Leaves mixed-case strings alone.
+  String _sentenceCase(String value) {
+    if (value.isEmpty || value != value.toUpperCase()) return value;
+    return value[0] + value.substring(1).toLowerCase();
   }
 
   @override
@@ -93,39 +98,68 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       onTap: (index) {},
       child: Consumer<LeaderboardProvider>(
         builder: (context, leaderboardProvider, child) {
-          return Container(
-            color: Colors.white,
-            child: SafeArea(
-              child: leaderboardProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+          final isLoading = leaderboardProvider.isLoading;
+          final bottomInset = MediaQuery.paddingOf(context).bottom + 20;
+
+          return CustomScrollView(
+            controller: _scrollController,
+            physics: isLoading ? const NeverScrollableScrollPhysics() : null,
+            slivers: [
+              // Ink hero: where you stand.
+              SliverToBoxAdapter(
+                child: InkHero(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpace.page,
+                    10,
+                    AppSpace.page,
+                    26,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(l10n),
+                      const SizedBox(height: 22),
+                      Entrance(
+                        delay: const Duration(milliseconds: 100),
+                        scaleFrom: 0.96,
+                        child: _buildCurrentUserCard(leaderboardProvider, l10n),
                       ),
-                      child: Column(
-                        children: [
-                          _buildHeader(l10n),
-                          const SizedBox(height: 20),
-                          _buildCurrentUserCard(
-                            leaderboardProvider,
-                            l10n,
-                          ),
-                          const SizedBox(height: 20),
-                          _buildTopThreeSection(
-                            leaderboardProvider.leaderboardData,
-                            l10n,
-                          ),
-                          const SizedBox(height: 20),
-                          _buildLeaderboardList(
-                            leaderboardProvider,
-                            l10n,
-                          ),
-                        ],
-                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (isLoading)
+                const SliverToBoxAdapter(
+                  child: SkeletonList(
+                    count: 6,
+                    itemHeight: 64,
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      22,
+                      AppSpace.page,
+                      0,
                     ),
-            ),
+                  ),
+                )
+              else ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.page,
+                      24,
+                      AppSpace.page,
+                      0,
+                    ),
+                    child: _buildTopThreeSection(
+                      leaderboardProvider.leaderboardData,
+                      l10n,
+                    ),
+                  ),
+                ),
+                ..._buildLeaderboardList(leaderboardProvider, l10n),
+              ],
+              SliverToBoxAdapter(child: SizedBox(height: bottomInset)),
+            ],
           );
         },
       ),
@@ -135,34 +169,39 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget _buildHeader(AppLocalizations l10n) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.userProfile;
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundImage: NetworkImage(
-            user?.avatarUrl ?? UserModel.defaultAvatarUrl,
+        if (canPop) ...[
+          GlassIconButton(
+            icon: Icons.arrow_back_rounded,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onTap: () => Navigator.maybePop(context),
           ),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
+        ],
         Expanded(
           child: Text(
             l10n.nationalRanking,
-            style: const TextStyle(
-              color: LightModeColors.dashboardTextPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.display(size: 24, color: Colors.white, height: 1.1),
           ),
         ),
-        const Icon(
-          Icons.notifications_none,
-          size: 24,
-          color: LightModeColors.dashboardTextPrimary,
+        const SizedBox(width: 12),
+        AppAvatar(
+          name: user?.name ?? '',
+          imageUrl: user?.avatarUrl ?? UserModel.defaultAvatarUrl,
+          size: 44,
         ),
       ],
     );
   }
+
+  // ---------------------------------------------------------------------
+  // The current user's standing — rank and points on dark glass.
+  // ---------------------------------------------------------------------
 
   Widget _buildCurrentUserCard(
     LeaderboardProvider leaderboardProvider,
@@ -188,199 +227,135 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final currentUserProfile = leaderboardAuthProvider.userProfile;
     final userAvailablePoints = currentUserProfile?.availablePoints ?? 0;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LightModeColors.lightPrimary,
-            LightModeColors.lightSecondary,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: LightModeColors.lightPrimary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
+    final num validatedPoints =
+        currentUserProfile?.totalPointsValidated ??
+        (currentUserInList['totalPointsValidated'] as num?)?.toDouble() ??
+        0.0;
+    final bool hasRank = currentRankStr != '0';
+    final int? rankValue = int.tryParse(currentRankStr);
+    final muted = Colors.white.withValues(alpha: 0.78);
+    final figure = AppText.display(size: 40, color: Colors.white, height: 1.0);
+
+    Widget rank;
+    if (userAvailablePoints == 0) {
+      rank = Text('0', style: figure, maxLines: 1);
+    } else if (rankValue != null) {
+      rank = CountUp(
+        value: rankValue,
+        style: figure,
+        format: (v) => '#${v.round()}',
+      );
+    } else {
+      rank = Text('#$currentRankStr', style: figure, maxLines: 1);
+    }
+
+    return SoftCard(
+      style: GlassStyle.dark,
+      blur: Glass.frost,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Decorative circles in background
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+          Row(
+            children: [
+              if (hasRank) ...[
+                Expanded(
+                  flex: 4,
+                  child: _buildHeroStat(
+                    label: _sentenceCase(l10n.yourRank),
+                    labelColor: muted,
+                    value: rank,
+                  ),
+                ),
+                Container(
+                  width: 1.2,
+                  height: 52,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  color: Colors.white.withValues(alpha: 0.22),
+                ),
+              ],
+              Expanded(
+                flex: 6,
+                child: _buildHeroStat(
+                  label: l10n.points,
+                  labelColor: muted,
+                  value: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      CountUp(value: validatedPoints, style: figure),
+                      const SizedBox(width: 6),
+                      Text('pts', style: AppText.label(size: 15, color: muted)),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          Positioned(
-            left: -30,
-            bottom: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
+          if (hasRank) ...[
+            const SizedBox(height: 16),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        l10n.yourRank.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    if (currentRankStr != '0')
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Color(0xFFF59E0B),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              userAvailablePoints == 0
-                                  ? '0'
-                                  : '#$currentRankStr',
-                              style: const TextStyle(
-                                color: Color(0xFF1F2937),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+                const Icon(
+                  Icons.emoji_events_rounded,
+                  color: AppColors.amber,
+                  size: 18,
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      _formatPoints(currentUserProfile?.totalPointsValidated ?? (currentUserInList['totalPointsValidated'] as num?)?.toDouble() ?? 0.0),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 42,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -1,
-                      ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.rankOnMychallenge(
+                      currentRankStr,
+                      leaderboardProvider.totalUsersCount > 0
+                          ? leaderboardProvider.totalUsersCount
+                          : leaderboardData.length,
                     ),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        'pts',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (currentRankStr != '0')
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.emoji_events_rounded,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            l10n.rankOnMychallenge(
-                              currentRankStr,
-                              leaderboardProvider.totalUsersCount > 0
-                                  ? leaderboardProvider.totalUsersCount
-                                  : leaderboardData.length,
-                            ),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.95),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+                    style: AppText.body(
+                      size: 13.5,
+                      weight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.86),
+                      height: 1.3,
                     ),
                   ),
+                ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _buildHeroStat({
+    required String label,
+    required Color labelColor,
+    required Widget value,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.label(size: 12.5, color: labelColor, letterSpacing: 0),
+        ),
+        const SizedBox(height: 6),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: value,
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // The podium — gold in the middle and tallest, silver left, bronze right.
+  // ---------------------------------------------------------------------
 
   Widget _buildTopThreeSection(
     List<Map<String, dynamic>> leaderboardData,
@@ -389,31 +364,42 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     if (leaderboardData.isEmpty) return const SizedBox.shrink();
     final topThree = leaderboardData.take(3).toList();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurfaceVariant,
-        borderRadius: BorderRadius.circular(28),
-      ),
+    return Entrance(
+      delay: const Duration(milliseconds: 180),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.nationalPodium,
-            style: TextStyle(
-              color: LightModeColors.dashboardTextPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          Text(l10n.nationalPodium, style: AppText.display(size: 20)),
+          const SizedBox(height: 14),
+          SoftCard(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            // Reserve the podium's final height so the ranking below does
+            // not shift while the steps rise.
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 270),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: topThree.length > 1
+                        ? _buildPodiumItem(topThree[1], 2, 80)
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: topThree.isNotEmpty
+                        ? _buildPodiumItem(topThree[0], 1, 114)
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: topThree.length > 2
+                        ? _buildPodiumItem(topThree[2], 3, 58)
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (topThree.length > 1) _buildPodiumItem(topThree[1], 2, 80),
-              if (topThree.isNotEmpty) _buildPodiumItem(topThree[0], 1, 100),
-              if (topThree.length > 2) _buildPodiumItem(topThree[2], 3, 60),
-            ],
           ),
         ],
       ),
@@ -432,97 +418,99 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     Color medalColor;
     switch (position) {
       case 1:
-        medalColor = LightModeColors.lightError;
+        medalColor = AppColors.gold;
         break;
       case 2:
-        medalColor = Colors.grey.shade400;
+        medalColor = AppColors.silver;
         break;
       case 3:
-        medalColor = LightModeColors.warning;
+        medalColor = AppColors.bronze;
         break;
       default:
-        medalColor = Colors.grey;
+        medalColor = AppColors.silver;
     }
 
     final num ptsVal = isCurrentUser
         ? (authProvider.userProfile?.totalPointsValidated ?? (user['totalPointsValidated'] as num?)?.toDouble() ?? 0.0)
         : ((user['totalPointsValidated'] ?? user['points'] ?? 0) as num);
 
+    final String name = '${user['name'] ?? ''}';
+    final double avatarSize = position == 1 ? 66 : 52;
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (isCurrentUser)
-          CircleAvatar(
-            radius: 25,
-            backgroundImage: NetworkImage(
-              authProvider.userProfile?.avatarUrl ?? UserModel.defaultAvatarUrl,
-            ),
-          )
-        else
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: _getAvatarGradient(user['userId']),
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                _getInitials(user['name']),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+        if (position == 1) ...[
+          const Icon(
+            Icons.emoji_events_rounded,
+            color: AppColors.gold,
+            size: 26,
           ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 4),
+        ],
+        // The avatar, set in its metal.
         Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(color: medalColor, shape: BoxShape.circle),
-          child: Icon(Icons.star, color: Colors.white, size: 16),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          isCurrentUser ? user['name'] : _getInitials(user['name']),
-          style: TextStyle(
-            color: LightModeColors.dashboardTextPrimary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${_formatPoints(ptsVal)} pts',
-          style: TextStyle(
-            color: LightModeColors.dashboardTextPrimary.withValues(alpha: 0.8),
-            fontSize: 10,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: 40,
-          height: height,
+          padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
+            shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [medalColor.withValues(alpha: 0.8), medalColor],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color.lerp(medalColor, Colors.white, 0.5)!, medalColor],
             ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
+            boxShadow: position == 1
+                ? AppShadows.glow(AppColors.gold, strength: 0.45)
+                : null,
+          ),
+          child: AppAvatar(
+            name: name,
+            imageUrl: isCurrentUser
+                ? (authProvider.userProfile?.avatarUrl ??
+                      UserModel.defaultAvatarUrl)
+                : null,
+            size: avatarSize,
+            ring: false,
+            tone: isCurrentUser ? Tone.indigo : _getAvatarTone(user['userId']),
           ),
         ),
+        const SizedBox(height: 8),
+        Text(
+          isCurrentUser ? name : _getInitials(name),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: AppText.label(
+            size: 13,
+            weight: FontWeight.w700,
+            letterSpacing: 0,
+            color: isCurrentUser ? AppColors.indigo : AppColors.text,
+          ),
+        ),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(formatPoints(ptsVal), style: AppText.display(size: 15)),
+              const SizedBox(width: 3),
+              Text('pts', style: AppText.label(size: 11.5, letterSpacing: 0)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        _PodiumStep(position: position, height: height, color: medalColor),
       ],
     );
   }
 
-  Widget _buildLeaderboardList(
+  // ---------------------------------------------------------------------
+  // The rest of the ranking — glass rows, the first few arriving in turn.
+  // ---------------------------------------------------------------------
+
+  List<Widget> _buildLeaderboardList(
     LeaderboardProvider leaderboardProvider,
     AppLocalizations l10n,
   ) {
@@ -530,154 +518,244 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.firebaseUser?.uid;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: LightModeColors.lightSurface,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Text(
-                  l10n.myNationalPosition,
-                  style: const TextStyle(
-                    color: LightModeColors.dashboardTextPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  l10n.points.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: leaderboardData.length,
-            separatorBuilder: (context, index) => Divider(
-              color: LightModeColors.lightOutline,
-              height: 1,
-              indent: 20,
-              endIndent: 20,
-            ),
-            itemBuilder: (context, index) {
-              final user = leaderboardData[index];
-              final isCurrentUser = user['userId'] == currentUserId;
+    // The top three stand on the podium; everyone else is listed here.
+    final int restCount = math.max(leaderboardData.length - 3, 0);
+    final int leadCount = math.min(restCount, _leadRows);
+    const rowPadding = EdgeInsets.symmetric(horizontal: AppSpace.page);
 
-              return Container(
-                color: isCurrentUser
-                    ? LightModeColors.lightPrimary.withValues(alpha: 0.1)
-                    : Colors.transparent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: isCurrentUser
-                            ? LightModeColors.warning
-                            : LightModeColors.lightOutlineVariant,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${user['rank']}',
-                          style: TextStyle(
-                            color: isCurrentUser
-                                ? Colors.white
-                                : LightModeColors.dashboardTextSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (isCurrentUser)
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage: NetworkImage(
-                          authProvider.userProfile?.avatarUrl ??
-                              UserModel.defaultAvatarUrl,
-                        ),
-                      )
-                    else
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: _getAvatarGradient(user['userId']),
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _getInitials(user['name']),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isCurrentUser
-                            ? user['name']
-                            : _getInitials(user['name']),
-                        style: TextStyle(
-                          color: LightModeColors.dashboardTextPrimary,
-                          fontSize: 14,
-                          fontWeight: isCurrentUser
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${user['totalPointsValidated'] ?? user['points']} pts',
-                      style: TextStyle(
-                        color: isCurrentUser
-                            ? LightModeColors.warning
-                            : LightModeColors.dashboardTextSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.page,
+            28,
+            AppSpace.page,
+            14,
           ),
-          if (leaderboardProvider.isLoadingMore)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: LightModeColors.lightPrimary,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.myNationalPosition,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.display(size: 18, height: 1.15),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(l10n.points, style: AppText.label(size: 13)),
+            ],
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: rowPadding,
+        sliver: SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < leadCount; i++)
+                Entrance.staggered(
+                  index: i,
+                  base: const Duration(milliseconds: 280),
+                  child: _buildRankRow(
+                    leaderboardData[i + 3],
+                    currentUserId,
+                    authProvider,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: rowPadding,
+        sliver: SliverList.builder(
+          itemCount: restCount - leadCount,
+          itemBuilder: (context, index) {
+            return _buildRankRow(
+              leaderboardData[index + 3 + leadCount],
+              currentUserId,
+              authProvider,
+            );
+          },
+        ),
+      ),
+      if (leaderboardProvider.isLoadingMore)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CapsuleLoader(size: 36)),
+          ),
+        ),
+    ];
+  }
+
+  Widget _buildRankRow(
+    Map<String, dynamic> user,
+    String? currentUserId,
+    AuthProvider authProvider,
+  ) {
+    final isCurrentUser = user['userId'] == currentUserId;
+    final String name = '${user['name'] ?? ''}';
+    final dynamic rowPoints = user['totalPointsValidated'] ?? user['points'];
+
+    Widget row = SoftCard(
+      radius: AppRadii.md,
+      shadow: false,
+      tint: isCurrentUser ? AppColors.indigoTint : null,
+      padding: const EdgeInsets.fromLTRB(6, 10, 16, 10),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 46,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '${user['rank']}',
+                maxLines: 1,
+                style: AppText.display(
+                  size: 19,
+                  color: isCurrentUser
+                      ? AppColors.indigo
+                      : AppColors.textMuted,
                 ),
               ),
             ),
+          ),
+          AppAvatar(
+            name: name,
+            imageUrl: isCurrentUser
+                ? (authProvider.userProfile?.avatarUrl ??
+                      UserModel.defaultAvatarUrl)
+                : null,
+            size: 42,
+            ring: isCurrentUser,
+            tone: isCurrentUser ? Tone.indigo : _getAvatarTone(user['userId']),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              isCurrentUser ? name : _getInitials(name),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body(
+                size: 15,
+                weight: isCurrentUser ? FontWeight.w700 : FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            rowPoints is num ? formatPoints(rowPoints) : '$rowPoints',
+            maxLines: 1,
+            style: AppText.display(
+              size: 16,
+              color: isCurrentUser ? AppColors.indigoDeep : AppColors.text,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text('pts', style: AppText.label(size: 12, letterSpacing: 0)),
         ],
+      ),
+    );
+
+    if (isCurrentUser) {
+      // An indigo edge so your own row is findable at a glance.
+      row = DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          border: Border.all(
+            color: AppColors.indigo.withValues(alpha: 0.42),
+            width: 1.4,
+          ),
+        ),
+        child: row,
+      );
+    }
+
+    return Padding(padding: const EdgeInsets.only(bottom: 8), child: row);
+  }
+}
+
+/// One step of the podium. Rises out of the card once, third place first.
+class _PodiumStep extends StatelessWidget {
+  final int position;
+  final double height;
+  final Color color;
+
+  const _PodiumStep({
+    required this.position,
+    required this.height,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double start = position == 1 ? 0.3 : (position == 2 ? 0.15 : 0.0);
+
+    final step = Container(
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadii.sm),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(color, Colors.white, 0.3)!,
+            color,
+            Color.lerp(color, AppColors.ink, 0.14)!,
+          ],
+          stops: const [0, 0.45, 1],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Gloss along the top edge of the step.
+          Positioned(
+            top: 5,
+            left: 8,
+            right: 8,
+            height: 5,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.42),
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ),
+          Align(
+            alignment: const Alignment(0, -0.1),
+            child: Text(
+              '$position',
+              style: AppText.display(
+                size: position == 1 ? 36 : 28,
+                color: AppColors.ink.withValues(alpha: 0.8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: AppMotion.reduced(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 1200),
+      curve: Interval(start, 1, curve: AppMotion.emphasized),
+      child: step,
+      builder: (context, t, child) => ClipRect(
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: t.clamp(0.0, 1.0),
+          child: child,
+        ),
       ),
     );
   }
@@ -776,7 +854,7 @@ class _AnimatedDateSelectorState extends State<_AnimatedDateSelector> {
 
           return Padding(
             padding: const EdgeInsets.only(right: 10),
-            child: GestureDetector(
+            child: Pressable(
               onTap: () {
                 // The selector is not interactive in this version, but tap could be added here.
               },
@@ -784,12 +862,14 @@ class _AnimatedDateSelectorState extends State<_AnimatedDateSelector> {
                 width: 45,
                 height: 65,
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(32),
+                  color: isSelected
+                      ? AppColors.ink
+                      : Colors.white.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
                   border: Border.all(
                     color: isSelected
-                        ? Colors.black
-                        : (isToday ? Colors.blue : Colors.grey.shade300),
+                        ? AppColors.ink
+                        : (isToday ? AppColors.indigo : Colors.white),
                     width: isToday && !isSelected ? 2 : 1,
                   ),
                 ),
@@ -798,19 +878,18 @@ class _AnimatedDateSelectorState extends State<_AnimatedDateSelector> {
                   children: [
                     Text(
                       day['day'],
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey.shade600,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                      style: AppText.label(
+                        size: 11,
+                        weight: FontWeight.w500,
+                        color: isSelected ? Colors.white : AppColors.textMuted,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       day['date'],
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                      style: AppText.display(
+                        size: 15,
+                        color: isSelected ? Colors.white : AppColors.text,
                       ),
                     ),
                   ],

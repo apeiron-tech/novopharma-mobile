@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:novopharma/controllers/notification_provider.dart';
 import 'package:novopharma/controllers/auth_provider.dart';
+import 'package:novopharma/design/design.dart';
 import 'package:novopharma/models/notification_model.dart';
 import 'package:novopharma/models/blog_post.dart';
 import 'package:novopharma/screens/badges_screen.dart';
@@ -11,7 +12,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:novopharma/screens/actualites_screen.dart';
 import 'package:novopharma/screens/goals_screen.dart';
 import 'package:novopharma/screens/quiz_correction_screen.dart';
-import '../theme.dart';
 import '../generated/l10n/app_localizations.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -22,6 +22,10 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  /// When the list first appeared. Rows built while it is arriving get a
+  /// staggered entrance; later builds (scroll, updates) do not replay it.
+  DateTime? _listShownAt;
+
   @override
   void initState() {
     super.initState();
@@ -29,116 +33,97 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     timeago.setLocaleMessages('fr', timeago.FrMessages());
   }
 
+  Widget _arriving(int index, Widget child) {
+    _listShownAt ??= DateTime.now();
+    final arriving =
+        index < 8 &&
+        DateTime.now().difference(_listShownAt!) <
+            const Duration(milliseconds: 1200);
+    return arriving ? Entrance.staggered(index: index, child: child) : child;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: LightModeColors.lightBackground,
-      appBar: AppBar(
-        backgroundColor: LightModeColors.lightBackground,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: LightModeColors.dashboardTextPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          AppLocalizations.of(context)!.notifications,
-          style: TextStyle(
-            color: LightModeColors.dashboardTextPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
+      backgroundColor: AppColors.canvas,
+      appBar: InkAppBar(
+        title: AppLocalizations.of(context)!.notifications,
+        leading: GlassIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onTap: () => Navigator.pop(context),
         ),
         actions: [
           Consumer2<NotificationProvider, AuthProvider>(
             builder: (context, notificationProvider, authProvider, _) {
-              if (notificationProvider.unreadCount == 0)
+              if (notificationProvider.unreadCount == 0) {
                 return const SizedBox();
+              }
 
-              return TextButton(
-                onPressed: () {
+              return GlassIconButton(
+                icon: Icons.done_all_rounded,
+                tooltip: AppLocalizations.of(context)!.markAsRead,
+                onTap: () {
                   final userId = authProvider.userProfile?.uid;
                   if (userId != null) {
                     notificationProvider.markAllAsRead(userId);
                   }
                 },
-                style: TextButton.styleFrom(
-                  foregroundColor: LightModeColors.lightPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.markAsRead,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               );
             },
           ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: Consumer2<NotificationProvider, AuthProvider>(
-        builder: (context, notificationProvider, authProvider, _) {
-          if (notificationProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: AppBackground(
+        child: SizedBox.expand(
+          child: Consumer2<NotificationProvider, AuthProvider>(
+            builder: (context, notificationProvider, authProvider, _) {
+              if (notificationProvider.isLoading) {
+                return const SkeletonList(
+                  count: 6,
+                  itemHeight: 96,
+                  padding: EdgeInsets.all(16),
+                );
+              }
 
-          final notifications = notificationProvider.notifications;
+              final notifications = notificationProvider.notifications;
 
-          if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: LightModeColors.lightSurfaceVariant,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.notifications_none_rounded,
-                      size: 64,
-                      color: LightModeColors.lightOnSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)!.noNotifications,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: LightModeColors.dashboardTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context)!.notificationsDescription,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: LightModeColors.dashboardTextSecondary),
-                  ),
-                ],
-              ),
-            );
-          }
+              if (notifications.isEmpty) {
+                return EmptyState(
+                  icon: Icons.notifications_none_rounded,
+                  title: AppLocalizations.of(context)!.noNotifications,
+                  message: AppLocalizations.of(
+                    context,
+                  )!.notificationsDescription,
+                );
+              }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: notifications.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final notification = notifications[index];
-              return _buildNotificationCard(
-                context,
-                notification,
-                authProvider.userProfile?.uid ?? '',
-                notificationProvider,
+              return ListView.separated(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  AppSpace.xl,
+                  16,
+                  16 + MediaQuery.paddingOf(context).bottom,
+                ),
+                itemCount: notifications.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final notification = notifications[index];
+                  return _arriving(
+                    index,
+                    _buildNotificationCard(
+                      context,
+                      notification,
+                      authProvider.userProfile?.uid ?? '',
+                      notificationProvider,
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -153,12 +138,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       key: Key(notification.id),
       background: Container(
         decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(12),
+          gradient: AppGradients.coral,
+          borderRadius: BorderRadius.circular(AppRadii.md),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+        padding: const EdgeInsets.only(right: 22),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (_) {
@@ -170,189 +155,155 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: notification.isRead ? LightModeColors.lightSurface : LightModeColors.lightPrimaryContainer,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: notification.isRead
-                ? LightModeColors.lightOutline
-                : LightModeColors.lightPrimary,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+      // Unread rows are tinted and lifted; read ones settle back.
+      child: SoftCard(
+        radius: AppRadii.md,
+        padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+        tint: notification.isRead
+            ? null
+            : Color.lerp(AppColors.indigoTint, AppColors.indigoBright, 0.16),
+        shadow: !notification.isRead,
+        onTap: () async {
+          // Mark as read
+          if (!notification.isRead) {
+            await provider.markAsRead(userId, notification.id);
+          }
+
+          // Navigate based on notification type
+          if (notification.type == NotificationType.newTraining) {
+            // Fetch the formation from Firestore
+            try {
+              final doc = await FirebaseFirestore.instance
+                  .collection('blogPosts')
+                  .doc(notification.resourceId)
+                  .get();
+
+              if (doc.exists && context.mounted) {
+                final formation = BlogPost.fromFirestore(doc);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        FormationDetailsScreen(formation: formation),
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context)!.formationNotFound,
+                    ),
+                    backgroundColor: AppColors.coralDeep,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Erreur: $e'),
+                    backgroundColor: AppColors.coralDeep,
+                  ),
+                );
+              }
+            }
+          } else if (notification.type == NotificationType.newActualite) {
+            if (context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ActualitesScreen(),
+                ),
+              );
+            }
+          } else if (notification.type == NotificationType.newGoal ||
+              notification.type == NotificationType.goalCompleted) {
+            if (context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GoalsScreen()),
+              );
+            }
+          } else if (notification.type == NotificationType.newBadge ||
+              notification.type == NotificationType.achievement) {
+            // Navigate to badges screen
+            if (context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BadgesScreen()),
+              );
+            }
+          } else if (notification.type == NotificationType.quizCorrection) {
+            if (context.mounted && notification.resourceId != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => QuizCorrectionScreen(
+                    quizId: notification.resourceId!,
+                  ),
+                ),
+              );
+            }
+          }
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon
+            TintIcon(
+              icon: _getNotificationIcon(notification.type),
+              tone: _getNotificationTone(notification.type),
+              size: 46,
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () async {
-              // Mark as read
-              if (!notification.isRead) {
-                await provider.markAsRead(userId, notification.id);
-              }
-
-              // Navigate based on notification type
-              if (notification.type == NotificationType.newTraining) {
-                // Fetch the formation from Firestore
-                try {
-                  final doc = await FirebaseFirestore.instance
-                      .collection('blogPosts')
-                      .doc(notification.resourceId)
-                      .get();
-
-                  if (doc.exists && context.mounted) {
-                    final formation = BlogPost.fromFirestore(doc);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FormationDetailsScreen(formation: formation),
-                      ),
-                    );
-                  } else if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(AppLocalizations.of(context)!.formationNotFound),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Erreur: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              } else if (notification.type == NotificationType.newActualite) {
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ActualitesScreen(),
-                    ),
-                  );
-                }
-              } else if (notification.type == NotificationType.newGoal ||
-                  notification.type == NotificationType.goalCompleted) {
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const GoalsScreen(),
-                    ),
-                  );
-                }
-              } else if (notification.type == NotificationType.newBadge ||
-                  notification.type == NotificationType.achievement) {
-                // Navigate to badges screen
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BadgesScreen(),
-                    ),
-                  );
-                }
-              } else if (notification.type == NotificationType.quizCorrection) {
-                if (context.mounted && notification.resourceId != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => QuizCorrectionScreen(
-                        quizId: notification.resourceId!,
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Row(
+            const SizedBox(width: 12),
+            // Content
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Icon
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _getNotificationColor(
-                        notification.type,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _getNotificationIcon(notification.type),
-                      color: _getNotificationColor(notification.type),
-                      size: 24,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notification.title,
+                          style: AppText.body(
+                            size: 15.5,
+                            weight: notification.isRead
+                                ? FontWeight.w600
+                                : FontWeight.w800,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                      if (!notification.isRead)
+                        Container(
+                          width: 9,
+                          height: 9,
+                          margin: const EdgeInsets.only(left: 8, top: 5),
+                          decoration: const BoxDecoration(
+                            color: AppColors.indigo,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  // Content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                notification.title,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: notification.isRead
-                                      ? FontWeight.w600
-                                      : FontWeight.bold,
-                                  color: LightModeColors.dashboardTextPrimary,
-                                ),
-                              ),
-                            ),
-                            if (!notification.isRead)
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF1F9BD1),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          notification.body,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: LightModeColors.dashboardTextSecondary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          timeago.format(notification.createdAt, locale: 'fr'),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: LightModeColors.lightOnSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    notification.body,
+                    style: AppText.body(size: 14, color: AppColors.textMuted),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    timeago.format(notification.createdAt, locale: 'fr'),
+                    style: AppText.label(size: 12, weight: FontWeight.w500),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -378,23 +329,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  Color _getNotificationColor(NotificationType type) {
+  /// One accent per feature: brand indigo for trainings, news and quizzes,
+  /// amber for badges, mint for wins, coral for objectives.
+  Tone _getNotificationTone(NotificationType type) {
     switch (type) {
       case NotificationType.newTraining:
-        return LightModeColors.lightPrimary;
+        return Tone.indigo;
       case NotificationType.newActualite:
-        return LightModeColors.novoPharmaBlue;
+        return Tone.indigo;
       case NotificationType.newBadge:
-        return LightModeColors.warning;
+        return Tone.amber;
       case NotificationType.achievement:
-        return LightModeColors.success;
+        return Tone.mint;
       case NotificationType.newGoal:
       case NotificationType.goalCompleted:
-        return LightModeColors.novoPharmaBlue;
+        return Tone.coral;
       case NotificationType.quizCorrection:
-        return LightModeColors.novoPharmaBlue;
+        return Tone.indigo;
       case NotificationType.reminder:
-        return LightModeColors.lightSecondary;
+        return Tone.peach;
     }
   }
 }
