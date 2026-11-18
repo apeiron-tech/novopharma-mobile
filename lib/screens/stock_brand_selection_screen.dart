@@ -268,7 +268,7 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: LightModeColors.lightOutlineVariant),
                                 boxShadow: [
-                                  BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 8, offset: const Offset(0, 4)),
+                                  BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4)),
                                 ],
                               ),
                               child: ListTile(

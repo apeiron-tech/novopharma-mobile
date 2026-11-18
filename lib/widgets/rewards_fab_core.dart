@@ -71,7 +71,7 @@ class _RewardsFABCoreState extends State<RewardsFABCore>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: LightModeColors.lightError.withOpacity(0.3),
+                      color: LightModeColors.lightError.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

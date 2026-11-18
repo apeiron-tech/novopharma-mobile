@@ -68,14 +68,14 @@ class RewardHistoryScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 2,
-                shadowColor: Colors.black.withOpacity(0.05),
+                shadowColor: Colors.black.withValues(alpha: 0.05),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
                   leading: Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: LightModeColors.novoPharmaBlue.withOpacity(0.1),
+                      color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(

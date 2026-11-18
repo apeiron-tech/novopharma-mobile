@@ -8,7 +8,9 @@ import 'package:novopharma/theme.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart'
+    show YoutubePlayerController;
+import 'package:novopharma/widgets/app_youtube_player.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
@@ -96,16 +98,7 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
   void _initMedia(CustomPageModel page) {
     if (page.videoUrl != null && page.videoUrl!.isNotEmpty) {
       if (!page.isVideoFile) {
-        final videoId = YoutubePlayer.convertUrlToId(page.videoUrl!);
-        if (videoId != null) {
-          _youtubeController = YoutubePlayerController(
-            initialVideoId: videoId,
-            flags: const YoutubePlayerFlags(
-              autoPlay: false,
-              mute: false,
-            ),
-          );
-        }
+        _youtubeController = AppYoutubePlayer.controllerFor(page.videoUrl!);
       } else {
         _videoPlayerController = VideoPlayerController.networkUrl(
           Uri.parse(page.videoUrl!),
@@ -198,7 +191,7 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   @override
   void dispose() {
-    _youtubeController?.dispose();
+    _youtubeController?.close();
     _videoPlayerController?.dispose();
     _productSearchController.dispose();
     super.dispose();
@@ -206,24 +199,10 @@ class _CustomPageScreenState extends State<CustomPageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_youtubeController != null) {
-      return YoutubePlayerBuilder(
-        player: YoutubePlayer(
-          controller: _youtubeController!,
-          showVideoProgressIndicator: true,
-          progressIndicatorColor: LightModeColors.novoPharmaBlue,
-          progressColors: const ProgressBarColors(
-            playedColor: LightModeColors.novoPharmaBlue,
-            handleColor: LightModeColors.novoPharmaBlue,
-          ),
-        ),
-        builder: (context, player) {
-          return _buildScaffold(player);
-        },
-      );
-    }
-
-    return _buildScaffold(null);
+    final controller = _youtubeController;
+    return _buildScaffold(
+      controller != null ? AppYoutubePlayer(controller: controller) : null,
+    );
   }
 
   Widget _buildScaffold(Widget? youtubePlayerWidget) {

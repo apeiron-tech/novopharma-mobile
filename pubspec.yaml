@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.10.2+57
+version: 1.10.3+58
 
 environment:
   sdk: ^3.9.0
@@ -69,10 +69,16 @@ dependencies:
   share_plus: ^12.0.2
   carousel_slider: ^5.1.2
   geolocator: ^13.0.2
-  youtube_player_flutter: ^9.1.1
+  youtube_player_flutter: ^10.0.2
+  # youtube_player_flutter 10 renders its controls with material_ui; used by
+  # lib/widgets/app_youtube_player.dart to give it a matching Theme/Material.
+  material_ui: ^1.11.1
   flutter_pdfview: ^1.4.0
   flutter_html: ^3.0.0-beta.2
-  
+  # Pinned: flutter_html 3.0.0 imports html's private query_selector `matches`,
+  # which was removed in html 0.15.7 and breaks compilation.
+  html: 0.15.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

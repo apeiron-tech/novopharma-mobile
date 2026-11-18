@@ -260,7 +260,7 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
                                     width: hasQty ? 1.5 : 1.0,
                                   ),
                                   boxShadow: [
-                                    BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 8, offset: const Offset(0, 4)),
+                                    BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4)),
                                   ],
                                 ),
                                 child: Column(
@@ -345,13 +345,13 @@ class _BrandStockInputScreenState extends State<BrandStockInputScreen> {
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                           decoration: BoxDecoration(
                                             color: draftItem.respectsPrice 
-                                                ? LightModeColors.success.withOpacity(0.1) 
+                                                ? LightModeColors.success.withValues(alpha: 0.1) 
                                                 : LightModeColors.novoPharmaLightBlue,
                                             borderRadius: BorderRadius.circular(8),
                                             border: Border.all(
                                               color: draftItem.respectsPrice 
-                                                  ? LightModeColors.success.withOpacity(0.3) 
-                                                  : LightModeColors.novoPharmaBlue.withOpacity(0.3),
+                                                  ? LightModeColors.success.withValues(alpha: 0.3) 
+                                                  : LightModeColors.novoPharmaBlue.withValues(alpha: 0.3),
                                             ),
                                           ),
                                           child: Row(

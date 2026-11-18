@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart'
+    show YoutubePlayerController;
+import '../widgets/app_youtube_player.dart';
 import '../models/blog_post.dart';
 import '../theme.dart';
 import '../widgets/video_player_dialog.dart';
@@ -29,45 +31,23 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
   void _initYoutubeVideo() {
     final youtubeUrl = widget.actualite.youtubeVideoUrl;
     if (youtubeUrl != null && youtubeUrl.isNotEmpty) {
-      final videoId = YoutubePlayer.convertUrlToId(youtubeUrl);
-      if (videoId != null) {
-        _youtubeController = YoutubePlayerController(
-          initialVideoId: videoId,
-          flags: const YoutubePlayerFlags(
-            autoPlay: false,
-            mute: false,
-          ),
-        );
-      }
+      _youtubeController = AppYoutubePlayer.controllerFor(youtubeUrl);
     }
   }
 
   @override
   void dispose() {
-    _youtubeController?.dispose();
+    _youtubeController?.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_youtubeController != null) {
-      return YoutubePlayerBuilder(
-        player: YoutubePlayer(
-          controller: _youtubeController!,
-          showVideoProgressIndicator: true,
-          progressIndicatorColor: LightModeColors.novoPharmaBlue,
-          progressColors: const ProgressBarColors(
-            playedColor: LightModeColors.novoPharmaBlue,
-            handleColor: LightModeColors.novoPharmaBlue,
-          ),
-        ),
-        builder: (context, player) {
-          return _buildScaffold(context, player);
-        },
-      );
-    }
-
-    return _buildScaffold(context, null);
+    final controller = _youtubeController;
+    return _buildScaffold(
+      context,
+      controller != null ? AppYoutubePlayer(controller: controller) : null,
+    );
   }
 
   Widget _buildScaffold(BuildContext context, Widget? youtubePlayerWidget) {
@@ -122,7 +102,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: LightModeColors.lightOnPrimary.withOpacity(0.2),
+                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -168,12 +148,12 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
         color: LightModeColors.lightSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: LightModeColors.lightOnPrimary.withOpacity(0.6),
+          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: LightModeColors.lightSurfaceVariant.withOpacity(0.08),
+            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -194,7 +174,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        LightModeColors.lightPrimary.withOpacity(0.1),
+                        LightModeColors.lightPrimary.withValues(alpha: 0.1),
                         Colors.transparent,
                       ],
                       begin: Alignment.topCenter,
@@ -238,13 +218,13 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            LightModeColors.success.withOpacity(0.1),
-                            LightModeColors.success.withOpacity(0.05),
+                            LightModeColors.success.withValues(alpha: 0.1),
+                            LightModeColors.success.withValues(alpha: 0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: LightModeColors.success.withOpacity(0.2),
+                          color: LightModeColors.success.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Text(
@@ -277,7 +257,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: LightModeColors.warning.withOpacity(0.1),
+                            color: LightModeColors.warning.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -300,7 +280,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: LightModeColors.lightSurfaceVariant
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -427,7 +407,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: LightModeColors.lightSurfaceVariant
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: LightModeColors.lightOutline,
@@ -535,7 +515,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: LightModeColors.lightSurfaceVariant.withOpacity(0.05),
+        color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: LightModeColors.lightOutline),
       ),
@@ -703,7 +683,7 @@ class _ActualiteDetailsScreenState extends State<ActualiteDetailsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: LightModeColors.lightSurfaceVariant.withOpacity(0.7),
+                  color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

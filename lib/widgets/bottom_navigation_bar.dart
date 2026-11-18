@@ -117,7 +117,7 @@ class SharedBottomNavigationBar extends StatelessWidget {
       },
       hideAnimationController: null,
       shadow: BoxShadow(
-        color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+        color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
         blurRadius: 10,
         offset: const Offset(0, -5),
       ),

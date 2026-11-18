@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart' as mui show GlobalMaterialLocalizations;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:novopharma/generated/l10n/app_localizations.dart';
@@ -82,8 +83,13 @@ void main() async {
   // Initialize ChottuLink handling
   ChottuLinkService().initialize();
 
-  // Initialize notification service
-  await NotificationService().initialize();
+  // Initialize notification service. A failure here must never block runApp
+  // (otherwise the app stays on a black screen).
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('[main] Notification init failed: $e');
+  }
 
   runApp(
     MultiProvider(
@@ -146,7 +152,11 @@ class NovoPharmaApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: const [
+        ...AppLocalizations.localizationsDelegates,
+        // Needed by material_ui widgets (YouTube player controls/sheets).
+        mui.GlobalMaterialLocalizations.delegate,
+      ],
       supportedLocales: AppLocalizations.supportedLocales,
       locale: localeProvider.locale,
       home: const SplashScreen(),

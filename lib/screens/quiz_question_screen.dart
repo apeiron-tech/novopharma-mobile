@@ -350,7 +350,7 @@ class _AnswerCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: isSelected
-                ? LightModeColors.novoPharmaBlue.withOpacity(0.1)
+                ? LightModeColors.novoPharmaBlue.withValues(alpha: 0.1)
                 : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(

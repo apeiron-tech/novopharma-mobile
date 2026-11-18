@@ -47,7 +47,7 @@ class TermsConditionsModal extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: LightModeColors.lightSurfaceVariant.withOpacity(0.05),
+                  color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -206,7 +206,7 @@ L'accès peut être retiré à tout moment :
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: LightModeColors.lightPrimary.withOpacity(0.1),
+                                color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Icon(

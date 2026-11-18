@@ -343,7 +343,7 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: LightModeColors.lightOutlineVariant),
                                 boxShadow: [
-                                  BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 8, offset: const Offset(0, 4)),
+                                  BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4)),
                                 ],
                               ),
                               child: Column(
@@ -452,13 +452,13 @@ class _StockReviewScreenState extends State<StockReviewScreen> {
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: item.respectsPrice
-                                              ? LightModeColors.success.withOpacity(0.1)
-                                              : LightModeColors.lightError.withOpacity(0.1),
+                                              ? LightModeColors.success.withValues(alpha: 0.1)
+                                              : LightModeColors.lightError.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(6),
                                           border: Border.all(
                                             color: item.respectsPrice
-                                                ? LightModeColors.success.withOpacity(0.3)
-                                                : LightModeColors.lightError.withOpacity(0.3),
+                                                ? LightModeColors.success.withValues(alpha: 0.3)
+                                                : LightModeColors.lightError.withValues(alpha: 0.3),
                                           ),
                                         ),
                                         child: Row(

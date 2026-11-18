@@ -21,7 +21,7 @@ class BadgeCard extends StatelessWidget {
         boxShadow: [
           if (isAwarded)
             BoxShadow(
-              color: LightModeColors.lightPrimary.withOpacity(0.1),
+              color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
               blurRadius: 10,
               spreadRadius: 2,
             ),

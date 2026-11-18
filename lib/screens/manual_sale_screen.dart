@@ -147,7 +147,7 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
@@ -246,7 +246,7 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -356,7 +356,7 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: matchingChallenge != null 
-                                        ? LightModeColors.success.withOpacity(0.12)
+                                        ? LightModeColors.success.withValues(alpha: 0.12)
                                         : LightModeColors.warningContainer,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -381,7 +381,7 @@ class _ManualSaleScreenState extends State<ManualSaleScreen> {
                                           '(Std: $standardPoints)',
                                           style: TextStyle(
                                             fontSize: 10,
-                                            color: LightModeColors.success.withOpacity(0.7),
+                                            color: LightModeColors.success.withValues(alpha: 0.7),
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),

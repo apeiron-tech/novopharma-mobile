@@ -504,7 +504,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: LightModeColors.lightPrimary.withOpacity(0.3),
+                color: LightModeColors.lightPrimary.withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -521,7 +521,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   height: 100 * scaleFactor,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -533,7 +533,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   height: 120 * scaleFactor,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                   ),
                 ),
               ),
@@ -553,7 +553,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -588,7 +588,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                 child: Text(
                                   'pts',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 16 * scaleFactor,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -609,9 +609,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withOpacity(0),
-                            Colors.white.withOpacity(0.3),
-                            Colors.white.withOpacity(0),
+                            Colors.white.withValues(alpha: 0),
+                            Colors.white.withValues(alpha: 0.3),
+                            Colors.white.withValues(alpha: 0),
                           ],
                         ),
                       ),
@@ -627,7 +627,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -662,7 +662,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                 child: Text(
                                   'pts',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 16 * scaleFactor,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -690,7 +690,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
               border: Border.all(color: LightModeColors.lightOutlineVariant),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -831,7 +831,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         border: Border.all(color: LightModeColors.lightOutlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -895,7 +895,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         border: Border.all(color: LightModeColors.lightOutlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -960,7 +960,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         border: Border.all(color: LightModeColors.lightOutlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1025,7 +1025,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         border: Border.all(color: LightModeColors.lightOutlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1090,7 +1090,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         border: Border.all(color: LightModeColors.lightOutlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1155,7 +1155,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
         border: Border.all(color: LightModeColors.lightOutlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

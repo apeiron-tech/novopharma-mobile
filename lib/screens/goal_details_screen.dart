@@ -244,8 +244,8 @@ class _GoalDetailsScreenState extends State<GoalDetailsScreen> {
                       .map(
                         (item) => Chip(
                           label: Text(item, overflow: TextOverflow.ellipsis),
-                          backgroundColor: LightModeColors.warning.withOpacity(
-                            0.1,
+                          backgroundColor: LightModeColors.warning.withValues(
+                            alpha: 0.1,
                           ),
                           labelStyle: const TextStyle(
                             color: LightModeColors.warning,

@@ -164,8 +164,8 @@ class _PopupDialogState extends State<PopupDialog>
                         margin: const EdgeInsets.symmetric(horizontal: 4.0),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(
-                            _currentIndex == entry.key ? 0.9 : 0.4,
+                          color: Colors.white.withValues(
+                            alpha: _currentIndex == entry.key ? 0.9 : 0.4,
                           ),
                         ),
                       ),
@@ -187,7 +187,7 @@ class _PopupDialogState extends State<PopupDialog>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -312,7 +312,7 @@ class _PopupDialogState extends State<PopupDialog>
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.close, color: Colors.white, size: 20),
@@ -331,7 +331,7 @@ class _PopupDialogState extends State<PopupDialog>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: LightModeColors.lightPrimary.withOpacity(0.9),
+                    color: LightModeColors.lightPrimary.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -421,11 +421,11 @@ class _AnimatingArrowButtonState extends State<_AnimatingArrowButton>
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

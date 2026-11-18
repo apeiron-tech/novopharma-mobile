@@ -190,10 +190,10 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            LightModeColors.lightSurface.withOpacity(0.7),
+            LightModeColors.lightSurface.withValues(alpha: 0.7),
             Colors.transparent,
             Colors.transparent,
-            LightModeColors.lightSurface.withOpacity(0.7),
+            LightModeColors.lightSurface.withValues(alpha: 0.7),
           ],
         ),
       ),
@@ -241,7 +241,7 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                   // Play/Pause button
                   Container(
                     decoration: BoxDecoration(
-                      color: LightModeColors.lightSurface.withOpacity(0.5),
+                      color: LightModeColors.lightSurface.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(40),
                     ),
                     child: IconButton(
@@ -264,7 +264,7 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                     colors: VideoProgressColors(
                       playedColor: LightModeColors.lightPrimary,
                       bufferedColor: LightModeColors.lightOutline,
-                      backgroundColor: LightModeColors.lightSurface.withOpacity(0.15),
+                      backgroundColor: LightModeColors.lightSurface.withValues(alpha: 0.15),
                     ),
                   ),
 

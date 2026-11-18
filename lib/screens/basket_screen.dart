@@ -50,7 +50,7 @@ class _BasketScreenState extends State<BasketScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.15),
+                        color: Colors.amber.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.card_giftcard, color: Colors.amber, size: 28),
@@ -84,7 +84,7 @@ class _BasketScreenState extends State<BasketScreen> {
                               width: isSel ? 2 : 1,
                             ),
                             borderRadius: BorderRadius.circular(12),
-                            color: isSel ? LightModeColors.novoPharmaBlue.withOpacity(0.05) : null,
+                            color: isSel ? LightModeColors.novoPharmaBlue.withValues(alpha: 0.05) : null,
                           ),
                           child: RadioListTile<String>(
                             value: eval.gift.id,
@@ -308,7 +308,7 @@ class _BasketScreenState extends State<BasketScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: LightModeColors.novoPharmaBlue.withOpacity(0.1),
+                        color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -355,7 +355,7 @@ class _BasketScreenState extends State<BasketScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: LightModeColors.novoPharmaBlue.withOpacity(0.08),
+                color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.08),
                 child: Row(
                   children: [
                     const Icon(Icons.storefront, size: 16, color: LightModeColors.novoPharmaBlue),
@@ -549,7 +549,7 @@ class _BasketScreenState extends State<BasketScreen> {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, -4),
                     ),

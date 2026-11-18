@@ -51,7 +51,7 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                         color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: LightModeColors.lightOnPrimary.withOpacity(0.3),
+                          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -108,7 +108,7 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+                            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 4),
                           ),
@@ -148,7 +148,7 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+                            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 4),
                           ),
@@ -161,7 +161,7 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: LightModeColors.warning.withOpacity(0.1),
+                              color: LightModeColors.warning.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(50),
                             ),
                             child: Icon(
@@ -252,10 +252,10 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
             boxShadow: [
               BoxShadow(
                 color: request.isPending
-                    ? LightModeColors.warning.withOpacity(0.1)
+                    ? LightModeColors.warning.withValues(alpha: 0.1)
                     : request.isApproved
-                    ? LightModeColors.success.withOpacity(0.1)
-                    : LightModeColors.lightError.withOpacity(0.1),
+                    ? LightModeColors.success.withValues(alpha: 0.1)
+                    : LightModeColors.lightError.withValues(alpha: 0.1),
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -268,12 +268,12 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                 color: LightModeColors.lightSurface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: LightModeColors.lightOnPrimary.withOpacity(0.6),
+                  color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: LightModeColors.lightSurfaceVariant.withOpacity(0.08),
+                    color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -324,7 +324,7 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+                                color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -386,9 +386,9 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              LightModeColors.dashboardTextSecondary.withOpacity(0.1),
-                                              LightModeColors.dashboardTextSecondary.withOpacity(0.3),
-                                              LightModeColors.dashboardTextSecondary.withOpacity(0.1),
+                                              LightModeColors.dashboardTextSecondary.withValues(alpha: 0.1),
+                                              LightModeColors.dashboardTextSecondary.withValues(alpha: 0.3),
+                                              LightModeColors.dashboardTextSecondary.withValues(alpha: 0.1),
                                             ],
                                           ),
                                         ),
@@ -411,9 +411,9 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              LightModeColors.dashboardTextSecondary.withOpacity(0.1),
-                                              LightModeColors.dashboardTextSecondary.withOpacity(0.3),
-                                              LightModeColors.dashboardTextSecondary.withOpacity(0.1),
+                                              LightModeColors.dashboardTextSecondary.withValues(alpha: 0.1),
+                                              LightModeColors.dashboardTextSecondary.withValues(alpha: 0.3),
+                                              LightModeColors.dashboardTextSecondary.withValues(alpha: 0.1),
                                             ],
                                           ),
                                         ),
@@ -444,10 +444,10 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                                     margin: const EdgeInsets.only(top: 16),
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: LightModeColors.lightSurfaceVariant.withOpacity(0.05),
+                                      color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: LightModeColors.lightError.withOpacity(0.2),
+                                        color: LightModeColors.lightError.withValues(alpha: 0.2),
                                         width: 1,
                                       ),
                                     ),
@@ -460,7 +460,7 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                                             Container(
                                               padding: const EdgeInsets.all(8),
                                               decoration: BoxDecoration(
-                                                color: LightModeColors.lightError.withOpacity(0.1),
+                                                color: LightModeColors.lightError.withValues(alpha: 0.1),
                                                 borderRadius:
                                                     BorderRadius.circular(10),
                                               ),
@@ -502,10 +502,10 @@ class _PluxeeHistoryScreenState extends State<PluxeeHistoryScreen> {
                                       vertical: 12,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: LightModeColors.lightSurfaceVariant.withOpacity(0.05),
+                                      color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: LightModeColors.lightError.withOpacity(0.2),
+                                        color: LightModeColors.lightError.withValues(alpha: 0.2),
                                         width: 1,
                                       ),
                                     ),

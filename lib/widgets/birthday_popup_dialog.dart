@@ -97,7 +97,7 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
+                    color: Colors.black.withValues(alpha: 0.18),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -120,7 +120,7 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: LightModeColors.lightPrimary.withOpacity(0.1),
+                              color: LightModeColors.lightPrimary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -162,7 +162,7 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF758C).withOpacity(0.35),
+                                color: const Color(0xFFFF758C).withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -199,7 +199,7 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: LightModeColors.dashboardTextPrimary
-                                .withOpacity(0.75),
+                                .withValues(alpha: 0.75),
                             height: 1.4,
                           ),
                         ),
@@ -222,7 +222,7 @@ class _BirthdayPopupDialogState extends State<BirthdayPopupDialog>
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF10B981).withOpacity(0.3),
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),

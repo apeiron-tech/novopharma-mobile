@@ -36,28 +36,28 @@ class GoalCard extends StatelessWidget {
             colors: isCompleted
                 ? [
                     LightModeColors.lightSurface,
-                    LightModeColors.success.withOpacity(0.05),
+                    LightModeColors.success.withValues(alpha: 0.05),
                   ]
                 : [Colors.white, LightModeColors.lightSurfaceVariant],
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isCompleted
-                ? progressColor.withOpacity(0.3)
+                ? progressColor.withValues(alpha: 0.3)
                 : LightModeColors.lightOutline,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
               color: isCompleted
-                  ? progressColor.withOpacity(0.15)
-                  : LightModeColors.lightSurfaceVariant.withOpacity(0.05),
+                  ? progressColor.withValues(alpha: 0.15)
+                  : LightModeColors.lightSurfaceVariant.withValues(alpha: 0.05),
               blurRadius: 16,
               offset: const Offset(0, 4),
               spreadRadius: 0,
             ),
             BoxShadow(
-              color: LightModeColors.lightSurfaceVariant.withOpacity(0.03),
+              color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -75,7 +75,7 @@ class GoalCard extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: progressColor.withOpacity(0.05),
+                    color: progressColor.withValues(alpha: 0.05),
                   ),
                 ),
               ),
@@ -93,7 +93,7 @@ class GoalCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: LightModeColors.lightError.withOpacity(0.1),
+                            color: LightModeColors.lightError.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(

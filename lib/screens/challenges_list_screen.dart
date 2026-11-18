@@ -114,14 +114,14 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                         Icon(
                           Icons.emoji_events_outlined,
                           size: 80,
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Colors.grey.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           "Aucun challenge disponible pour le moment",
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey.withOpacity(0.8),
+                            color: Colors.grey.withValues(alpha: 0.8),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -156,7 +156,7 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -212,9 +212,9 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.2),
+                              Colors.black.withValues(alpha: 0.2),
                               Colors.transparent,
-                              Colors.black.withOpacity(0.4),
+                              Colors.black.withValues(alpha: 0.4),
                             ],
                           ),
                         ),
@@ -230,11 +230,11 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: LightModeColors.success.withOpacity(0.95),
+                          color: LightModeColors.success.withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -276,8 +276,8 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                           Icon(
                             Icons.arrow_forward_rounded,
                             size: 20,
-                            color: LightModeColors.lightPrimary.withOpacity(
-                              0.5,
+                            color: LightModeColors.lightPrimary.withValues(
+                              alpha: 0.5,
                             ),
                           ),
                         ],
@@ -290,7 +290,7 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           color: LightModeColors.dashboardTextSecondary
-                              .withOpacity(0.8),
+                              .withValues(alpha: 0.8),
                           height: 1.5,
                         ),
                       ),
@@ -306,8 +306,8 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: LightModeColors.lightPrimary.withOpacity(
-                                  0.1,
+                                color: LightModeColors.lightPrimary.withValues(
+                                  alpha: 0.1,
                                 ),
                                 shape: BoxShape.circle,
                               ),
@@ -327,7 +327,7 @@ class _ChallengesListScreenState extends State<ChallengesListScreen> {
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: LightModeColors.lightPrimary
-                                        .withOpacity(0.6),
+                                        .withValues(alpha: 0.6),
                                     letterSpacing: 0.5,
                                   ),
                                 ),

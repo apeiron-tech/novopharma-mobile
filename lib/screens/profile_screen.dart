@@ -499,8 +499,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: _hasChanges && !_isLoading ? _saveProfile : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: LightModeColors.lightPrimary,
-              disabledBackgroundColor: LightModeColors.lightPrimary.withOpacity(
-                0.6,
+              disabledBackgroundColor: LightModeColors.lightPrimary.withValues(
+                alpha: 0.6,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -571,16 +571,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icon(
               Icons.delete_forever_rounded,
               size: 20,
-              color: LightModeColors.lightError.withOpacity(0.8),
+              color: LightModeColors.lightError.withValues(alpha: 0.8),
             ),
             label: Text(
               l10n.deleteAccount,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: LightModeColors.lightError.withOpacity(0.8),
+                color: LightModeColors.lightError.withValues(alpha: 0.8),
                 decoration: TextDecoration.underline,
-                decorationColor: LightModeColors.lightError.withOpacity(0.8),
+                decorationColor: LightModeColors.lightError.withValues(alpha: 0.8),
               ),
             ),
             style: TextButton.styleFrom(

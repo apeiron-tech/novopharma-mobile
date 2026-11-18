@@ -67,7 +67,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         iconTheme: const IconThemeData(
           color: LightModeColors.dashboardTextPrimary,
         ),
@@ -144,7 +144,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
 
     return Card(
       elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
       child: Opacity(
@@ -249,7 +249,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

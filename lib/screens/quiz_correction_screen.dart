@@ -75,7 +75,7 @@ class _QuizCorrectionScreenState extends State<QuizCorrectionScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: LightModeColors.dashboardTextPrimary),
           onPressed: () => Navigator.of(context).pop(),
@@ -166,7 +166,7 @@ class _QuizCorrectionScreenState extends State<QuizCorrectionScreen> {
 
     return Card(
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.06),
+      shadowColor: Colors.black.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(18.0),
@@ -178,7 +178,7 @@ class _QuizCorrectionScreenState extends State<QuizCorrectionScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: LightModeColors.novoPharmaBlue.withOpacity(0.1),
+                    color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -298,7 +298,7 @@ class _QuizCorrectionScreenState extends State<QuizCorrectionScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.06),
+      shadowColor: Colors.black.withValues(alpha: 0.06),
       child: Padding(
         padding: const EdgeInsets.all(18.0),
         child: Column(

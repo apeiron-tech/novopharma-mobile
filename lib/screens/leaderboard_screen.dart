@@ -202,7 +202,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: LightModeColors.lightPrimary.withOpacity(0.3),
+            color: LightModeColors.lightPrimary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -219,7 +219,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -231,7 +231,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -250,7 +250,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -274,7 +274,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -324,7 +324,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       child: Text(
                         'pts',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
@@ -340,10 +340,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -352,7 +352,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       children: [
                         Icon(
                           Icons.emoji_events_rounded,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           size: 16,
                         ),
                         const SizedBox(width: 8),
@@ -365,7 +365,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   : leaderboardData.length,
                             ),
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -498,7 +498,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         Text(
           '${_formatPoints(ptsVal)} pts',
           style: TextStyle(
-            color: LightModeColors.dashboardTextPrimary.withOpacity(0.8),
+            color: LightModeColors.dashboardTextPrimary.withValues(alpha: 0.8),
             fontSize: 10,
           ),
         ),
@@ -508,7 +508,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           height: height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [medalColor.withOpacity(0.8), medalColor],
+              colors: [medalColor.withValues(alpha: 0.8), medalColor],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -577,7 +577,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
               return Container(
                 color: isCurrentUser
-                    ? LightModeColors.lightPrimary.withOpacity(0.1)
+                    ? LightModeColors.lightPrimary.withValues(alpha: 0.1)
                     : Colors.transparent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,

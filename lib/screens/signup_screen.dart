@@ -256,7 +256,7 @@ class _SignupScreenState extends State<SignupScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -296,7 +296,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: LightModeColors.novoPharmaBlue.withOpacity(0.3),
+                        color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -310,7 +310,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -337,7 +337,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   l10n.joinCommunity,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ],
@@ -352,7 +352,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -629,8 +629,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     boxShadow: _isButtonEnabled
                         ? [
                             BoxShadow(
-                              color: LightModeColors.novoPharmaBlue.withOpacity(
-                                0.3,
+                              color: LightModeColors.novoPharmaBlue.withValues(
+                                alpha: 0.3,
                               ),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
@@ -771,7 +771,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: LightModeColors.novoPharmaBlue.withOpacity(0.2),
+                    color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -812,8 +812,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: LightModeColors.novoPharmaBlue.withOpacity(
-                              0.3,
+                            color: LightModeColors.novoPharmaBlue.withValues(
+                              alpha: 0.3,
                             ),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
@@ -859,7 +859,7 @@ class _SignupScreenState extends State<SignupScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1003,7 +1003,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildRoleDropdown() {
     final l10n = AppLocalizations.of(context)!;
     return DropdownButtonFormField<String>(
-      value: _selectedRole,
+      initialValue: _selectedRole,
       isExpanded: true,
       decoration: _buildInputDecoration(
         hintText: l10n.selectPosition,

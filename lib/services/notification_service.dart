@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:novopharma/models/notification_model.dart';
 import 'package:novopharma/navigation.dart';
@@ -51,8 +52,8 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Get FCM token
-    String? token = await _messaging.getToken();
+    // Get FCM token (may be unavailable on iOS until APNs registers)
+    final String? token = await _safeGetToken();
     print('[NotificationService] FCM Token: $token');
 
     // Handle foreground messages
@@ -71,9 +72,33 @@ class NotificationService {
     }
   }
 
+  // Returns the FCM token, or null if it is not available yet.
+  // On iOS, getToken() throws `apns-token-not-set` until APNs has delivered a
+  // device token (always the case on simulators), so wait briefly and never
+  // let that failure propagate.
+  Future<String?> _safeGetToken() async {
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        String? apnsToken = await _messaging.getAPNSToken();
+        for (var i = 0; apnsToken == null && i < 3; i++) {
+          await Future.delayed(const Duration(seconds: 1));
+          apnsToken = await _messaging.getAPNSToken();
+        }
+        if (apnsToken == null) {
+          print('[NotificationService] APNs token not available yet');
+          return null;
+        }
+      }
+      return await _messaging.getToken();
+    } catch (e) {
+      print('[NotificationService] Unable to get FCM token: $e');
+      return null;
+    }
+  }
+
   // Save FCM token to user document
   Future<void> saveFCMToken(String userId) async {
-    String? token = await _messaging.getToken();
+    final String? token = await _safeGetToken();
     if (token != null) {
       await _firestore.collection('users').doc(userId).update({
         'fcmToken': token, // Keep for backward compatibility
@@ -85,7 +110,7 @@ class NotificationService {
 
   // Remove FCM token from user document
   Future<void> removeFCMToken(String userId) async {
-    String? token = await _messaging.getToken();
+    final String? token = await _safeGetToken();
     if (token != null) {
       await _firestore.collection('users').doc(userId).update({
         'fcmTokens': FieldValue.arrayRemove([token]),

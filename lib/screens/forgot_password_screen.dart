@@ -221,8 +221,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: LightModeColors.novoPharmaBlue.withOpacity(
-                              0.1,
+                            color: LightModeColors.novoPharmaBlue.withValues(
+                              alpha: 0.1,
                             ),
                             borderRadius: BorderRadius.circular(60),
                           ),

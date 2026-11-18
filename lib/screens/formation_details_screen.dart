@@ -93,7 +93,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
             gradient: LinearGradient(
               colors: [
                 LightModeColors.novoPharmaBlue,
-                LightModeColors.novoPharmaBlue.withOpacity(0.8),
+                LightModeColors.novoPharmaBlue.withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -107,7 +107,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -187,12 +187,12 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withOpacity(0.05),
+            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.05),
             blurRadius: 30,
             offset: const Offset(0, 4),
           ),
@@ -217,7 +217,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: LightModeColors.novoPharmaBlue.withOpacity(0.2),
+                        color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.2),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),
@@ -276,7 +276,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.1),
+                                Colors.black.withValues(alpha: 0.1),
                               ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
@@ -334,7 +334,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: LightModeColors.warning.withOpacity(0.1),
+                        color: LightModeColors.warning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -361,7 +361,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: LightModeColors.success.withOpacity(0.1),
+                          color: LightModeColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -449,7 +449,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: colors[colorIndex][0].withOpacity(0.3),
+                            color: colors[colorIndex][0].withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -497,7 +497,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -667,9 +667,9 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                         gradient: isActive
                             ? LinearGradient(
                                 colors: [
-                                  LightModeColors.lightwarning.withOpacity(0.1),
-                                  LightModeColors.lightwarning.withOpacity(
-                                    0.05,
+                                  LightModeColors.lightwarning.withValues(alpha: 0.1),
+                                  LightModeColors.lightwarning.withValues(
+                                    alpha: 0.05,
                                   ),
                                 ],
                                 begin: Alignment.topLeft,
@@ -683,7 +683,7 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                               ),
                         border: Border.all(
                           color: isActive
-                              ? LightModeColors.lightwarning.withOpacity(0.3)
+                              ? LightModeColors.lightwarning.withValues(alpha: 0.3)
                               : LightModeColors.lightSurfaceVariant,
                           width: 1.5,
                         ),
@@ -691,8 +691,8 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
                         boxShadow: [
                           if (isActive)
                             BoxShadow(
-                              color: LightModeColors.lightwarning.withOpacity(
-                                0.1,
+                              color: LightModeColors.lightwarning.withValues(
+                                alpha: 0.1,
                               ),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
@@ -1664,8 +1664,11 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
       );
 
       if (link != null) {
-        await Share.share(
-          'Consultez cette formation sur MyChallenge : ${widget.formation.title}\n\nLien : $link',
+        await SharePlus.instance.share(
+          ShareParams(
+            text:
+                'Consultez cette formation sur MyChallenge : ${widget.formation.title}\n\nLien : $link',
+          ),
         );
       } else {
         _showSnackBar('Erreur lors de la génération du lien');

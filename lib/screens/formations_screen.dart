@@ -114,7 +114,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: LightModeColors.lightOnPrimary.withOpacity(0.3),
+                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -142,8 +142,8 @@ class _FormationsScreenState extends State<FormationsScreen>
                           'Développez vos compétences',
                           style: TextStyle(
                             fontSize: 14,
-                            color: LightModeColors.lightOnPrimary.withOpacity(
-                              0.7,
+                            color: LightModeColors.lightOnPrimary.withValues(
+                              alpha: 0.7,
                             ), // 70% opacity of white
                             fontWeight: FontWeight.w500,
                           ),
@@ -159,12 +159,12 @@ class _FormationsScreenState extends State<FormationsScreen>
                   color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: LightModeColors.lightOnPrimary.withOpacity(0.3),
+                    color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -185,12 +185,12 @@ class _FormationsScreenState extends State<FormationsScreen>
                     hintText: 'Rechercher une formation...',
                     hintStyle: TextStyle(
                       color: LightModeColors.lightOnPrimaryContainer
-                          .withOpacity(0.7), // 70% opacity of white
+                          .withValues(alpha: 0.7), // 70% opacity of white
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
                       color: LightModeColors.lightOnPrimaryContainer
-                          .withOpacity(0.8), // 80% opacity of white
+                          .withValues(alpha: 0.8), // 80% opacity of white
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -215,7 +215,7 @@ class _FormationsScreenState extends State<FormationsScreen>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -306,24 +306,24 @@ class _FormationsScreenState extends State<FormationsScreen>
           end: Alignment.bottomRight,
           colors: [
             LightModeColors.lightSurface,
-            LightModeColors.lightSurface.withOpacity(0.95),
+            LightModeColors.lightSurface.withValues(alpha: 0.95),
             LightModeColors.lightSurfaceVariant,
           ],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: LightModeColors.lightOnPrimary.withOpacity(0.6),
+          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: LightModeColors.novoPharmaBlue.withOpacity(0.1),
+            color: LightModeColors.novoPharmaBlue.withValues(alpha: 0.1),
             blurRadius: 30,
             offset: const Offset(0, 12),
             spreadRadius: -5,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -387,7 +387,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.3),
+                            Colors.black.withValues(alpha: 0.3),
                           ],
                         ),
                       ),
@@ -400,11 +400,11 @@ class _FormationsScreenState extends State<FormationsScreen>
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: LightModeColors.lightOnPrimary.withOpacity(0.9),
+                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -433,10 +433,10 @@ class _FormationsScreenState extends State<FormationsScreen>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: LightModeColors.success.withOpacity(0.1),
+                    color: LightModeColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: LightModeColors.success.withOpacity(0.2),
+                      color: LightModeColors.success.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -481,7 +481,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: LightModeColors.warning.withOpacity(0.1),
+                              color: LightModeColors.warning.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
@@ -521,11 +521,11 @@ class _FormationsScreenState extends State<FormationsScreen>
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: LightModeColors.success.withOpacity(0.1),
+                                color: LightModeColors.success.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: LightModeColors.success.withOpacity(
-                                    0.2,
+                                  color: LightModeColors.success.withValues(
+                                    alpha: 0.2,
                                   ),
                                   width: 1,
                                 ),
@@ -595,7 +595,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 color: LightModeColors.lightOnPrimary
-                                    .withOpacity(0.2),
+                                    .withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
@@ -742,7 +742,7 @@ class _FormationsScreenState extends State<FormationsScreen>
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: LightModeColors.lightSurface.withOpacity(0.6),
+            color: LightModeColors.lightSurface.withValues(alpha: 0.6),
             width: 1.5,
           ),
           boxShadow: [
@@ -753,7 +753,7 @@ class _FormationsScreenState extends State<FormationsScreen>
               spreadRadius: -3,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -775,7 +775,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -829,11 +829,11 @@ class _FormationsScreenState extends State<FormationsScreen>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  LightModeColors.novoPharmaBlue.withOpacity(
-                                    0.1,
+                                  LightModeColors.novoPharmaBlue.withValues(
+                                    alpha: 0.1,
                                   ),
-                                  LightModeColors.novoPharmaBlue.withOpacity(
-                                    0.05,
+                                  LightModeColors.novoPharmaBlue.withValues(
+                                    alpha: 0.05,
                                   ),
                                 ],
                               ),
@@ -853,7 +853,7 @@ class _FormationsScreenState extends State<FormationsScreen>
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                           ],
                         ),
                       ),
@@ -861,13 +861,13 @@ class _FormationsScreenState extends State<FormationsScreen>
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: LightModeColors.lightOnPrimary.withOpacity(
-                              0.9,
+                            color: LightModeColors.lightOnPrimary.withValues(
+                              alpha: 0.9,
                             ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -896,10 +896,10 @@ class _FormationsScreenState extends State<FormationsScreen>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: LightModeColors.success.withOpacity(0.1),
+                      color: LightModeColors.success.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: LightModeColors.success.withOpacity(0.2),
+                        color: LightModeColors.success.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),

@@ -140,7 +140,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: LightModeColors.lightOnPrimary.withOpacity(0.3),
+                        color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -168,8 +168,8 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                           'Restez informé des dernières actualités',
                           style: TextStyle(
                             fontSize: 14,
-                            color: LightModeColors.lightOnPrimary.withOpacity(
-                              0.7,
+                            color: LightModeColors.lightOnPrimary.withValues(
+                              alpha: 0.7,
                             ), // 70% opacity of white
                             fontWeight: FontWeight.w500,
                           ),
@@ -185,12 +185,12 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                   color: LightModeColors.lightOnPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: LightModeColors.lightOnPrimary.withOpacity(0.3),
+                    color: LightModeColors.lightOnPrimary.withValues(alpha: 0.3),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -211,12 +211,12 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                     hintText: 'Rechercher une actualité...',
                     hintStyle: TextStyle(
                       color: LightModeColors.lightOnPrimaryContainer
-                          .withOpacity(0.7), // 70% opacity of white
+                          .withValues(alpha: 0.7), // 70% opacity of white
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
                       color: LightModeColors.lightOnPrimaryContainer
-                          .withOpacity(0.8), // 80% opacity of white
+                          .withValues(alpha: 0.8), // 80% opacity of white
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -241,7 +241,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -314,12 +314,12 @@ class _ActualitesScreenState extends State<ActualitesScreen>
         color: LightModeColors.lightSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: LightModeColors.lightOnPrimary.withOpacity(0.6),
+          color: LightModeColors.lightOnPrimary.withValues(alpha: 0.6),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: LightModeColors.lightSurfaceVariant.withOpacity(0.08),
+            color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -365,7 +365,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          LightModeColors.lightPrimary.withOpacity(0.1),
+                          LightModeColors.lightPrimary.withValues(alpha: 0.1),
                           Colors.transparent,
                         ],
                         begin: Alignment.topCenter,
@@ -411,13 +411,13 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            LightModeColors.success.withOpacity(0.1),
-                            LightModeColors.success.withOpacity(0.05),
+                            LightModeColors.success.withValues(alpha: 0.1),
+                            LightModeColors.success.withValues(alpha: 0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: LightModeColors.success.withOpacity(0.2),
+                          color: LightModeColors.success.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Text(
@@ -469,7 +469,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: LightModeColors.warning.withOpacity(0.1),
+                            color: LightModeColors.warning.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -492,7 +492,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: LightModeColors.lightSurfaceVariant
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -532,7 +532,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+              color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -544,7 +544,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: LightModeColors.lightError.withOpacity(0.1),
+                color: LightModeColors.lightError.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Icon(
@@ -605,7 +605,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: LightModeColors.lightSurfaceVariant.withOpacity(0.1),
+              color: LightModeColors.lightSurfaceVariant.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -617,7 +617,7 @@ class _ActualitesScreenState extends State<ActualitesScreen>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: LightModeColors.warning.withOpacity(0.1),
+                color: LightModeColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Icon(

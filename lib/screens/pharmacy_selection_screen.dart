@@ -109,7 +109,7 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -1100,7 +1100,7 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.02),
+                                            color: Colors.black.withValues(alpha: 0.02),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -1217,7 +1217,7 @@ class _PharmacySelectionScreenState extends State<PharmacySelectionScreen> {
             Container(
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: LightModeColors.lightError.withOpacity(0.08),
+                color: LightModeColors.lightError.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
