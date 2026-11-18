@@ -99,7 +99,7 @@ flutter:
     - assets/images/
     - assets/flags/
     - assets/logo/
-    - .env
+    - config.env
 
 flutter_native_splash:
   color: "#0F0D45"

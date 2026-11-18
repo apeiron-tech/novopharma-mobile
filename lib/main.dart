@@ -75,7 +75,11 @@ void main() async {
   if (!kIsWeb) {
     HttpOverrides.global = AppHttpOverrides();
   }
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: "config.env", isOptional: true);
+  } catch (e) {
+    debugPrint('[main] dotenv load failed: $e');
+  }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
@@ -131,8 +135,11 @@ void main() async {
 
 Future<void> _initializePostLaunchServices() async {
   try {
+    final chottuApiKey = dotenv.isInitialized
+        ? (dotenv.env['CHOTTULINK_API_KEY'] ?? '')
+        : '';
     await ChottuLink.init(
-      apiKey: dotenv.env['CHOTTULINK_API_KEY'] ?? '',
+      apiKey: chottuApiKey,
     ).timeout(const Duration(seconds: 5));
     ChottuLinkService().initialize();
   } catch (e) {
