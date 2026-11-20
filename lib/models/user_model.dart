@@ -56,9 +56,25 @@ class UserModel {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
     // Handle potential data mismatch from Backoffice
+    // Fields edited from the back office / imports are not always strings
+    // (e.g. phone saved as a number). A hard cast here made the whole profile
+    // fail to load ("Could not load user profile" on the product screen).
+    String? optStr(dynamic v) {
+      if (v == null) return null;
+      if (v is String) return v;
+      if (v is num || v is bool) return v.toString();
+      return null;
+    }
+
+    double toDouble(dynamic v) {
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v.replaceAll(',', '.')) ?? 0.0;
+      return 0.0;
+    }
+
     dynamic positionData = data['position'];
     String? positionStr;
-    String? statusStr = data['status'];
+    String? statusStr = optStr(data['status']);
 
     if (positionData is Map) {
       // Backoffice structure: position is a Map, and status might be nested inside
@@ -71,33 +87,33 @@ class UserModel {
       positionStr = positionData;
     }
 
-    String pCat = data['pharmacyCategory'] as String? ?? '';
+    String pCat = optStr(data['pharmacyCategory']) ?? '';
     if (pCat.trim().isEmpty) {
       pCat = 'Pharmacie';
     }
 
     return UserModel(
       uid: doc.id,
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
+      name: optStr(data['name']) ?? '',
+      email: optStr(data['email']) ?? '',
       status: _statusFromString(statusStr),
-      pharmacyId: data['pharmacyId'] ?? '',
-      pharmacy: data['pharmacy'],
+      pharmacyId: (optStr(data['pharmacyId']) ?? '').trim(),
+      pharmacy: optStr(data['pharmacy']),
       pharmacyCategory: pCat,
       dateOfBirth: _parseDate(data['dateOfBirth']),
-      points: (data['points'] as num?)?.toDouble() ?? 0.0,
-      pendingPluxeePoints:
-          (data['pendingPluxeePoints'] as num?)?.toDouble() ?? 0.0,
-      totalPointsValidated:
-          (data['totalPointsValidated'] as num?)?.toDouble() ?? (data['points'] as num?)?.toDouble() ?? 0.0,
-      pointsInvalid: (data['pointsInvalid'] as num?)?.toDouble() ?? 0.0,
-      avatarUrl: data['avatarUrl'],
-      phone: data['phone'],
+      points: toDouble(data['points']),
+      pendingPluxeePoints: toDouble(data['pendingPluxeePoints']),
+      totalPointsValidated: data['totalPointsValidated'] != null
+          ? toDouble(data['totalPointsValidated'])
+          : toDouble(data['points']),
+      pointsInvalid: toDouble(data['pointsInvalid']),
+      avatarUrl: optStr(data['avatarUrl']),
+      phone: optStr(data['phone']),
       position: positionStr,
-      city: data['city'],
-      pointOfSale: data['pointOfSale'],
-      role: data['role'] ?? '',
-      birthdayNotif: data['birthdayNotif'] as bool? ?? true,
+      city: optStr(data['city']),
+      pointOfSale: optStr(data['pointOfSale']),
+      role: optStr(data['role']) ?? '',
+      birthdayNotif: data['birthdayNotif'] is bool ? data['birthdayNotif'] : true,
     );
   }
 

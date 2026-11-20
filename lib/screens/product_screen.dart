@@ -128,13 +128,11 @@ class _ProductScreenState extends State<ProductScreen> {
       }
     }
 
+    resolvedPharmacyId = resolvedPharmacyId?.trim();
     if (resolvedPharmacyId != null && resolvedPharmacyId.isNotEmpty) {
-      final pharmacies = await _pharmacyService.getPharmaciesByIds([
-        resolvedPharmacyId,
-      ]);
-      if (pharmacies.isNotEmpty) {
-        pharmacy = pharmacies.first;
-      }
+      // Direct document read: simpler than a whereIn query and doesn't fail
+      // on IDs that aren't valid query values.
+      pharmacy = await _pharmacyService.getPharmacy(resolvedPharmacyId);
     }
 
     return _ProductScreenData(
@@ -2550,7 +2548,25 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
               );
             }
-            return Center(child: Text('Could not load user profile.'));
+            final isEn = Localizations.localeOf(context).languageCode == 'en';
+            final String message;
+            if (user == null) {
+              message = isEn
+                  ? 'Could not load your user profile. Please check your connection and try again.'
+                  : 'Impossible de charger votre profil. Vérifiez votre connexion et réessayez.';
+            } else {
+              // User loaded but the linked pharmacy is missing, deleted or
+              // not set — previously also shown as "Could not load user profile".
+              message = isEn
+                  ? 'Your account is not linked to an active pharmacy. Please contact your administrator.'
+                  : "Votre compte n'est lié à aucune pharmacie active. Veuillez contacter votre administrateur.";
+            }
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(message, textAlign: TextAlign.center),
+              ),
+            );
           }
 
           // Check if product is disabled

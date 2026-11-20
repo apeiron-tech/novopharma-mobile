@@ -11,8 +11,8 @@ class PointOfSale {
 
   factory PointOfSale.fromMap(Map<String, dynamic> map) {
     return PointOfSale(
-      name: map['name'] ?? '',
-      city: map['city'] ?? '',
+      name: map['name']?.toString() ?? '',
+      city: map['city']?.toString() ?? '',
     );
   }
 
@@ -68,19 +68,42 @@ class Pharmacy {
           .toList();
     }
 
+    // Tolerate non-string values (e.g. postalCode/phone saved as numbers):
+    // a type error here used to make the pharmacy "missing", which the
+    // product screen reported as "Could not load user profile".
+    String str(dynamic v) => (v is String) ? v : (v == null ? '' : v.toString());
+
+    GeoPoint parseLocation(dynamic v) {
+      if (v is GeoPoint) return v;
+      if (v is Map) {
+        final lat = v['latitude'] ?? v['lat'];
+        final lng = v['longitude'] ?? v['lng'];
+        if (lat is num && lng is num) {
+          return GeoPoint(lat.toDouble(), lng.toDouble());
+        }
+      }
+      return const GeoPoint(0, 0);
+    }
+
+    DateTime parseDate(dynamic v) {
+      if (v is Timestamp) return v.toDate();
+      if (v is String) return DateTime.tryParse(v) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return Pharmacy(
       id: doc.id,
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
-      phone: data['phone'] ?? '',
-      address: data['address'] ?? '',
-      city: data['city'] ?? '',
-      postalCode: data['postalCode'] ?? '',
-      zone: data['zone'] ?? '',
-      clientCategory: data['clientCategory'] ?? '',
-      location: data['location'] ?? const GeoPoint(0, 0),
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      name: str(data['name']),
+      email: str(data['email']),
+      phone: str(data['phone']),
+      address: str(data['address']),
+      city: str(data['city']),
+      postalCode: str(data['postalCode']),
+      zone: str(data['zone']),
+      clientCategory: str(data['clientCategory']),
+      location: parseLocation(data['location']),
+      createdAt: parseDate(data['createdAt']),
+      updatedAt: parseDate(data['updatedAt']),
       hasPointsOfSale: data['hasPointsOfSale'] == true,
       pointsOfSale: posList,
     );
