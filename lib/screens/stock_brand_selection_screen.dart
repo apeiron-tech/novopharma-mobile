@@ -97,7 +97,7 @@ class _StockBrandSelectionScreenState extends State<StockBrandSelectionScreen> {
 
     // Search product list for the SKU
     final matchedProduct = _allProducts.firstWhere(
-      (p) => p.sku.toLowerCase() == scannedSku.trim().toLowerCase(),
+      (p) => p.matchesSku(scannedSku),
       orElse: () => Product(
         id: '',
         name: '',

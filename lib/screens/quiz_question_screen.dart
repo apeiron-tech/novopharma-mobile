@@ -59,8 +59,12 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
     }
   }
 
+  bool _isSubmitting = false;
+
   void _submitQuiz() async {
-    if (!mounted) return;
+    // Guard against double submission (FAB tap + quiz/question timer firing).
+    if (!mounted || _isSubmitting) return;
+    _isSubmitting = true;
     _quizProvider.stopQuiz();
 
     final userId = Provider.of<AuthProvider>(
@@ -70,11 +74,9 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
     int correctAnswers = 0;
     for (int i = 0; i < widget.quiz.questions.length; i++) {
       final question = widget.quiz.questions[i];
-      final selected = _selectedAnswers[i] ?? [];
-      final correct = question.correctAnswers;
-
-      selected.sort();
-      correct.sort();
+      // Copy before sorting so we don't mutate the quiz model or the answers.
+      final selected = [...(_selectedAnswers[i] ?? <int>[])]..sort();
+      final correct = [...question.correctAnswers]..sort();
 
       if (const ListEquality().equals(selected, correct)) {
         correctAnswers++;
@@ -85,13 +87,33 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
         (correctAnswers >= widget.quiz.effectiveMinCorrectAnswers)
         ? widget.quiz.points
         : 0;
-    await QuizService().submitQuiz(
-      userId,
-      widget.quiz.id,
-      correctAnswers,
-      pointsEarned,
-      selectedAnswers: _selectedAnswers,
-    );
+    try {
+      await QuizService().submitQuiz(
+        userId,
+        widget.quiz.id,
+        correctAnswers,
+        pointsEarned,
+        selectedAnswers: _selectedAnswers,
+      );
+    } catch (e) {
+      // Previously an error here left the user on an endless spinner
+      // (activeQuizState was already cleared). Tell them and leave the quiz.
+      if (mounted) {
+        final isEn = Localizations.localeOf(context).languageCode == 'en';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isEn
+                  ? 'Could not submit your quiz. Please check your connection and try again.'
+                  : 'Impossible de soumettre le quiz. Vérifiez votre connexion et réessayez.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+      return;
+    }
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
