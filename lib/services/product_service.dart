@@ -35,13 +35,26 @@ class ProductService {
           .where('sku', whereIn: candidates)
           .limit(10)
           .get();
-      if (querySnapshot.docs.isEmpty) return null;
+      var docs = querySnapshot.docs;
+
+      // Fallback: stored SKU has stray spaces / invisible characters (saved
+      // untrimmed from the back-office form), so no exact query can hit it.
+      // Compare normalized SKUs client-side. Only runs on a miss.
+      if (docs.isEmpty) {
+        final target = Product.normalizeSku(sku);
+        final all = await _firestore.collection(_collection).get();
+        docs = all.docs.where((d) {
+          final stored = (d.data())['sku'];
+          return stored != null &&
+              stored.toString().trim().isNotEmpty &&
+              Product.normalizeSku(stored.toString()) == target;
+        }).toList();
+        if (docs.isEmpty) return null;
+      }
 
       // Prefer an exact match, then an enabled product, then anything.
       final trimmed = sku.trim();
-      final products = querySnapshot.docs
-          .map((doc) => Product.fromFirestore(doc))
-          .toList();
+      final products = docs.map((doc) => Product.fromFirestore(doc)).toList();
       return products.firstWhere(
         (p) => p.sku == trimmed,
         orElse: () => products.firstWhere(

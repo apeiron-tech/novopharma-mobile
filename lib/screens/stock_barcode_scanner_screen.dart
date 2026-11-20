@@ -11,7 +11,20 @@ class StockBarcodeScannerScreen extends StatefulWidget {
 }
 
 class _StockBarcodeScannerScreenState extends State<StockBarcodeScannerScreen> {
-  final MobileScannerController cameraController = MobileScannerController();
+  // Retail barcode formats only. Product boxes also carry QR codes (e.g. the
+  // recycling-info QR next to the EAN); with all formats enabled, Android's
+  // ML Kit often reports that QR first and its URL is looked up as the SKU.
+  // autoZoom (Android only) helps small/thin EAN bars at normal distance.
+  final MobileScannerController cameraController = MobileScannerController(
+    formats: const [
+      BarcodeFormat.ean13,
+      BarcodeFormat.ean8,
+      BarcodeFormat.upcA,
+      BarcodeFormat.upcE,
+      BarcodeFormat.code128,
+    ],
+    autoZoom: true,
+  );
   bool _isDetecting = false;
 
   @override

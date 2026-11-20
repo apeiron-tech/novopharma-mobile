@@ -9,6 +9,12 @@ void main() {
       expect(Product.normalizeSku(' 3600523614059 '), '3600523614059');
     });
 
+    test('ignores stray and invisible whitespace in stored SKUs', () {
+      expect(Product.normalizeSku('8435534402907 '), '8435534402907');
+      expect(Product.normalizeSku(' 8435534402907​'), '8435534402907');
+      expect(Product.normalizeSku('843 5534 402907'), '8435534402907');
+    });
+
     test('keeps non-numeric codes, case-insensitive', () {
       expect(Product.normalizeSku(' AB-001 '), 'ab-001');
     });

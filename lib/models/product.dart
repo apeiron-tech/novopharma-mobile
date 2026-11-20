@@ -57,7 +57,11 @@ class Product {
   /// for purely numeric codes, without leading zeros (so "0123", "123" and an
   /// EAN-13 "0012345678905" vs UPC-A "012345678905" compare equal).
   static String normalizeSku(String raw) {
-    final s = raw.trim().toLowerCase();
+    // Drop all whitespace and invisible characters (NBSP, zero-width, BOM):
+    // SKUs typed/pasted in the back-office form are saved untrimmed.
+    final s = raw
+        .replaceAll(RegExp(r'[\s ​-‍⁠﻿]'), '')
+        .toLowerCase();
     if (_digitsOnly.hasMatch(s)) {
       final stripped = s.replaceFirst(RegExp(r'^0+'), '');
       return stripped.isEmpty ? '0' : stripped;
@@ -143,8 +147,12 @@ class Product {
               .map((e) => e.toString())
               .toList()
           : <String>[],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: data['updatedAt'] is Timestamp
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       imageUrl: parseString(data['imageUrl']).trim(),
       composition: parseString(data['composition']),
       clientCode: parseInt(data['clientCode']),

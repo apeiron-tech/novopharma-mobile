@@ -40,6 +40,9 @@ class FormationDetailsScreen extends StatefulWidget {
 }
 
 class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
+  // "Pièces jointes" section is hidden on formations.
+  static const bool _showAttachments = false;
+
   int _currentStep = 0;
 
   // Formation steps with completion tracking
@@ -162,8 +165,8 @@ class _FormationDetailsScreenState extends State<FormationDetailsScreen> {
             // Formation Steps
             _buildFormationSteps(),
 
-            // Attachments Section
-            _buildAttachmentsSection(),
+            // Attachments Section (hidden for now — flip _showAttachments to restore)
+            if (_showAttachments) _buildAttachmentsSection(),
 
             const SizedBox(height: 20),
           ],
